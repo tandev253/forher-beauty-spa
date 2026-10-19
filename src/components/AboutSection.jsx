@@ -1,5 +1,9 @@
 import React from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
+import diodeLaser from '../assets/diode_laser_machine.jpg';
+import facialTreatment from '../assets/facial_treatment.jpg';
+import chemicalPeel from '../assets/chemical_peel.jpg';
+import spaVipRoom from '../assets/spa_vip_room.jpg';
 
 export default function AboutSection({ onBookClick }) {
   const visualTreatments = [
@@ -7,28 +11,28 @@ export default function AboutSection({ onBookClick }) {
       id: 'triet-long',
       title: 'Triệt Lông Diode Laser BH 2 Năm',
       desc: 'Công nghệ đầu lạnh âm độ, êm ái không đau rát, se khít nang lông. Cam kết cấp thẻ bảo hành chính thức 2 năm (24 tháng) dặm miễn phí.',
-      image: './assets/diode_laser_machine.jpg',
+      image: diodeLaser,
       tag: 'BẢO HÀNH 2 NĂM'
     },
     {
       id: 'nan-mun',
       title: 'Điều Trị Mụn Chuẩn Y Khoa',
       desc: 'Dụng cụ tiệt trùng 1 lần riêng biệt, lấy sạch cồi già, sát khuẩn tia điện tím và ánh sáng Biolight giúp giảm sưng đỏ, ngừa thâm mụn tối đa.',
-      image: './assets/facial_treatment.jpg',
+      image: facialTreatment,
       tag: 'VÔ KHUẨN 100%'
     },
     {
       id: 'peel-meso',
       title: 'Chemical Peel & Cấy Meso Vi Điểm',
       desc: 'Peel thay da sinh học (Peel Tảo, TCA, Image Skincare) kết hợp điện di tinh chất HA/Mulgwang nuôi dưỡng tầng sâu cho da căng mướt, rạng ngời.',
-      image: './assets/chemical_peel.jpg',
+      image: chemicalPeel,
       tag: 'TINH CHẤT CHÍNH HÃNG'
     },
     {
       id: 'khong-gian',
       title: 'Không Gian VIP & Kỹ Thuật Viên 1:1',
       desc: 'Phòng dịch vụ riêng tư, yên tĩnh tại 515 Bà Hạt Quận 10. Chuyên viên chăm sóc chu đáo, bảng giá niêm yết minh bạch, không chèo kéo phát sinh.',
-      image: './assets/spa_vip_room.jpg',
+      image: spaVipRoom,
       tag: 'KHÔNG GIAN VIP 1:1'
     }
   ];

@@ -1,5 +1,6 @@
 import React from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
+import spaVipRoom from '../assets/spa_vip_room.jpg';
 
 export default function Hero({ onBookClick, onPricingClick }) {
   return (
@@ -77,7 +78,7 @@ export default function Hero({ onBookClick, onPricingClick }) {
         <div className="hero-visual-col">
           <div className="hero-image-frame">
             <img 
-              src="./assets/spa_vip_room.jpg" 
+              src={spaVipRoom} 
               alt="Phòng trị liệu VIP tại FORHER Beauty & Spa 515 Bà Hạt Quận 10" 
               className="hero-main-img"
               loading="eager"
