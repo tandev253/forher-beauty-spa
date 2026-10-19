@@ -77,7 +77,7 @@ export default function Hero({ onBookClick, onPricingClick }) {
         <div className="hero-visual-col">
           <div className="hero-image-frame">
             <img 
-              src="/assets/spa_vip_room.jpg" 
+              src="./assets/spa_vip_room.jpg" 
               alt="Phòng trị liệu VIP tại FORHER Beauty & Spa 515 Bà Hạt Quận 10" 
               className="hero-main-img"
               loading="eager"
