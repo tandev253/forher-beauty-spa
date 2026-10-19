@@ -262,18 +262,24 @@ button {
 .btn-nav-call {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 8px 16px;
   border-radius: 999px;
   border: 1.5px solid var(--border-light);
   font-size: 0.84rem;
   font-weight: 700;
   color: var(--text-heading);
+  background: #FFF;
+  transition: all 0.2s ease;
 }
 
 .btn-nav-call:hover {
   border-color: var(--primary-gold);
   color: var(--primary-gold-dark);
+}
+
+.hotline-text-short {
+  display: none;
 }
 
 .btn-book-nav {
@@ -296,9 +302,20 @@ button {
 
 .mobile-hamburger-btn {
   display: none;
-  font-size: 1.5rem;
+  background: #FAF6F0;
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
   color: var(--text-dark);
-  padding: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mobile-hamburger-btn:hover {
+  background: #F0EAE1;
+  border-color: var(--primary-gold);
 }
 
 /* ==========================================================================
@@ -1713,13 +1730,96 @@ button {
   }
 }
 
+@keyframes slideDownMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
+  /* Layout & Spacing */
+  .site-container {
+    padding: 0 16px;
+  }
+  
+  .section-padding {
+    padding: 50px 0;
+  }
+  
+  .section-header-center {
+    margin-bottom: 28px;
+  }
+  
+  .section-title {
+    font-size: 1.7rem;
+    line-height: 1.3;
+  }
+  
+  .section-subtitle {
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    letter-spacing: 1.2px;
+  }
+  
+  .section-lead-text {
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  /* 1. Header */
   .top-micro-bar {
     display: none;
   }
+
+  .main-nav-bar {
+    padding: 8px 0;
+  }
+  
+  .brand-script {
+    font-size: 1.95rem;
+  }
+  
+  .brand-sub {
+    font-size: 0.64rem;
+    letter-spacing: 1px;
+  }
+
+  .hotline-text-full {
+    display: none;
+  }
+  
+  .hotline-text-short {
+    display: inline;
+    font-size: 0.8rem;
+  }
+  
+  .btn-nav-call {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    gap: 5px;
+  }
+
+  .mobile-hamburger-btn {
+    display: flex;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
   .nav-menu-list {
     display: none;
   }
+
   .nav-menu-list.open {
     display: flex;
     flex-direction: column;
@@ -1727,81 +1827,453 @@ button {
     top: 100%;
     left: 0;
     right: 0;
-    background: #FFF;
-    padding: 20px 24px;
-    box-shadow: var(--shadow-md);
-    border-bottom: 2px solid var(--primary-gold);
-    gap: 14px;
-    align-items: flex-start;
+    background: #FFFFFF;
+    padding: 16px 20px 24px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+    border-bottom: 2.5px solid var(--primary-gold);
+    gap: 0;
+    align-items: stretch;
+    animation: slideDownMenu 0.22s ease-out;
   }
-  .desktop-only {
-    display: none !important;
+
+  .nav-menu-list.open li {
+    width: 100%;
+    border-bottom: 1px solid rgba(223, 211, 198, 0.5);
   }
-  .mobile-only {
-    display: block !important;
+
+  .nav-menu-list.open li:last-child {
+    border-bottom: none;
   }
+
+  .nav-menu-list.open a {
+    display: block;
+    padding: 12px 4px;
+    font-size: 0.96rem;
+    color: var(--text-heading);
+    font-weight: 600;
+  }
+
+  .nav-menu-list.open a:hover {
+    color: var(--primary-gold-dark);
+    padding-left: 8px;
+  }
+
   .mobile-cta-item {
     display: block;
     width: 100%;
-    margin-top: 8px;
+    margin-top: 14px;
+    padding-top: 6px;
   }
+
   .mobile-cta-item .btn-book-nav {
     width: 100%;
     justify-content: center;
+    padding: 12px;
+    font-size: 0.95rem;
   }
-  .mobile-hamburger-btn {
-    display: block;
+
+  /* 2. Hero Section */
+  .hero-section {
+    padding: 30px 0 35px;
   }
-  .hero-title {
-    font-size: 2.2rem;
-  }
-  .hero-title-sub {
-    font-size: 1.25rem;
-  }
-  .hero-main-img {
-    height: 280px;
-  }
-  .hero-trust-bar {
-    grid-template-columns: 1fr;
-  }
-  .about-visual-grid {
-    grid-template-columns: 1fr;
-  }
-  .about-invite-box {
-    flex-direction: column;
+
+  .hero-badge {
+    font-size: 0.68rem;
+    padding: 5px 12px;
+    letter-spacing: 0.8px;
+    margin-bottom: 14px;
     text-align: center;
   }
-  .invite-action-col {
+
+  .hero-title {
+    font-size: 1.95rem;
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+
+  .hero-title-sub {
+    font-size: 1.05rem;
+    margin-top: 4px;
+  }
+
+  .hero-description {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
+
+  .hero-actions {
+    display: flex;
     flex-direction: column;
     width: 100%;
+    gap: 10px;
+    margin-bottom: 24px;
   }
-  .invite-action-col button, .invite-action-col a {
+
+  .btn-primary-gold,
+  .btn-outline-gold,
+  .btn-zalo-chat {
     width: 100%;
     justify-content: center;
+    text-align: center;
+    padding: 13px 18px;
+    font-size: 0.92rem;
+    border-radius: 10px;
+    min-height: 48px;
   }
+
+  .hero-main-img {
+    height: 240px;
+    border-radius: 14px;
+  }
+
+  .hero-floating-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    padding: 10px 14px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+
+  .hero-floating-badge strong {
+    font-size: 0.84rem;
+  }
+
+  .hero-floating-badge p {
+    font-size: 0.72rem;
+  }
+
+  .hero-guarantee-pill {
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+  }
+
+  .hero-trust-bar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-top: 18px;
+  }
+
+  .trust-item {
+    padding: 10px 12px;
+  }
+
+  /* 3. About Section */
+  .about-visual-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card-treatment-img {
+    height: 190px;
+  }
+
+  .card-info-wrap {
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+  }
+
+  .card-desc {
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .about-invite-box {
+    padding: 20px 16px;
+    border-radius: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .invite-title {
+    font-size: 1.2rem;
+  }
+
+  .invite-desc {
+    font-size: 0.85rem;
+  }
+
+  .invite-action-col {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .invite-action-col button,
+  .invite-action-col a {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    min-height: 46px;
+  }
+
+  /* 4. Services & Pricing */
+  .pricing-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .search-bar-clean {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .btn-view-original-menu {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  .category-tabs-scroll {
+    margin: 0 -16px 20px;
+    padding: 4px 16px 12px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    gap: 8px;
+  }
+
+  .category-tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cat-pill-button {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    padding: 9px 16px;
+    font-size: 0.84rem;
+    min-height: 40px;
+  }
+
   .services-compact-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
+
+  .service-compact-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .service-card-name {
+    font-size: 1.15rem;
+  }
+
+  .service-card-pricing-row {
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  .btn-select-to-book {
+    padding: 12px;
+    font-size: 0.88rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  /* 5. Booking Form */
+  .booking-form-container {
+    padding: 22px 16px;
+    border-radius: 14px;
+  }
+
+  /* iOS Safari zoom prevention: 16px prevents viewport scale jump */
+  .form-field-group input,
+  .form-field-group select,
+  .form-field-group textarea {
+    font-size: 16px !important;
+    padding: 12px 14px;
+    border-radius: 8px;
+  }
+
   .form-row-2col {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
+
   .service-mode-picker {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
+
+  .mode-btn {
+    padding: 12px;
+    min-height: 44px;
+  }
+
+  .booking-selected-service-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .banner-price {
+    text-align: left;
+  }
+
   .booking-actions-group {
     grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 10px;
   }
-  .booking-form-container {
-    padding: 24px 18px;
+
+  .btn-confirm-booking-zalo {
+    padding: 15px 16px;
+    font-size: 0.98rem;
+    width: 100%;
+    border-radius: 10px;
+    min-height: 48px;
   }
-  .grid-two-sheets {
+
+  .btn-call-direct {
+    padding: 14px 16px;
+    font-size: 0.92rem;
+    width: 100%;
+    border-radius: 10px;
+    min-height: 46px;
+  }
+
+  .booking-footer-commitments {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    padding-top: 16px;
+  }
+
+  /* 6. Contact & Map */
+  .contact-main-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
+
+  .contact-info-card {
+    padding: 14px;
+  }
+
+  .contact-social-links-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .social-btn-link {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 12px 16px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .map-embed-box iframe {
+    height: 280px;
+  }
+
+  /* 7. Footer */
+  .site-footer {
+    padding: 40px 0 24px;
+  }
+
   .footer-top-row {
     grid-template-columns: 1fr;
+    gap: 28px;
+    padding-bottom: 28px;
   }
+
+  .footer-logo-script {
+    font-size: 2.4rem;
+  }
+
+  .footer-bottom-bar {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .footer-bottom-links {
+    justify-content: center;
+  }
+
+  /* 8. Floating Quick Dock */
   .floating-quick-dock {
-    bottom: 16px;
-    right: 16px;
+    bottom: 18px;
+    right: 14px;
+    gap: 10px;
+  }
+
+  .dock-circle-action {
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  }
+
+  /* 9. Modal */
+  .corp-modal-container {
+    width: 96%;
+    max-height: 92vh;
+    border-radius: 12px;
+  }
+
+  .corp-modal-header {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .corp-modal-body {
+    padding: 14px 10px;
+  }
+
+  .grid-two-sheets {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .menu-sheet-card {
+    padding: 20px 12px;
+  }
+
+  .sheet-logo-cursive {
+    font-size: 2.6rem;
+  }
+}
+
+/* Extra small mobile adjustments (iPhone SE / 360px - 420px) */
+@media (max-width: 420px) {
+  .brand-script {
+    font-size: 1.75rem;
+  }
+
+  .hotline-text-short {
+    display: none;
+  }
+
+  .btn-nav-call {
+    padding: 6px 8px;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+  }
+
+  .hero-title-sub {
+    font-size: 0.95rem;
+  }
+
+  .section-title {
+    font-size: 1.48rem;
   }
 }
