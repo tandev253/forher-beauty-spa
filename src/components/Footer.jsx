@@ -1,7 +1,7 @@
 import React from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
 
-export default function Footer({ onOpenOriginalMenu }) {
+export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   const handleScrollTo = (id) => {
@@ -34,11 +34,6 @@ export default function Footer({ onOpenOriginalMenu }) {
               <li><button type="button" onClick={() => handleScrollTo('services')}>Bảng Giá 35 Dịch Vụ</button></li>
               <li><button type="button" onClick={() => handleScrollTo('booking')}>Đặt Lịch Hẹn Trực Tuyến</button></li>
               <li><button type="button" onClick={() => handleScrollTo('contact')}>Địa Chỉ & Bản Đồ</button></li>
-              <li>
-                <button type="button" className="footer-menu-modal-link" onClick={onOpenOriginalMenu}>
-                  Xem Bản In 2 Trang Menu Gốc
-                </button>
-              </li>
             </ul>
           </div>
 

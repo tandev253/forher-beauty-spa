@@ -7,11 +7,9 @@ import BookingSection from './components/BookingSection';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import FloatingActions from './components/FloatingActions';
-import OriginalMenuModal from './components/OriginalMenuModal';
 
 export default function App() {
   const [selectedService, setSelectedService] = useState(null);
-  const [isOriginalMenuModalOpen, setIsOriginalMenuModalOpen] = useState(false);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -44,7 +42,6 @@ export default function App() {
         {/* 4. Services & Pricing: 35 services with direct booking buttons */}
         <ServicesPricing 
           onSelectServiceToBook={handleSelectServiceToBook}
-          onOpenOriginalMenu={() => setIsOriginalMenuModalOpen(true)}
         />
 
         {/* 5. Central Booking Section: Online appointment form with Zalo & Hotline integration */}
@@ -58,16 +55,10 @@ export default function App() {
       </main>
 
       {/* 7. Footer: Brand information, commitments, and links */}
-      <Footer onOpenOriginalMenu={() => setIsOriginalMenuModalOpen(true)} />
+      <Footer />
 
       {/* Floating Action Dock: Quick Zalo, Phone & Book triggers */}
       <FloatingActions onBookClick={() => scrollToSection('booking')} />
-
-      {/* Modal to view authentic printed 2-page spa menu */}
-      <OriginalMenuModal 
-        isOpen={isOriginalMenuModalOpen}
-        onClose={() => setIsOriginalMenuModalOpen(false)}
-      />
     </div>
   );
 }

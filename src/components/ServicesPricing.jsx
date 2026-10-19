@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SERVICES_CATALOG, CATEGORIES } from '../data/servicesData';
 
-export default function ServicesPricing({ onSelectServiceToBook, onOpenOriginalMenu }) {
+export default function ServicesPricing({ onSelectServiceToBook }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -57,14 +57,6 @@ export default function ServicesPricing({ onSelectServiceToBook, onOpenOriginalM
               </button>
             )}
           </div>
-
-          <button 
-            type="button" 
-            className="btn-view-original-menu"
-            onClick={onOpenOriginalMenu}
-          >
-            Xem Bản In 2 Trang Menu Gốc
-          </button>
         </div>
 
         {/* Category Pills without emojis */}

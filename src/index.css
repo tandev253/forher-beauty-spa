@@ -717,16 +717,15 @@ button {
 .pricing-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 16px;
-  margin-bottom: 22px;
-  flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
 .search-bar-clean {
   position: relative;
-  flex: 1;
-  max-width: 480px;
+  width: 100%;
+  max-width: 560px;
 }
 
 .search-icon-symbol, .search-svg-icon {
