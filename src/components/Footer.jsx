@@ -31,7 +31,7 @@ export default function Footer() {
             <ul className="footer-nav-list">
               <li><button type="button" onClick={() => handleScrollTo('hero')}>Trang Chủ</button></li>
               <li><button type="button" onClick={() => handleScrollTo('about')}>Giới Thiệu FORHER</button></li>
-              <li><button type="button" onClick={() => handleScrollTo('services')}>Bảng Giá 35 Dịch Vụ</button></li>
+              <li><button type="button" onClick={() => handleScrollTo('services')}>Bảng Giá Dịch Vụ</button></li>
               <li><button type="button" onClick={() => handleScrollTo('booking')}>Đặt Lịch Hẹn Trực Tuyến</button></li>
               <li><button type="button" onClick={() => handleScrollTo('contact')}>Địa Chỉ & Bản Đồ</button></li>
             </ul>
@@ -42,7 +42,7 @@ export default function Footer() {
             <h4 className="footer-heading">Cam Kết Doanh Nghiệp</h4>
             <ul className="footer-commit-list">
               <li><strong>Bảo Hành 2 Năm:</strong> Bằng văn bản cho mọi vùng triệt lông Diode Laser.</li>
-              <li><strong>Vô Trùng Y Khoa:</strong> Dụng cụ 1 lần riêng biệt, an toàn tuyệt đối.</li>
+              <li><strong>Tiệt Trùng Riêng Biệt:</strong> Dụng cụ 1 lần riêng biệt, an toàn tuyệt đối.</li>
               <li><strong>Minh Bạch Giá:</strong> Tuyệt đối không chèo kéo, không phát sinh phụ phí.</li>
               <li><strong>Giờ Mở Cửa:</strong> {COMPANY_INFO.workingHours}.</li>
             </ul>
@@ -50,9 +50,9 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom-bar">
-          <p>© {currentYear} {COMPANY_INFO.name}. Chuẩn web giới thiệu & đặt lịch dịch vụ thẩm mỹ y khoa.</p>
+          <p>© {currentYear} {COMPANY_INFO.name}. Trang giới thiệu & đặt lịch dịch vụ làm đẹp chính thức.</p>
           <div className="footer-bottom-links">
-            <span>515 Bà Hạt, P. Diên Hồng, Q.10, TP.HCM</span>
+            <span>515 Bà Hạt, P.8, Q.10, TP.HCM</span>
             <span>•</span>
             <a href={COMPANY_INFO.social.zalo} target="_blank" rel="noopener noreferrer">Zalo: {COMPANY_INFO.phone}</a>
           </div>

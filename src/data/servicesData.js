@@ -6,10 +6,10 @@
 export const COMPANY_INFO = {
   name: 'FORHER BEAUTY & SPA',
   brandTitle: 'Forher Beauty',
-  brandSubtitle: 'Aesthetic Clinic & Beauty Center',
-  tagline: 'Viện Chăm Sóc Da & Thẩm Mỹ Công Nghệ Cao Chuẩn Y Khoa',
-  address: '515 Bà Hạt, Phường Diên Hồng, Quận 10, TP. Hồ Chí Minh',
-  addressShort: '515 Bà Hạt, P. Diên Hồng, Q.10, TP.HCM',
+  brandSubtitle: 'Chăm Sóc Da • Triệt Lông • Dưỡng Sinh • Nail',
+  tagline: 'Chăm Sóc Da, Triệt Lông Diode Laser, Gội Đầu Dưỡng Sinh & Nail',
+  address: '515 Bà Hạt, Phường 8, Quận 10, TP. Hồ Chí Minh',
+  addressShort: '515 Bà Hạt, P.8, Q.10, TP.HCM',
   phone: '0703 994 683',
   phoneClean: '0703994683',
   email: 'contact@forherbeauty.vn',
@@ -26,18 +26,19 @@ export const COMPANY_INFO = {
   stats: [
     { value: '02 Năm', label: 'Bảo Hành Triệt Lông Cam Kết' },
     { value: '10,000+', label: 'Khách Hàng Đã Phục Vụ' },
-    { value: '100%', label: 'Vô Trùng Dụng Cụ Y Khoa' },
+    { value: '100%', label: 'Tiệt Trùng Dụng Cụ Riêng Biệt' },
     { value: '4.9 / 5', label: 'Đánh Giá Hài Lòng Khách Hàng' }
   ]
 };
 
 export const CATEGORIES = [
-  { id: 'all', name: 'Tất Cả Dịch Vụ', count: 35 },
+  { id: 'all', name: 'Tất Cả Dịch Vụ', count: 37 },
   { id: 'triet-long', name: 'Triệt Lông (BH 2 Năm)', count: 10 },
-  { id: 'nan-mun', name: 'Điều Trị Mụn Y Khoa', count: 5 },
+  { id: 'nan-mun', name: 'Chăm Sóc & Trị Mụn', count: 5 },
   { id: 'skincare', name: 'Skincare & Phục Hồi', count: 6 },
   { id: 'chemical-peel', name: 'Chemical Peel Thay Da', count: 11 },
-  { id: 'meso', name: 'Cấy Tinh Chất Meso', count: 5 },
+  { id: 'duong-sinh', name: 'Gội Đầu Dưỡng Sinh', count: 3 },
+  { id: 'nail', name: 'Nail & Chăm Sóc Móng', count: 4 },
   { id: 'eye', name: 'Chăm Sóc Vùng Mắt', count: 2 },
   { id: 'shading', name: 'Shading & Phun Xăm', count: 3 }
 ];
@@ -164,7 +165,7 @@ export const SERVICES_CATALOG = [
     category: 'triet-long',
     categoryName: 'Triệt Lông (BH 2 Năm)',
     name: 'Triệt Lông Bikini',
-    desc: 'Phòng VIP riêng tư 1:1, kỹ thuật viên nữ chuyên nghiệp, dụng cụ vô khuẩn tuyệt đối, không đau rát.',
+    desc: 'Khu vực rèm ngăn riêng biệt kín đáo, kỹ thuật viên nữ chuyên nghiệp, dụng cụ tiệt trùng tuyệt đối, êm ái không đau rát.',
     duration: '30-40 phút',
     singlePrice: 2200000,
     singlePriceDisplay: '2.200.000đ',
@@ -537,78 +538,107 @@ export const SERVICES_CATALOG = [
     savings: '2.001.000đ'
   },
 
-  // 5. MESOTHERAPY (MS) - CẤY TINH CHẤT
+  // 5. GỘI ĐẦU DƯỠNG SINH THẢO DƯỢC
   {
-    id: 'ms-hyaluronic',
-    code: 'MS-01',
-    category: 'meso',
-    categoryName: 'Cấy Tinh Chất Meso',
-    name: 'Meso Cấy Tinh Chất Hyaluronic (HA)',
-    desc: 'Vi tiêm đưa trực tiếp tinh chất Hyaluronic Acid tinh khiết vào trung bì, cung cấp lượng nước dồi dào cho da ngậm nước bóng khỏe tức thì.',
+    id: 'ds-thu-gian',
+    code: 'DS-01',
+    category: 'duong-sinh',
+    categoryName: 'Gội Đầu Dưỡng Sinh',
+    name: 'Gội Đầu Dưỡng Sinh Thảo Dược Thư Giãn',
+    desc: 'Quy trình rửa mặt dịu nhẹ, khai mở huyệt vị vùng đầu, gội sạch sâu với nước bồ kết thảo mộc thiên nhiên, massage da đầu thư thái và sấy tóc mềm mượt.',
+    duration: '45 phút',
+    singlePrice: 99000,
+    singlePriceDisplay: '99.000đ',
+    coursePrice: 450000,
+    coursePriceDisplay: '450.000đ (5B)',
+    savings: '45.000đ',
+    highlight: true
+  },
+  {
+    id: 'ds-co-vai-gay',
+    code: 'DS-02',
+    category: 'duong-sinh',
+    categoryName: 'Gội Đầu Dưỡng Sinh',
+    name: 'Gội Dưỡng Sinh Trị Liệu Cổ Vai Gáy',
+    desc: 'Liệu trình kết hợp ấn huyệt chuyên sâu giải tỏa nhức mỏi cổ vai gáy, xông đầu thảo dược ấm thư giãn thần kinh, gội sạch sâu và đắp mặt nạ thiên nhiên dưỡng da.',
     duration: '60 phút',
-    singlePrice: 2550000,
-    singlePriceDisplay: '2.550.000đ',
-    coursePrice: 8800000,
-    coursePriceDisplay: '8.800.000đ (5B)',
-    savings: '3.950.000đ',
+    singlePrice: 169000,
+    singlePriceDisplay: '169.000đ',
+    coursePrice: 790000,
+    coursePriceDisplay: '790.000đ (5B)',
+    savings: '55.000đ',
     highlight: true
   },
   {
-    id: 'ms-epqf-ha3',
-    code: 'MS-02',
-    category: 'meso',
-    categoryName: 'Cấy Tinh Chất Meso',
-    name: 'Meso E-PQF + HA 3%',
-    desc: 'Sự kết hợp hoàn hảo giữa yếu tố tăng trưởng biểu bì E-PQF và HA 3% đậm đặc giúp tái tạo collagen và trẻ hóa cấu trúc da chùng nhão.',
-    duration: '65 phút',
-    singlePrice: 2990000,
-    singlePriceDisplay: '2.990.000đ',
-    coursePrice: 9000000,
-    coursePriceDisplay: '9.000.000đ (5B)',
-    savings: '5.950.000đ'
-  },
-  {
-    id: 'ms-activated-ce-glu',
-    code: 'MS-03',
-    category: 'meso',
-    categoryName: 'Cấy Tinh Chất Meso',
-    name: 'Meso Activated C-E GLU (Trắng Sáng & Chống Oxy Hóa)',
-    desc: 'Bộ ba vàng chống oxy hóa đỉnh cao: Vitamin C, Vitamin E & Glutathione nồng độ cao loại bỏ gốc tự do, bật tone trắng sáng đều màu.',
-    duration: '70 phút',
-    singlePrice: 3190000,
-    singlePriceDisplay: '3.190.000đ',
-    coursePrice: 10000000,
-    coursePriceDisplay: '10.000.000đ (5B)',
-    savings: '5.950.000đ',
-    highlight: true
-  },
-  {
-    id: 'ms-melasma-fx',
-    code: 'MS-04',
-    category: 'meso',
-    categoryName: 'Cấy Tinh Chất Meso',
-    name: 'Meso Melasma FX (Đặc Trị Nám & Tàn Nhang)',
-    desc: 'Phác đồ ức chế trực tiếp enzyme sản sinh hắc sắc tố Melanin, đặc trị nám mảng, tàn nhang và đốm nâu lâu năm kháng trị.',
-    duration: '70 phút',
-    singlePrice: 3290000,
-    singlePriceDisplay: '3.290.000đ',
-    coursePrice: 11000000,
-    coursePriceDisplay: '11.000.000đ (5B)',
-    savings: '5.450.000đ'
-  },
-  {
-    id: 'ms-melasma-fx-ha',
-    code: 'MS-05',
-    category: 'meso',
-    categoryName: 'Cấy Tinh Chất Meso',
-    name: 'Meso Melasma FX + HA (Trị Nám & Căng Bóng Toàn Diện)',
-    desc: 'Gói Meso VIP đỉnh cao vừa đánh tan nám sạm vừa phục hồi hàng rào ẩm đa tầng, cho làn da trong suốt căng bóng như gương.',
+    id: 'ds-vip',
+    code: 'DS-03',
+    category: 'duong-sinh',
+    categoryName: 'Gội Đầu Dưỡng Sinh',
+    name: 'Combo Dưỡng Sinh VIP Thảo Mộc Toàn Diện',
+    desc: 'Gói chăm sóc cao cấp: ngâm chân thảo dược, massage trị liệu lưng & cổ vai gáy với đá nóng bazan, gội thảo mộc canh thuốc dưỡng tóc, đắp mặt nạ tươi trẻ hóa da.',
     duration: '75 phút',
-    singlePrice: 4550000,
-    singlePriceDisplay: '4.550.000đ',
-    coursePrice: 12500000,
-    coursePriceDisplay: '12.500.000đ (5B)',
-    savings: '10.250.000đ',
+    singlePrice: 249000,
+    singlePriceDisplay: '249.000đ',
+    coursePrice: 1190000,
+    coursePriceDisplay: '1.190.000đ (5B)',
+    savings: '55.000đ',
+    highlight: true
+  },
+
+  // 6. NAIL & CHĂM SÓC MÓNG
+  {
+    id: 'nail-cat-da',
+    code: 'NL-01',
+    category: 'nail',
+    categoryName: 'Nail & Chăm Sóc Móng',
+    name: 'Chăm Sóc Móng (Cắt Da & Định Hình Form)',
+    desc: 'Ngâm mềm da với tinh dầu, làm sạch da thừa khóe móng tỉ mỉ êm ái, dũa tạo form tròn/vuông/hạnh nhân theo yêu cầu và dưỡng dầu viền móng chuyên sâu.',
+    duration: '30 phút',
+    singlePrice: 50000,
+    singlePriceDisplay: '50.000đ',
+    coursePrice: 50000,
+    coursePriceDisplay: '50.000đ'
+  },
+  {
+    id: 'nail-son-gel',
+    code: 'NL-02',
+    category: 'nail',
+    categoryName: 'Nail & Chăm Sóc Móng',
+    name: 'Sơn Gel Cao Cấp Hàn Quốc / Nhật Bản',
+    desc: 'Sơn gel độ bóng cao, bền màu 3-4 tuần không bong tróc, bảng màu đa dạng trẻ trung trendy, hơ đèn LED cao cấp không nóng rát tay.',
+    duration: '45 phút',
+    singlePrice: 120000,
+    singlePriceDisplay: '120.000đ',
+    coursePrice: 120000,
+    coursePriceDisplay: '120.000đ',
+    highlight: true
+  },
+  {
+    id: 'nail-combo-gel',
+    code: 'NL-03',
+    category: 'nail',
+    categoryName: 'Nail & Chăm Sóc Móng',
+    name: 'Combo Cắt Da + Sơn Gel Thạch / Mắt Mèo',
+    desc: 'Trọn gói làm sạch da tay/chân tỉ mỉ, dưỡng móng và sơn gel màu thạch trong trẻo hoặc mắt mèo ánh kim thời thượng, thanh lịch.',
+    duration: '60 phút',
+    singlePrice: 160000,
+    singlePriceDisplay: '160.000đ',
+    coursePrice: 160000,
+    coursePriceDisplay: '160.000đ',
+    highlight: true
+  },
+  {
+    id: 'nail-design',
+    code: 'NL-04',
+    category: 'nail',
+    categoryName: 'Nail & Chăm Sóc Móng',
+    name: 'Thiết Kế Móng Nghệ Thuật (Ombre, Tráng Gương, Ẩn Xà Cừ)',
+    desc: 'Thiết kế mẫu móng phong cách Hàn/Nhật: ombre loang màu, tráng gương ngọc trai, ẩn xà cừ, vẽ móng nghệ thuật hoặc đính charm sang trọng.',
+    duration: '60-75 phút',
+    singlePrice: 220000,
+    singlePriceDisplay: '220.000đ - 280.000đ',
+    coursePrice: 220000,
+    coursePriceDisplay: 'Theo mẫu thiết kế',
     highlight: true
   },
 
@@ -691,39 +721,39 @@ export const SERVICES_CATALOG = [
 export const CLINICAL_STEPS = [
   {
     step: '01',
-    title: 'Soi Da & Thăm Khám 1:1',
-    desc: 'Bác sĩ/Chuyên viên phân tích tầng sâu cấu trúc biểu bì, xác định chính xác vấn đề và chỉ định phác đồ cá nhân hóa.'
+    title: 'Kiểm Tra Da & Tư Vấn Tận Tâm',
+    desc: 'Chuyên viên giàu kinh nghiệm phân tích tình trạng da, xác định nhu cầu và tư vấn gói dịch vụ phù hợp nhất.'
   },
   {
     step: '02',
-    title: 'Vô Khuẩn & Làm Sạch Sâu',
-    desc: 'Tẩy trang, rửa mặt dịu nhẹ, tẩy tế bào chết sinh học và xông hơi giãn nở nang lông hút sạch bã nhờn trong môi trường vô trùng.'
+    title: 'Tiệt Trùng & Làm Sạch Sâu',
+    desc: 'Tẩy trang, rửa mặt dịu nhẹ, tẩy tế bào chết sinh học và xông hơi giãn nở nang lông hút sạch bã nhờn trong môi trường sạch sẽ.'
   },
   {
     step: '03',
-    title: 'Thực Hiện Kỹ Thuật Chuyên Sâu',
-    desc: 'Kỹ thuật viên tay nghề cao thao tác chuẩn xác: lấy mụn tăm bông, bắn Diode laser đầu lạnh, cấy tinh chất Meso hoặc Chemical Peel.'
+    title: 'Thực Hiện Liệu Trình Chuyên Sâu',
+    desc: 'Kỹ thuật viên tay nghề cao thao tác chuẩn xác: lấy mụn êm ái, bắn Diode laser đầu lạnh, điện di cấp ẩm hoặc Chemical Peel.'
   },
   {
     step: '04',
     title: 'Tiêu Khuẩn & Làm Dịu Biểu Bì',
-    desc: 'Chiếu tia điện tím diệt khuẩn P.Acnes tức thì kết hợp ánh sáng sinh học Biolight giảm đỏ và đẩy nhanh quá trình lành thương.'
+    desc: 'Chiếu tia điện tím diệt khuẩn tức thì kết hợp ánh sáng sinh học Biolight giảm đỏ và đẩy nhanh quá trình làm dịu da.'
   },
   {
     step: '05',
     title: 'Điện Di Tinh Chất Khóa Ẩm',
-    desc: 'Điện di lạnh thẩm thấu sâu tế bào gốc/HA và đắp mặt nạ đặc trị độc quyền giúp làm dịu và phục hồi tối ưu màng bảo vệ da.'
+    desc: 'Điện di lạnh thẩm thấu sâu tinh chất HA/dưỡng chất và đắp mặt nạ đặc trị giúp làm dịu và phục hồi tối ưu màng ẩm da.'
   },
   {
     step: '06',
     title: 'Cấp Thẻ Bảo Hành & Hướng Dẫn',
-    desc: 'Cấp thẻ bảo hành điện tử chính thức (cho liệu trình triệt lông 2 năm) và hướng dẫn phác đồ chăm sóc tại nhà tận tâm 24/7.'
+    desc: 'Cấp thẻ bảo hành điện tử chính thức (cho liệu trình triệt lông 2 năm) và hướng dẫn cách chăm sóc tại nhà tận tâm 24/7.'
   }
 ];
 
 export const WARRANTY_POLICY = {
   title: 'Chính Sách Bảo Hành Triệt Lông 2 Năm Bằng Văn Bản',
-  subtitle: 'Cam kết pháp lý rõ ràng - Bảo đảm quyền lợi tuyệt đối cho khách hàng',
+  subtitle: 'Cam kết rõ ràng - Bảo đảm quyền lợi tối đa cho khách hàng',
   benefits: [
     {
       title: 'Thời Gian Bảo Hành 24 Tháng Trọn Gói',
@@ -738,8 +768,8 @@ export const WARRANTY_POLICY = {
       desc: 'Mỗi khách hàng được lưu trữ hồ sơ điện tử riêng biệt trên hệ thống quản lý FORHER Beauty, theo dõi lịch sử liệu trình minh bạch.'
     },
     {
-      title: 'Kỹ Thuật Viên 1:1 Tận Tâm',
-      desc: 'Được phục vụ trong không gian phòng VIP riêng tư bởi đội ngũ kỹ thuật viên lành nghề với công nghệ Diode Laser nhập khẩu an toàn.'
+      title: 'Kỹ Thuật Viên Tay Nghề Chu Đáo',
+      desc: 'Được phục vụ trong không gian spa ấm cúng, rèm che riêng biệt bởi đội ngũ kỹ thuật viên lành nghề với công nghệ Diode Laser an toàn.'
     }
   ]
 };
@@ -747,40 +777,40 @@ export const WARRANTY_POLICY = {
 export const FAQS = [
   {
     q: 'Bảng giá tại FORHER Beauty có phát sinh thêm phụ phí nào không?',
-    a: 'Dạ hoàn toàn KHÔNG. Mọi mức giá niêm yết trên website và bảng giá tại cơ sở đều là chi phí trọn gói. Chúng tôi cam kết bằng uy tín doanh nghiệp không thu thêm phí phụ thu, phí tư vấn hay bất kỳ chi phí ẩn nào.'
+    a: 'Dạ hoàn toàn KHÔNG. Mọi mức giá niêm yết trên website và bảng giá tại cơ sở đều là chi phí trọn gói. Chúng tôi cam kết bằng uy tín không thu thêm phí phụ thu, phí tư vấn hay bất kỳ chi phí ẩn nào.'
   },
   {
     q: 'Gói triệt lông bảo hành 2 năm hoạt động như thế nào?',
     a: 'Khi đăng ký bất kỳ dịch vụ triệt lông nào (từ Nách 500k đến Toàn Thân 12.7tr), quý khách sẽ nhận được thẻ bảo hành 2 năm chính thức. Sau liệu trình ban đầu (khoảng 6-8 buổi), trong suốt 24 tháng tiếp theo nếu có nang lông tơ mảnh mọc lại, quý khách chỉ cần đặt hẹn ghé dặm hoàn toàn miễn phí.'
   },
   {
-    q: 'Nặn mụn chuẩn Y khoa tại spa có gây sưng đỏ hay thâm sẹo không?',
-    a: 'Quy trình lấy mụn tại FORHER sử dụng dụng cụ tiệt trùng y khoa 1 lần riêng biệt, chỉ lấy các cồi mụn đã gom cồi già, không chèn ép mô lành. Sau khi lấy mụn, da được sát khuẩn tia điện tím và chiếu ánh sáng sinh học làm dịu, giúp cồi mụn se khô nhanh sau 12-24h và hạn chế tối đa nguy cơ thâm sẹo.'
+    q: 'Nặn mụn tại FORHER có gây sưng đỏ hay thâm sẹo không?',
+    a: 'Quy trình lấy mụn tại FORHER sử dụng dụng cụ tiệt trùng 1 lần riêng biệt, chỉ lấy các cồi mụn đã gom già, không chèn ép mô lành. Sau khi lấy mụn, da được sát khuẩn tia điện tím và chiếu ánh sáng sinh học làm dịu, giúp vết mụn se khô nhanh sau 12-24h và hạn chế tối đa nguy cơ thâm sẹo.'
   },
   {
     q: 'Gói liệu trình 5 buổi có thời hạn sử dụng bao lâu?',
-    a: 'Gói liệu trình 5 buổi (Nặn mụn, Skincare, Chemical Peel, Mesotherapy) có giá trị sử dụng lên đến 12 tháng kể từ ngày đăng ký. Khách hàng có thể linh hoạt sắp xếp thời gian ghé chăm sóc định kỳ theo lời khuyên của chuyên viên.'
+    a: 'Gói liệu trình 5 buổi (Chăm sóc mụn, Skincare, Chemical Peel, Gội đầu dưỡng sinh) có giá trị sử dụng lên đến 12 tháng kể từ ngày đăng ký. Khách hàng có thể linh hoạt sắp xếp thời gian ghé chăm sóc định kỳ theo lời khuyên của chuyên viên.'
   },
   {
     q: 'Tôi có cần đặt lịch hẹn trước khi đến FORHER Beauty không?',
-    a: 'Để đảm bảo chất lượng phục vụ 1:1 chu đáo và quý khách không phải chờ đợi trong giờ cao điểm, FORHER khuyến khích bạn đặt hẹn trước qua website hoặc Hotline/Zalo 0703 994 683. Khách hàng đặt trước luôn được ưu tiên giữ phòng và sắp xếp chuyên viên sẵn sàng.'
+    a: 'Để đảm bảo chất lượng phục vụ chu đáo và quý khách không phải chờ đợi trong giờ cao điểm, FORHER khuyến khích bạn đặt hẹn trước qua website hoặc Hotline/Zalo 0703 994 683. Khách hàng đặt trước luôn được ưu tiên giữ giường dịch vụ và sắp xếp chuyên viên sẵn sàng.'
   }
 ];
 
 export const TESTIMONIALS = [
   {
     name: 'Chị Mai Phương',
-    role: 'Giám Đốc Kinh Doanh, Quận 3',
-    treatment: 'Gói Triệt Lông Toàn Thân & Meso Căng Bóng',
+    role: 'Quận 3, TP.HCM',
+    treatment: 'Gói Triệt Lông Toàn Thân & Điện Di Phục Hồi',
     rating: 5,
-    comment: 'Tôi đánh giá rất cao sự minh bạch và chuyên nghiệp của FORHER Beauty. Bảng giá rõ ràng, không mồi chài bán thêm gói, thẻ bảo hành 2 năm có giá trị thực tế. Phòng ốc cực kỳ sạch sẽ và riêng tư.'
+    comment: 'Tôi đánh giá rất cao sự minh bạch và chuyên nghiệp của FORHER Beauty. Bảng giá rõ ràng, không mồi chài bán thêm gói, thẻ bảo hành 2 năm có giá trị thực tế. Không gian cực kỳ sạch sẽ và rèm che kín đáo.'
   },
   {
     name: 'Bạn Hoàng Yến',
-    role: 'Bác Sĩ Răng Hàm Mặt, Quận 10',
+    role: 'Nhân Viên Văn Phòng, Quận 10',
     treatment: 'Liệu Trình Điều Trị Mụn Tiêu Khuẩn 5B',
     rating: 5,
-    comment: 'Là người làm trong ngành Y, tôi rất kỹ tính về quy trình tiệt trùng. FORHER tuân thủ nghiêm ngặt từ găng tay, que gắp đến tia điện tím. Da mình sau 3 buổi đã giảm mụn viêm rõ rệt, không để lại thâm.'
+    comment: 'Quy trình tiệt trùng tại FORHER rất kỹ lưỡng, găng tay và que gắp dùng riêng biệt. Sau 3 buổi da mình đã giảm mụn viêm rõ rệt, kết hợp gội đầu dưỡng sinh ở đây thư giãn tuyệt vời!'
   },
   {
     name: 'Chị Thanh Trúc',

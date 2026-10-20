@@ -24,8 +24,8 @@ export default function ServicesPricing({ onSelectServiceToBook }) {
           <h2 className="section-title">Danh Mục Dịch Vụ & Chi Phí Liệu Trình</h2>
           <div className="section-divider-gold"></div>
           <p className="section-lead-text">
-            Bảng giá 35 dịch vụ chăm sóc da & thẩm mỹ tại FORHER Beauty & Spa được niêm yết minh bạch. 
-            Quý khách có thể bấm <strong>"Đặt Lịch Dịch Vụ Này"</strong> ở bất kỳ dịch vụ nào để điền thông tin hẹn giờ giữ phòng.
+            Bảng giá các dịch vụ chăm sóc da, triệt lông, gội đầu dưỡng sinh & nail tại FORHER Beauty & Spa được niêm yết minh bạch. 
+            Quý khách có thể bấm <strong>"Đặt Lịch Dịch Vụ Này"</strong> ở bất kỳ dịch vụ nào để điền thông tin hẹn giờ tiếp đón chu đáo.
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default function ServicesPricing({ onSelectServiceToBook }) {
             </svg>
             <input 
               type="text" 
-              placeholder="Tìm nhanh dịch vụ (ví dụ: Nách, Mụn, Meso, Peel, Môi...)"
+              placeholder="Tìm nhanh dịch vụ (ví dụ: Nách, Mụn, Gội đầu, Nail, Peel, Môi...)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-label="Tìm kiếm dịch vụ"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
-import spaVipRoom from '../assets/spa_vip_room.jpg';
+import forherSpaRoomReal from '../assets/forher_spa_room_real.jpg';
 
 export default function Hero({ onBookClick, onPricingClick }) {
   return (
@@ -9,7 +9,7 @@ export default function Hero({ onBookClick, onPricingClick }) {
         {/* Left Column: Brand Message & CTAs */}
         <div className="hero-text-col">
           <div className="hero-badge">
-            <span>CHĂM SÓC DA & THẨM MỸ CÔNG NGHỆ CAO CHUẨN Y KHOA</span>
+            <span>CHĂM SÓC DA • TRIỆT LÔNG DIODE LASER • GỘI ĐẦU DƯỠNG SINH & NAIL</span>
           </div>
 
           <h1 className="hero-title">
@@ -18,9 +18,9 @@ export default function Hero({ onBookClick, onPricingClick }) {
           </h1>
 
           <p className="hero-description">
-            Chào mừng bạn đến với <strong>FORHER Beauty & Spa</strong> tại <strong>515 Bà Hạt, Quận 10, TP.HCM</strong>. 
-            Không gian làm đẹp thư thái riêng tư, phác đồ điều trị da chuẩn y khoa: <strong>Triệt lông Diode Laser bảo hành 2 năm</strong>, 
-            điều trị mụn tiêu khuẩn, Chemical Peel thay da sinh học & cấy tinh chất Meso căng bóng da.
+            Chào mừng bạn đến với <strong>FORHER Beauty & Spa</strong> tại <strong>515 Bà Hạt, P.8, Quận 10, TP.HCM</strong>. 
+            Không gian làm đẹp ấm cúng, thư thái với dịch vụ chăm sóc toàn diện: <strong>Triệt lông Diode Laser bảo hành 2 năm</strong>, 
+            chăm sóc & lấy mụn vô trùng, Chemical Peel tái tạo da, cùng <strong>Gội đầu dưỡng sinh thảo dược</strong> và <strong>Nail nghệ thuật</strong>.
           </p>
 
           {/* Action buttons */}
@@ -60,8 +60,8 @@ export default function Hero({ onBookClick, onPricingClick }) {
 
             <div className="trust-item">
               <div>
-                <strong>Chuẩn Y Khoa 100%</strong>
-                <p>Dụng cụ vô trùng riêng biệt</p>
+                <strong>Tiệt Trùng 100%</strong>
+                <p>Dụng cụ riêng biệt từng khách</p>
               </div>
             </div>
 
@@ -74,26 +74,26 @@ export default function Hero({ onBookClick, onPricingClick }) {
           </div>
         </div>
 
-        {/* Right Column: High-end Spa Imagery Showcase */}
+        {/* Right Column: Authentic Spa Imagery Showcase */}
         <div className="hero-visual-col">
           <div className="hero-image-frame">
             <img 
-              src={spaVipRoom} 
-              alt="Phòng trị liệu VIP tại FORHER Beauty & Spa 515 Bà Hạt Quận 10" 
+              src={forherSpaRoomReal} 
+              alt="Không gian phòng thư giãn tại FORHER Beauty & Spa 515 Bà Hạt Quận 10" 
               className="hero-main-img"
               loading="eager"
             />
             {/* Floating luxury badge */}
             <div className="hero-floating-badge">
               <div>
-                <strong>Không Gian VIP Riêng Tư 1:1</strong>
-                <p>515 Bà Hạt, P. Diên Hồng, Q.10 • TP.HCM</p>
+                <strong>Không Gian Thư Thái & Ấm Cúng</strong>
+                <p>515 Bà Hạt, P.8, Q.10 • TP.HCM</p>
               </div>
             </div>
 
             {/* Secondary guarantee pill */}
             <div className="hero-guarantee-pill">
-              <span>100% Dụng Cụ Tiệt Trùng Y Khoa</span>
+              <span>Dụng Cụ Tiệt Trùng Riêng Biệt</span>
             </div>
           </div>
         </div>

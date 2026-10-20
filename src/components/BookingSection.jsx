@@ -61,7 +61,7 @@ Nhờ spa hỗ trợ kiểm tra lịch và giữ phòng ưu tiên giúp em nhé!
           <h2 className="section-title">Giữ Chỗ & Đặt Lịch Chăm Sóc Da Tại FORHER</h2>
           <div className="section-divider-gold"></div>
           <p className="section-lead-text">
-            Đặt hẹn online để được <strong>ưu tiên giữ phòng riêng 1:1</strong>, không phải chờ đợi và nhận tư vấn phác đồ chuẩn y khoa miễn phí.
+            Đặt hẹn online để được <strong>ưu tiên tiếp đón chu đáo</strong>, không phải chờ đợi và nhận tư vấn liệu trình phù hợp nhất.
           </p>
         </div>
 
@@ -241,7 +241,7 @@ Nhờ spa hỗ trợ kiểm tra lịch và giữ phòng ưu tiên giúp em nhé!
               <div className="booking-footer-commitments">
                 <div className="commit-badge">Bảng giá niêm yết minh bạch 100%</div>
                 <div className="commit-badge">Dụng cụ tiệt trùng y khoa riêng biệt</div>
-                <div className="commit-badge">Ưu tiên tiếp đón 1:1 không phải đợi</div>
+                <div className="commit-badge">Ưu tiên phục vụ chu đáo không phải đợi</div>
               </div>
             </form>
           </div>

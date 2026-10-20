@@ -38,7 +38,7 @@ export default function Header({ onBookClick }) {
           {/* Brand Logo */}
           <a href="#" className="brand-logo" onClick={(e) => handleNavClick(e, 'hero')}>
             <span className="brand-script">{COMPANY_INFO.brandTitle}</span>
-            <span className="brand-sub">Spa & Aesthetic Clinic</span>
+            <span className="brand-sub">Beauty & Spa</span>
           </a>
 
           {/* Desktop Nav links */}
