@@ -32,13 +32,11 @@ export const COMPANY_INFO = {
 };
 
 export const CATEGORIES = [
-  { id: 'all', name: 'Tất Cả Dịch Vụ', count: 37 },
+  { id: 'all', name: 'Tất Cả Dịch Vụ', count: 39 },
   { id: 'triet-long', name: 'Triệt Lông (BH 2 Năm)', count: 10 },
   { id: 'nan-mun', name: 'Chăm Sóc & Trị Mụn', count: 5 },
   { id: 'skincare', name: 'Skincare & Phục Hồi', count: 6 },
-  { id: 'chemical-peel', name: 'Chemical Peel Thay Da', count: 11 },
-  { id: 'duong-sinh', name: 'Gội Đầu Dưỡng Sinh', count: 3 },
-  { id: 'nail', name: 'Nail & Chăm Sóc Móng', count: 4 },
+  { id: 'chemical-peel', name: 'Chemical Peel Thay Da', count: 13 },
   { id: 'eye', name: 'Chăm Sóc Vùng Mắt', count: 2 },
   { id: 'shading', name: 'Shading & Phun Xăm', count: 3 }
 ];
@@ -538,111 +536,7 @@ export const SERVICES_CATALOG = [
     savings: '2.001.000đ'
   },
 
-  // 5. GỘI ĐẦU DƯỠNG SINH THẢO DƯỢC
-  {
-    id: 'ds-thu-gian',
-    code: 'DS-01',
-    category: 'duong-sinh',
-    categoryName: 'Gội Đầu Dưỡng Sinh',
-    name: 'Gội Đầu Dưỡng Sinh Thảo Dược Thư Giãn',
-    desc: 'Quy trình rửa mặt dịu nhẹ, khai mở huyệt vị vùng đầu, gội sạch sâu với nước bồ kết thảo mộc thiên nhiên, massage da đầu thư thái và sấy tóc mềm mượt.',
-    duration: '45 phút',
-    singlePrice: 99000,
-    singlePriceDisplay: '99.000đ',
-    coursePrice: 450000,
-    coursePriceDisplay: '450.000đ (5B)',
-    savings: '45.000đ',
-    highlight: true
-  },
-  {
-    id: 'ds-co-vai-gay',
-    code: 'DS-02',
-    category: 'duong-sinh',
-    categoryName: 'Gội Đầu Dưỡng Sinh',
-    name: 'Gội Dưỡng Sinh Trị Liệu Cổ Vai Gáy',
-    desc: 'Liệu trình kết hợp ấn huyệt chuyên sâu giải tỏa nhức mỏi cổ vai gáy, xông đầu thảo dược ấm thư giãn thần kinh, gội sạch sâu và đắp mặt nạ thiên nhiên dưỡng da.',
-    duration: '60 phút',
-    singlePrice: 169000,
-    singlePriceDisplay: '169.000đ',
-    coursePrice: 790000,
-    coursePriceDisplay: '790.000đ (5B)',
-    savings: '55.000đ',
-    highlight: true
-  },
-  {
-    id: 'ds-vip',
-    code: 'DS-03',
-    category: 'duong-sinh',
-    categoryName: 'Gội Đầu Dưỡng Sinh',
-    name: 'Combo Dưỡng Sinh VIP Thảo Mộc Toàn Diện',
-    desc: 'Gói chăm sóc cao cấp: ngâm chân thảo dược, massage trị liệu lưng & cổ vai gáy với đá nóng bazan, gội thảo mộc canh thuốc dưỡng tóc, đắp mặt nạ tươi trẻ hóa da.',
-    duration: '75 phút',
-    singlePrice: 249000,
-    singlePriceDisplay: '249.000đ',
-    coursePrice: 1190000,
-    coursePriceDisplay: '1.190.000đ (5B)',
-    savings: '55.000đ',
-    highlight: true
-  },
-
-  // 6. NAIL & CHĂM SÓC MÓNG
-  {
-    id: 'nail-cat-da',
-    code: 'NL-01',
-    category: 'nail',
-    categoryName: 'Nail & Chăm Sóc Móng',
-    name: 'Chăm Sóc Móng (Cắt Da & Định Hình Form)',
-    desc: 'Ngâm mềm da với tinh dầu, làm sạch da thừa khóe móng tỉ mỉ êm ái, dũa tạo form tròn/vuông/hạnh nhân theo yêu cầu và dưỡng dầu viền móng chuyên sâu.',
-    duration: '30 phút',
-    singlePrice: 50000,
-    singlePriceDisplay: '50.000đ',
-    coursePrice: 50000,
-    coursePriceDisplay: '50.000đ'
-  },
-  {
-    id: 'nail-son-gel',
-    code: 'NL-02',
-    category: 'nail',
-    categoryName: 'Nail & Chăm Sóc Móng',
-    name: 'Sơn Gel Cao Cấp Hàn Quốc / Nhật Bản',
-    desc: 'Sơn gel độ bóng cao, bền màu 3-4 tuần không bong tróc, bảng màu đa dạng trẻ trung trendy, hơ đèn LED cao cấp không nóng rát tay.',
-    duration: '45 phút',
-    singlePrice: 120000,
-    singlePriceDisplay: '120.000đ',
-    coursePrice: 120000,
-    coursePriceDisplay: '120.000đ',
-    highlight: true
-  },
-  {
-    id: 'nail-combo-gel',
-    code: 'NL-03',
-    category: 'nail',
-    categoryName: 'Nail & Chăm Sóc Móng',
-    name: 'Combo Cắt Da + Sơn Gel Thạch / Mắt Mèo',
-    desc: 'Trọn gói làm sạch da tay/chân tỉ mỉ, dưỡng móng và sơn gel màu thạch trong trẻo hoặc mắt mèo ánh kim thời thượng, thanh lịch.',
-    duration: '60 phút',
-    singlePrice: 160000,
-    singlePriceDisplay: '160.000đ',
-    coursePrice: 160000,
-    coursePriceDisplay: '160.000đ',
-    highlight: true
-  },
-  {
-    id: 'nail-design',
-    code: 'NL-04',
-    category: 'nail',
-    categoryName: 'Nail & Chăm Sóc Móng',
-    name: 'Thiết Kế Móng Nghệ Thuật (Ombre, Tráng Gương, Ẩn Xà Cừ)',
-    desc: 'Thiết kế mẫu móng phong cách Hàn/Nhật: ombre loang màu, tráng gương ngọc trai, ẩn xà cừ, vẽ móng nghệ thuật hoặc đính charm sang trọng.',
-    duration: '60-75 phút',
-    singlePrice: 220000,
-    singlePriceDisplay: '220.000đ - 280.000đ',
-    coursePrice: 220000,
-    coursePriceDisplay: 'Theo mẫu thiết kế',
-    highlight: true
-  },
-
-  // 6. CHĂM SÓC VÙNG MẮT (EYE CARE)
+  // 5. CHĂM SÓC VÙNG MẮT (EYE CARE)
   {
     id: 'eye-active',
     code: 'EY-01',

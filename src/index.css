@@ -570,6 +570,109 @@ button {
 /* ==========================================================================
    3. ABOUT SECTION (THƯ VIỆN HÌNH ẢNH DỊCH VỤ & KHÔNG GIAN)
    ========================================================================== */
+.about-journey-container {
+  max-width: 1060px;
+  margin: 0 auto 40px auto;
+}
+
+.journey-floors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 860px) {
+  .journey-floors-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.journey-floor-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-gold);
+  border-radius: 14px;
+  padding: 24px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.journey-floor-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-gold-dark);
+}
+
+.floor-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--bg-gold-light);
+  color: var(--primary-gold-dark);
+  border: 1px solid var(--border-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.floor-title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.floor-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.journey-summary-quote {
+  background: linear-gradient(135deg, #FAF6F0 0%, #F5ECE0 100%);
+  border-left: 4px solid var(--primary-gold);
+  border-radius: 0 14px 14px 0;
+  padding: 20px 24px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.journey-highlight-line {
+  font-size: 1.05rem;
+  color: var(--text-heading);
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.journey-philosophy-line {
+  font-size: 0.92rem;
+  color: var(--text-body);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.card-slogan-highlight {
+  font-size: 0.8rem;
+  color: var(--primary-gold-dark);
+  font-weight: 700;
+  background: var(--bg-gold-light);
+  border: 1px dashed var(--border-gold);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
 .about-visual-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

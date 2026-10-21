@@ -36,8 +36,11 @@ export default function App() {
           onPricingClick={() => scrollToSection('services')}
         />
 
-        {/* 3. About Section: Introduction to FORHER Beauty & Spa & 4 Core Pillars */}
-        <AboutSection onBookClick={() => scrollToSection('booking')} />
+        {/* 3. About Section: Introduction to FORHER Beauty & Spa & 3 Floors */}
+        <AboutSection 
+          onBookClick={() => scrollToSection('booking')} 
+          onPricingClick={() => scrollToSection('services')}
+        />
 
         {/* 4. Services & Pricing: 35 services with direct booking buttons */}
         <ServicesPricing 
