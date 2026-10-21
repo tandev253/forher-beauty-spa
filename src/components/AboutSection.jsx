@@ -10,46 +10,52 @@ import forherSkincareCareReal from '../assets/forher_skincare_care_real.jpg';
 export default function AboutSection({ onBookClick }) {
   const visualTreatments = [
     {
+      id: 'storefront',
+      title: 'Mặt Tiền FORHER Beauty & Spa',
+      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P.8, Quận 10. Không gian sạch sẽ, ấm cúng và trang bị đầy đủ máy móc công nghệ hiện đại.',
+      image: forherStorefrontReal,
+      tag: '515 BÀ HẠT, Q.10',
+      btnText: 'Đặt lịch ghé spa →'
+    },
+    {
       id: 'goidau',
       title: 'Gội Đầu Dưỡng Sinh Thảo Dược',
       desc: 'Không gian gội đầu chuyên biệt với giường êm ái, nước bồ kết thảo mộc nấu ấm, massage ấn huyệt giải tỏa đau mỏi cổ vai gáy.',
       image: forherGoidauReal,
-      tag: 'DƯỠNG SINH THẢO MỘC'
+      tag: 'DƯỠNG SINH THẢO MỘC',
+      btnText: 'Đặt lịch dịch vụ này →'
     },
     {
       id: 'nail',
       title: 'Khu Vực Nail & Chăm Sóc Móng',
       desc: 'Ghế sofa pedicure thư giãn, bồn ngâm chân, bảng màu sơn gel phong phú cùng kỹ thuật vẽ móng nghệ thuật trendy, bền đẹp.',
       image: forherNailReal,
-      tag: 'NAIL NGHỆ THUẬT'
-    },
-    {
-      id: 'storefront',
-      title: 'Mặt Tiền FORHER Beauty & Spa',
-      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P.8, Quận 10. Không gian sạch sẽ, ấm cúng và trang bị đầy đủ máy móc công nghệ hiện đại.',
-      image: forherStorefrontReal,
-      tag: '515 BÀ HẠT, Q.10'
+      tag: 'NAIL NGHỆ THUẬT',
+      btnText: 'Đặt lịch dịch vụ này →'
     },
     {
       id: 'khonggian-spa',
       title: 'Phòng Spa Chăm Sóc Da & Triệt Lông',
       desc: 'Giường spa êm ái với rèm che ngăn cách từng giường kín đáo, không gian yên tĩnh thư giãn tối đa cho khách hàng.',
       image: forherSpaRoomReal,
-      tag: 'RÈM NGĂN RIÊNG BIỆT'
+      tag: 'RÈM NGĂN RIÊNG BIỆT',
+      btnText: 'Đặt lịch dịch vụ này →'
     },
     {
       id: 'chamsoc-da',
       title: 'Chăm Sóc & Lấy Mụn Kỹ Thuật Cao',
       desc: 'Dụng cụ tiệt trùng 1 lần riêng biệt, kỹ thuật viên tay nghề êm ái, kết hợp tia điện tím và ánh sáng sinh học giúp làm dịu da nhanh chóng.',
       image: forherFacialTreatmentReal,
-      tag: 'TIỆT TRÙNG 100%'
+      tag: 'TIỆT TRÙNG 100%',
+      btnText: 'Đặt lịch dịch vụ này →'
     },
     {
       id: 'phuchoi-da',
       title: 'Nuôi Dưỡng & Phục Hồi Làn Da',
       desc: 'Sử dụng mỹ phẩm và tinh chất lành tính dịu nhẹ. Tẩy tế bào chết, điện di cấp ẩm đa tầng và đắp mặt nạ nuôi dưỡng da mềm mịn.',
       image: forherSkincareCareReal,
-      tag: 'DƯỠNG CHẤT CHÍNH HÃNG'
+      tag: 'DƯỠNG CHẤT CHÍNH HÃNG',
+      btnText: 'Đặt lịch dịch vụ này →'
     }
   ];
 
@@ -86,7 +92,7 @@ export default function AboutSection({ onBookClick }) {
                   className="card-book-link"
                   onClick={onBookClick}
                 >
-                  Đặt lịch dịch vụ này →
+                  {item.btnText || 'Đặt lịch dịch vụ này →'}
                 </button>
               </div>
             </div>
