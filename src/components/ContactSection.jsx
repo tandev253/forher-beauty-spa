@@ -70,7 +70,7 @@ export default function ContactSection() {
                 rel="noopener noreferrer" 
                 className="social-btn-link"
               >
-                Facebook Fanpage
+                Facebook: Three House Nails
               </a>
               <a 
                 href={COMPANY_INFO.social.tiktok} 
@@ -78,7 +78,7 @@ export default function ContactSection() {
                 rel="noopener noreferrer" 
                 className="social-btn-link"
               >
-                Kênh TikTok
+                TikTok: @three.house.nails
               </a>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function ContactSection() {
           <div className="contact-map-col">
             <div className="map-embed-box">
               <iframe
-                title="Bản đồ chỉ đường FORHER Beauty 515 Bà Hạt Quận 10"
+                title="Bản đồ chỉ đường 515 Bà Hạt Phường Diên Hồng Quận 10"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.605273752538!2d106.66358487480477!3d10.76480078938361!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752ee17e8c3b77%3A0x6b198c60012e8790!2zNTE1IELDoCBI4bqhdCwIFBoxrDhu51uZyBEacOqbiBI4buTbmcsIFF14bqtbiAxMCwgSOG7kyBDaMOtIE1pbmgsIFZpZXRuYW0!5e0!3m2!1svi!2s!4v1710000000000!5m2!1svi!2s"
                 width="100%"
                 height="380"

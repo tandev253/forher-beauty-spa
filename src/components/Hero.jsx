@@ -18,7 +18,7 @@ export default function Hero({ onBookClick, onPricingClick }) {
           </h1>
 
           <p className="hero-description">
-            Chào mừng bạn đến với <strong>FORHER Beauty & Spa</strong> tại <strong>515 Bà Hạt, P.8, Quận 10, TP.HCM</strong>. 
+            Chào mừng bạn đến với <strong>FORHER Beauty & Spa</strong> tại <strong>515 Bà Hạt, P. Diên Hồng, Quận 10, TP.HCM</strong>. 
             Không gian làm đẹp ấm cúng, thư thái với dịch vụ chăm sóc toàn diện: <strong>Triệt lông Diode Laser bảo hành 2 năm</strong>, 
             chăm sóc & lấy mụn vô trùng, Chemical Peel tái tạo da, cùng <strong>Gội đầu dưỡng sinh thảo dược</strong> và <strong>Nail nghệ thuật</strong>.
           </p>
@@ -87,7 +87,7 @@ export default function Hero({ onBookClick, onPricingClick }) {
             <div className="hero-floating-badge">
               <div>
                 <strong>Không Gian Thư Thái & Ấm Cúng</strong>
-                <p>515 Bà Hạt, P.8, Q.10 • TP.HCM</p>
+                <p>515 Bà Hạt, P. Diên Hồng, Q.10 • TP.HCM</p>
               </div>
             </div>
 

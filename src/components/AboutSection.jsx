@@ -12,21 +12,23 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
     {
       id: 'storefront',
       title: 'Mặt Tiền FORHER Beauty & Spa',
-      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P.8, Quận 10. Điểm đến làm đẹp ấm cúng, sang trọng với trọn vẹn 3 tầng trải nghiệm thư giãn dành riêng cho bạn.',
+      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P. Diên Hồng, Quận 10. Điểm đến làm đẹp ấm cúng, sang trọng với trọn vẹn 3 tầng trải nghiệm thư giãn dành riêng cho bạn.',
       image: forherStorefrontReal,
-      tag: '515 BÀ HẠT, Q.10',
+      tag: '515 BÀ HẠT, P. DIÊN HỒNG',
       btnText: 'Đặt lịch ghé spa →',
       action: 'book'
     },
     {
       id: 'nail',
-      title: 'Nail – Đa Dạng Màu Sắc, Trọn Vẹn Cá Tính',
-      desc: 'Ngay từ cửa bước vào là không gian Nail trẻ trung, hiện đại với đa dạng bảng màu sơn được cập nhật thường xuyên, từ những gam màu nhẹ nhàng, thanh lịch đến những sắc màu nổi bật, cá tính. Bạn có thể thoải mái lựa chọn màu yêu thích, kết hợp cùng nhiều kiểu design, mắt mèo, thạch, nhũ, French, ombre, charm và đính đá để tạo nên một bộ móng mang dấu ấn riêng.',
+      title: 'Three House Nails – Đa Dạng Màu Sắc, Trọn Vẹn Cá Tính',
+      desc: 'Ngay từ cửa bước vào là không gian Three House Nails trẻ trung, hiện đại với đa dạng bảng màu sơn được cập nhật thường xuyên, từ những gam màu nhẹ nhàng, thanh lịch đến những sắc màu nổi bật, cá tính. Bạn có thể thoải mái lựa chọn màu yêu thích, kết hợp cùng nhiều kiểu design, mắt mèo, thạch, nhũ, French, ombre, charm và đính đá để tạo nên một bộ móng mang dấu ấn riêng.',
       slogan: 'Nhiều màu để chọn – nhiều kiểu để yêu – một bộ nail dành riêng cho bạn.',
       image: forherNailReal,
-      tag: 'TẦNG TRỆT • NAIL NGHỆ THUẬT',
-      btnText: 'Khám phá không gian Nail →',
-      action: 'book'
+      tag: 'TẦNG TRỆT • THREE HOUSE NAILS',
+      btnText: 'Xem Mẫu Móng Three House Nails ↗',
+      action: 'external',
+      fbUrl: 'https://www.facebook.com/threehousenails',
+      tiktokUrl: 'https://www.tiktok.com/@three.house.nails'
     },
     {
       id: 'goidau',
@@ -67,7 +69,9 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
   ];
 
   const handleCardClick = (item) => {
-    if (item.action === 'pricing' && onPricingClick) {
+    if (item.action === 'external' && item.fbUrl) {
+      window.open(item.fbUrl, '_blank');
+    } else if (item.action === 'pricing' && onPricingClick) {
       onPricingClick();
     } else if (onBookClick) {
       onBookClick();
@@ -90,7 +94,7 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
             {/* Floor 0: Ground Floor Nail */}
             <div className="journey-floor-card">
               <div className="floor-badge">TẦNG TRỆT</div>
-              <h4 className="floor-title">Không Gian Nail Hiện Đại</h4>
+              <h4 className="floor-title">Three House Nails Hiện Đại</h4>
               <p className="floor-desc">
                 Từ khi bước vào, bạn sẽ được chào đón bởi không gian Nail hiện đại, nơi chăm chút đôi tay và đôi chân với những thiết kế xinh xắn, tinh tế và phù hợp với phong cách riêng của mỗi khách hàng.
               </p>
@@ -146,6 +150,28 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
                   <p className="card-slogan-highlight">
                     {item.slogan}
                   </p>
+                )}
+                {item.fbUrl && (
+                  <div className="card-social-pills-row">
+                    <a 
+                      href={item.fbUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="card-mini-social-link fb"
+                    >
+                      FB: @threehousenails ↗
+                    </a>
+                    {item.tiktokUrl && (
+                      <a 
+                        href={item.tiktokUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="card-mini-social-link tiktok"
+                      >
+                        TikTok: @three.house.nails ↗
+                      </a>
+                    )}
+                  </div>
                 )}
                 <button 
                   type="button" 

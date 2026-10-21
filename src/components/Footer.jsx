@@ -52,7 +52,11 @@ export default function Footer() {
         <div className="footer-bottom-bar">
           <p>© {currentYear} {COMPANY_INFO.name}. Trang giới thiệu & đặt lịch dịch vụ làm đẹp chính thức.</p>
           <div className="footer-bottom-links">
-            <span>515 Bà Hạt, P.8, Q.10, TP.HCM</span>
+            <span>{COMPANY_INFO.addressShort}</span>
+            <span>•</span>
+            <a href={COMPANY_INFO.social.facebook} target="_blank" rel="noopener noreferrer">FB: Three House Nails</a>
+            <span>•</span>
+            <a href={COMPANY_INFO.social.tiktok} target="_blank" rel="noopener noreferrer">TikTok: @three.house.nails</a>
             <span>•</span>
             <a href={COMPANY_INFO.social.zalo} target="_blank" rel="noopener noreferrer">Zalo: {COMPANY_INFO.phone}</a>
           </div>
