@@ -12,7 +12,7 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
     {
       id: 'storefront',
       title: 'Mặt Tiền FORHER Beauty & Spa',
-      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P. Diên Hồng, Quận 10. Điểm đến làm đẹp ấm cúng, sang trọng với trọn vẹn 3 tầng trải nghiệm thư giãn dành riêng cho bạn.',
+      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P. Diên Hồng, TP.HCM. Điểm đến làm đẹp ấm cúng, sang trọng với trọn vẹn 3 tầng trải nghiệm thư giãn dành riêng cho bạn.',
       image: forherStorefrontReal,
       tag: '515 BÀ HẠT, P. DIÊN HỒNG',
       btnText: 'Đặt lịch ghé spa →',
