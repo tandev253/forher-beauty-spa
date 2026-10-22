@@ -606,14 +606,16 @@ export default function AdminPanel({
                 </button>
               </>
             )}
-            <button 
-              type="button" 
-              className={isStandalone ? "btn-admin-close btn-admin-home" : "btn-admin-close"} 
-              onClick={handleExit}
-              title={isStandalone ? "Về Trang Chủ FORHER Beauty & Spa" : "Đóng Quản Trị"}
-            >
-              {isStandalone ? "← Về Trang Chủ Website" : "✕ Đóng"}
-            </button>
+            {!isStandalone && (
+              <button 
+                type="button" 
+                className="btn-admin-close" 
+                onClick={handleExit}
+                title="Đóng Quản Trị"
+              >
+                ✕ Đóng
+              </button>
+            )}
           </div>
 
           {/* MOBILE TOP ACTIONS (Compact Install Pill + Hamburger Menu) */}
@@ -697,15 +699,18 @@ export default function AdminPanel({
                   </button>
                 )}
 
-                <div className="drawer-divider"></div>
-
-                <button 
-                  type="button" 
-                  className="drawer-link-item home"
-                  onClick={() => { setIsMobileMenuOpen(false); handleExit(); }}
-                >
-                  ← Về Trang Chủ Website FORHER
-                </button>
+                {!isStandalone && (
+                  <>
+                    <div className="drawer-divider"></div>
+                    <button 
+                      type="button" 
+                      className="drawer-link-item home"
+                      onClick={() => { setIsMobileMenuOpen(false); handleExit(); }}
+                    >
+                      ← Về Trang Chủ Website FORHER
+                    </button>
+                  </>
+                )}
 
                 {isAuthenticated && (
                   <button 
@@ -798,9 +803,11 @@ export default function AdminPanel({
                   <button type="submit" className="btn-primary-gold w-100" disabled={isLoggingIn}>
                     {isLoggingIn ? 'Đang Kiểm Tra...' : 'Đăng Nhập Quản Trị'}
                   </button>
-                  <button type="button" className="btn-outline-gold w-100" onClick={handleExit}>
-                    {isStandalone ? '← Về Trang Chủ Website' : 'Quay Lại Website'}
-                  </button>
+                  {!isStandalone && (
+                    <button type="button" className="btn-outline-gold w-100" onClick={handleExit}>
+                      Quay Lại Website
+                    </button>
+                  )}
                   {!isAppInstalled && (
                     <button 
                       type="button" 
