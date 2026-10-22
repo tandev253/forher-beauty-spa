@@ -251,10 +251,10 @@ export default function AdminPanel({
     }
   }, [isOpen]);
 
-  // Strict Role Redirection: Staff NEVER sees whole spa revenue
+  // Strict Role Redirection: Staff NEVER sees admin-only tabs
   useEffect(() => {
     if (isAuthenticated && !isBoss) {
-      if (activeTab === 'revenue' || activeTab === 'staff' || activeTab === 'attendance') {
+      if (['revenue', 'staff', 'attendance', 'bank', 'logs', 'backup'].includes(activeTab)) {
         setActiveTab('my_performance');
       }
     }
@@ -444,25 +444,17 @@ export default function AdminPanel({
     if (isBoss) {
       list.push(
         { id: 'revenue', label: 'Báo Cáo Doanh Thu (Toàn Spa)' },
-        { id: 'attendance', label: 'Chấm Công & Hiệu Suất NV' }
+        { id: 'attendance', label: 'Chấm Công & Hiệu Suất NV' },
+        { id: 'bank', label: 'Cài Đặt Ngân Hàng & QR' },
+        { id: 'staff', label: `Quản Lý Nhân Viên (${staffAccounts.length})` },
+        { id: 'logs', label: `Lịch Sử Thao Tác (${logs.length})` },
+        { id: 'backup', label: 'Xuất File Dữ Liệu' }
       );
     } else {
       list.push(
         { id: 'my_performance', label: 'Chấm Công & Doanh Thu Của Tôi' }
       );
     }
-    list.push(
-      { id: 'bank', label: `Cài Đặt Ngân Hàng & QR ${isBoss ? '' : '(Xem)'}` }
-    );
-    if (isBoss) {
-      list.push(
-        { id: 'staff', label: `Quản Lý Nhân Viên (${staffAccounts.length})` }
-      );
-    }
-    list.push(
-      { id: 'logs', label: `Lịch Sử Thao Tác (${logs.length})` },
-      { id: 'backup', label: 'Xuất File Dữ Liệu' }
-    );
     return list;
   }, [bookings.length, isBoss, staffAccounts.length, logs.length]);
 
@@ -796,6 +788,10 @@ export default function AdminPanel({
 
   // Export CSV
   const handleExportCsv = () => {
+    if (!isBoss) {
+      alert('BỊ CHẶN: Chỉ Quản lý (tài khoản Sếp admin) mới có quyền xuất file dữ liệu!');
+      return;
+    }
     const csvData = BookingStorage.exportToCsv();
     if (!csvData) {
       alert('Chưa có đơn đặt lịch nào để xuất file.');
@@ -974,6 +970,34 @@ export default function AdminPanel({
                         >
                           Chấm Công & Hiệu Suất NV
                         </button>
+                        <button 
+                          type="button" 
+                          className={`drawer-link-item ${activeTab === 'bank' ? 'active-tab-drawer' : ''}`}
+                          onClick={() => { setActiveTab('bank'); setIsMobileMenuOpen(false); }}
+                        >
+                          Cài Đặt Ngân Hàng & QR
+                        </button>
+                        <button 
+                          type="button" 
+                          className={`drawer-link-item ${activeTab === 'staff' ? 'active-tab-drawer' : ''}`}
+                          onClick={() => { setActiveTab('staff'); setIsMobileMenuOpen(false); }}
+                        >
+                          Quản Lý Nhân Viên ({staffAccounts.length})
+                        </button>
+                        <button 
+                          type="button" 
+                          className={`drawer-link-item ${activeTab === 'logs' ? 'active-tab-drawer' : ''}`}
+                          onClick={() => { setActiveTab('logs'); setIsMobileMenuOpen(false); }}
+                        >
+                          Lịch Sử Thao Tác ({logs.length})
+                        </button>
+                        <button 
+                          type="button" 
+                          className={`drawer-link-item ${activeTab === 'backup' ? 'active-tab-drawer' : ''}`}
+                          onClick={() => { setActiveTab('backup'); setIsMobileMenuOpen(false); }}
+                        >
+                          Xuất File Dữ Liệu
+                        </button>
                       </>
                     ) : (
                       <button 
@@ -984,36 +1008,6 @@ export default function AdminPanel({
                         Chấm Công & Doanh Thu Của Tôi
                       </button>
                     )}
-                    <button 
-                      type="button" 
-                      className={`drawer-link-item ${activeTab === 'bank' ? 'active-tab-drawer' : ''}`}
-                      onClick={() => { setActiveTab('bank'); setIsMobileMenuOpen(false); }}
-                    >
-                      Cài Đặt Ngân Hàng & QR {isBoss ? '' : '(Xem)'}
-                    </button>
-                    {isBoss && (
-                      <button 
-                        type="button" 
-                        className={`drawer-link-item ${activeTab === 'staff' ? 'active-tab-drawer' : ''}`}
-                        onClick={() => { setActiveTab('staff'); setIsMobileMenuOpen(false); }}
-                      >
-                        Quản Lý Nhân Viên ({staffAccounts.length})
-                      </button>
-                    )}
-                    <button 
-                      type="button" 
-                      className={`drawer-link-item ${activeTab === 'logs' ? 'active-tab-drawer' : ''}`}
-                      onClick={() => { setActiveTab('logs'); setIsMobileMenuOpen(false); }}
-                    >
-                      Lịch Sử Thao Tác ({logs.length})
-                    </button>
-                    <button 
-                      type="button" 
-                      className={`drawer-link-item ${activeTab === 'backup' ? 'active-tab-drawer' : ''}`}
-                      onClick={() => { setActiveTab('backup'); setIsMobileMenuOpen(false); }}
-                    >
-                      Xuất File Dữ Liệu
-                    </button>
 
                     <div className="drawer-divider"></div>
                     <div className="mobile-drawer-section-title">TIỆN ÍCH HỆ THỐNG</div>
@@ -1024,13 +1018,15 @@ export default function AdminPanel({
                     >
                       Đổi Mật Khẩu Cá Nhân
                     </button>
-                    <button 
-                      type="button" 
-                      className="drawer-link-item"
-                      onClick={() => { setIsMobileMenuOpen(false); handleExportCsv(); }}
-                    >
-                      Xuất File Excel (CSV)
-                    </button>
+                    {isBoss && (
+                      <button 
+                        type="button" 
+                        className="drawer-link-item"
+                        onClick={() => { setIsMobileMenuOpen(false); handleExportCsv(); }}
+                      >
+                        Xuất File Excel (CSV)
+                      </button>
+                    )}
                     <button 
                       type="button" 
                       className="drawer-link-item"
@@ -1482,13 +1478,15 @@ export default function AdminPanel({
                     + Thêm Đơn Mới
                   </button>
                 )}
-                <button 
-                  type="button" 
-                  className="btn-admin-action outline"
-                  onClick={handleExportCsv}
-                >
-                  Xuất File Excel
-                </button>
+                {isBoss && (
+                  <button 
+                    type="button" 
+                    className="btn-admin-action outline"
+                    onClick={handleExportCsv}
+                  >
+                    Xuất File Excel
+                  </button>
+                )}
                 <button 
                   type="button" 
                   className="btn-admin-action refresh"
@@ -2627,8 +2625,8 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB CONTENT 3: BANK & QR CONFIGURATION (BOSS EDITABLE ONLY) */}
-            {activeTab === 'bank' && (
+            {/* TAB CONTENT 3: BANK & QR CONFIGURATION (BOSS ONLY) */}
+            {activeTab === 'bank' && isBoss && (
               <div className="admin-tab-content">
                 <div className="bank-config-wrap">
                   <div className="bank-form-card">
@@ -2636,13 +2634,6 @@ export default function AdminPanel({
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
                       Thông tin này dùng để tự động tạo mã QR chuyển khoản cho khách hàng khi thu tiền tại quầy.
                     </p>
-
-                    {!isBoss && (
-                      <div className="role-notice-banner banner-staff" style={{ marginBottom: '16px' }}>
-                        <strong>Chỉ Quản lý (Sếp admin) mới có quyền chỉnh sửa số tài khoản ngân hàng!</strong>
-                        <p style={{ marginTop: '2px' }}>Nhân viên chỉ có quyền xem thông tin để thu ngân và in hóa đơn.</p>
-                      </div>
-                    )}
 
                     <form onSubmit={handleSaveBankConfig}>
                       <div className="form-group" style={{ marginBottom: '14px' }}>
@@ -2821,8 +2812,8 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB CONTENT 5: AUDIT LOGS */}
-            {activeTab === 'logs' && (
+            {/* TAB CONTENT 5: AUDIT LOGS (BOSS ONLY) */}
+            {activeTab === 'logs' && isBoss && (
               <div className="admin-tab-content">
                 <div className="audit-logs-header">
                   <div>
@@ -2881,8 +2872,8 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB CONTENT 6: EXPORT & DATA */}
-            {activeTab === 'backup' && (
+            {/* TAB CONTENT 6: EXPORT & DATA (BOSS ONLY) */}
+            {activeTab === 'backup' && isBoss && (
               <div className="admin-tab-content">
                 <div className="backup-sections-grid">
                   <div className="backup-card">
