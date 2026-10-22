@@ -107,6 +107,15 @@ export default function AdminPanel({
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
 
+  // Accordion Expand State for Mobile Cards ("chỉ hiển thị tên khách hàng và dịch vụ, khi bấm vào mới hiện hết")
+  const [expandedCardIds, setExpandedCardIds] = useState({});
+  const toggleCardExpand = (bookingId) => {
+    setExpandedCardIds(prev => ({
+      ...prev,
+      [bookingId]: !prev[bookingId]
+    }));
+  };
+
   // Bank & VietQR Configuration
   const [bankConfig, setBankConfig] = useState(DEFAULT_BANK_CONFIG);
   const [bankConfigMsg, setBankConfigMsg] = useState('');
@@ -1381,127 +1390,181 @@ export default function AdminPanel({
                   ) : (
                     filteredBookings.map((b) => {
                       const isToday = b.bookingDate === todayStr;
-                      const amt = b.paidAmount || parsePriceToNumber(b.priceDisplay);
+                      const isExpanded = !!expandedCardIds[b.id];
                       return (
-                        <div key={b.id} className="mobile-booking-card">
-                          <div className="mobile-card-header">
-                            <div className="mobile-card-id-block">
-                              <span className="order-num-pill">#{b.id}</span>
-                              {isToday && <span className="today-badge-mini">HÔM NAY</span>}
+                        <div 
+                          key={b.id} 
+                          className={`mobile-booking-card ${isExpanded ? 'is-expanded' : 'is-collapsed'}`}
+                        >
+                          {/* DÒNG TÓM TẮT: CHỈ HIỂN THỊ TÊN KHÁCH HÀNG & DỊCH VỤ */}
+                          <div 
+                            className="mobile-card-summary"
+                            onClick={() => toggleCardExpand(b.id)}
+                            title="Bấm để xem chi tiết toàn bộ đơn hàng"
+                          >
+                            <div className="mobile-summary-main">
+                              <div className="mobile-summary-customer-row">
+                                <strong className="mobile-summary-name">{b.fullName}</strong>
+                                {isToday && <span className="today-badge-mini">HÔM NAY</span>}
+                              </div>
+                              <div className="mobile-summary-service-row">
+                                <span className="mobile-summary-service">{b.serviceName}</span>
+                                {b.bookingTime && <span className="mobile-summary-time">• {b.bookingTime}</span>}
+                              </div>
                             </div>
-                            <select
-                              value={b.status}
-                              onChange={(e) => handleQuickStatusChange(b.id, e.target.value)}
-                              className={`status-select-badge mini ${b.status}`}
-                            >
-                              <option value="pending">Chờ xác nhận</option>
-                              <option value="confirmed">Đã xác nhận</option>
-                              <option value="completed">Đã hoàn thành</option>
-                              <option value="cancelled">Đã hủy</option>
-                            </select>
-                          </div>
 
-                          <div className="mobile-card-appointment-time">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            <span>Lịch hẹn: <strong>{b.bookingTime}</strong> • {b.bookingDate}</span>
-                          </div>
-
-                          <div className="mobile-card-customer">
-                            <div className="customer-left">
-                              <strong className="customer-name-lg">{b.fullName}</strong>
-                              <a href={`tel:${b.phoneNumber}`} className="customer-phone-link">{b.phoneNumber}</a>
-                            </div>
-                            <div className="customer-contact-actions">
-                              <a href={`tel:${b.phoneNumber}`} className="btn-quick-contact phone" title="Gọi điện">
-                                Gọi
-                              </a>
-                              <a href={`https://zalo.me/${b.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="btn-quick-contact zalo" title="Chat Zalo">
-                                Zalo
-                              </a>
+                            <div className="mobile-summary-status-wrap">
+                              <span className={`status-pill-compact ${b.status}`}>
+                                {b.status === 'pending' ? 'Chờ duyệt' :
+                                 b.status === 'confirmed' ? 'Đã duyệt' :
+                                 b.status === 'completed' ? 'Đã xong' : 'Đã hủy'}
+                              </span>
+                              <div className={`chevron-indicator ${isExpanded ? 'rotated' : ''}`}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              </div>
                             </div>
                           </div>
 
-                          <div className="mobile-card-service">
-                            <div className="service-info-col">
-                              <span className="service-name-bold">{b.serviceName}</span>
-                              <span className="service-mode-tag">{b.modeLabel}</span>
-                            </div>
-                            <div className="service-price-col">
-                              <span className="service-price-val">{b.priceDisplay}</span>
-                              {b.isPaid || b.status === 'completed' ? (
-                                <span className="payment-pill paid mini">
-                                  ĐÃ THU ({b.paymentMethod === 'cash' ? 'Tiền mặt' : 'QR'})
-                                </span>
-                              ) : (
-                                <span className="payment-pill unpaid mini">CHƯA THU</span>
+                          {/* KHI BẤM VÀO MỚI HIỆN HẾT ĐƠN CỦA KHÁCH */}
+                          {isExpanded && (
+                            <div className="mobile-card-expanded-body">
+                              {/* Header: Mã đơn + Trạng thái */}
+                              <div className="mobile-expanded-meta-row">
+                                <div className="mobile-card-id-block">
+                                  <span className="order-num-pill">#{b.id}</span>
+                                  <span className="order-date-text">{new Date(b.createdAt).toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <select
+                                    value={b.status}
+                                    onChange={(e) => handleQuickStatusChange(b.id, e.target.value)}
+                                    className={`status-select-badge mini ${b.status}`}
+                                  >
+                                    <option value="pending">Chờ xác nhận</option>
+                                    <option value="confirmed">Đã xác nhận</option>
+                                    <option value="completed">Đã hoàn thành</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Lịch hẹn */}
+                              <div className="mobile-card-appointment-time">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span>Lịch hẹn: <strong>{b.bookingTime}</strong> • {b.bookingDate} {isToday ? '(Hôm nay)' : ''}</span>
+                              </div>
+
+                              {/* Khách hàng & Số điện thoại + Nút Gọi/Zalo */}
+                              <div className="mobile-card-customer">
+                                <div className="customer-left">
+                                  <span className="customer-phone-label">Điện thoại:</span>
+                                  <a href={`tel:${b.phoneNumber}`} className="customer-phone-link">{b.phoneNumber}</a>
+                                </div>
+                                <div className="customer-contact-actions" onClick={(e) => e.stopPropagation()}>
+                                  <a href={`tel:${b.phoneNumber}`} className="btn-quick-contact phone" title="Gọi điện">
+                                    Gọi
+                                  </a>
+                                  <a href={`https://zalo.me/${b.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="btn-quick-contact zalo" title="Chat Zalo">
+                                    Zalo
+                                  </a>
+                                </div>
+                              </div>
+
+                              {/* Dịch vụ & Giá & Trạng thái thanh toán */}
+                              <div className="mobile-card-service">
+                                <div className="service-info-col">
+                                  <span className="service-name-bold">{b.serviceName}</span>
+                                  <span className="service-mode-tag">{b.modeLabel}</span>
+                                </div>
+                                <div className="service-price-col">
+                                  <span className="service-price-val">{b.priceDisplay}</span>
+                                  {b.isPaid || b.status === 'completed' ? (
+                                    <span className="payment-pill paid mini">
+                                      ĐÃ THU ({b.paymentMethod === 'cash' ? 'Tiền mặt' : 'QR'})
+                                    </span>
+                                  ) : (
+                                    <span className="payment-pill unpaid mini">CHƯA THU</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Ghi chú da */}
+                              {b.skinNotes && (
+                                <div className="mobile-card-note">
+                                  <strong>Ghi chú da:</strong> {b.skinNotes}
+                                </div>
                               )}
-                            </div>
-                          </div>
 
-                          {b.skinNotes && (
-                            <div className="mobile-card-note">
-                              <strong>Ghi chú:</strong> {b.skinNotes}
+                              {/* Ghi chú nội bộ */}
+                              {b.adminNotes && (
+                                <div className="mobile-card-note internal">
+                                  <strong>Nội bộ:</strong> {b.adminNotes}
+                                </div>
+                              )}
+
+                              {/* Các nút thao tác */}
+                              <div className="mobile-card-footer" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  className="btn-card-op view"
+                                  onClick={() => handleOpenDetail(b)}
+                                >
+                                  Chi Tiết
+                                </button>
+
+                                {!b.isPaid && b.status !== 'completed' ? (
+                                  <button
+                                    type="button"
+                                    className="btn-card-op pay"
+                                    onClick={() => handleOpenCheckout(b)}
+                                  >
+                                    Thu Tiền / QR
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn-card-op bill"
+                                    onClick={() => handleOpenReceipt(b)}
+                                  >
+                                    In Bill
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  className="btn-card-op edit"
+                                  onClick={() => handleOpenEditModal(b)}
+                                >
+                                  Sửa
+                                </button>
+
+                                {isBoss ? (
+                                  <button
+                                    type="button"
+                                    className="btn-card-op delete"
+                                    onClick={() => handleAttemptDelete(b.id)}
+                                    title="Xóa đơn (chỉ Sếp)"
+                                  >
+                                    Xóa
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn-card-op delete-disabled"
+                                    onClick={() => handleAttemptDelete(b.id)}
+                                    title="Khóa xóa"
+                                  >
+                                    Khóa
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           )}
-
-                          <div className="mobile-card-footer">
-                            <button
-                              type="button"
-                              className="btn-card-op view"
-                              onClick={() => handleOpenDetail(b)}
-                            >
-                              Chi Tiết
-                            </button>
-
-                            {!b.isPaid && b.status !== 'completed' ? (
-                              <button
-                                type="button"
-                                className="btn-card-op pay"
-                                onClick={() => handleOpenCheckout(b)}
-                              >
-                                Thu Tiền / QR
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="btn-card-op bill"
-                                onClick={() => handleOpenReceipt(b)}
-                              >
-                                In Bill
-                              </button>
-                            )}
-
-                            <button
-                              type="button"
-                              className="btn-card-op edit"
-                              onClick={() => handleOpenEditModal(b)}
-                            >
-                              Sửa
-                            </button>
-
-                            {isBoss ? (
-                              <button
-                                type="button"
-                                className="btn-card-op delete"
-                                onClick={() => handleAttemptDelete(b.id)}
-                                title="Xóa đơn (chỉ Sếp)"
-                              >
-                                Xóa
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="btn-card-op delete-disabled"
-                                onClick={() => handleAttemptDelete(b.id)}
-                                title="Khóa xóa"
-                              >
-                                Khóa
-                              </button>
-                            )}
-                          </div>
                         </div>
                       );
                     })
