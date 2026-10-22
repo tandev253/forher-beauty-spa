@@ -216,10 +216,10 @@ export const BookingStorage = {
 
     this.addLog(
       'AUTH',
-      '👑 Sếp tạo tài khoản nhân viên',
+      'Sếp tạo tài khoản nhân viên',
       `Sếp đã tạo tài khoản "${username}" cho nhân viên ${fullName} (${role === 'boss' ? 'Quản lý' : 'Nhân viên lễ tân'})`,
       null,
-      '👑 Sếp (admin)',
+      'Sếp (admin)',
       'boss'
     );
 
@@ -273,10 +273,10 @@ export const BookingStorage = {
 
     this.addLog(
       'AUTH',
-      '👑 Sếp xóa tài khoản nhân viên',
+      'Sếp xóa tài khoản nhân viên',
       `Sếp đã xóa tài khoản nhân viên "${username}" (${target.fullName}) khỏi hệ thống`,
       null,
-      '👑 Sếp (admin)',
+      'Sếp (admin)',
       'boss'
     );
 
@@ -468,7 +468,7 @@ export const BookingStorage = {
     let actorRole = 'customer';
 
     if (source === 'admin' && session) {
-      actor = session.role === 'boss' ? `👑 Sếp (${session.username})` : `💼 ${session.fullName}`;
+      actor = session.role === 'boss' ? `Sếp (${session.username})` : session.fullName;
       actorRole = session.role;
     }
 
@@ -549,7 +549,7 @@ export const BookingStorage = {
     this.saveBookings(bookings);
 
     const session = this.getCurrentSession();
-    const actor = session ? (session.role === 'boss' ? `👑 Sếp (${session.username})` : `💼 ${session.fullName}`) : 'Nhân viên';
+    const actor = session ? (session.role === 'boss' ? `Sếp (${session.username})` : session.fullName) : 'Nhân viên';
     const actorRole = session ? session.role : 'staff';
 
     // Try sync to Supabase
@@ -631,11 +631,11 @@ export const BookingStorage = {
     }
 
     const session = this.getCurrentSession();
-    const bossName = session ? `👑 Sếp (${session.username})` : '👑 Sếp';
+    const bossName = session ? `Sếp (${session.username})` : 'Sếp';
 
     this.addLog(
       'DELETE',
-      '👑 Sếp đã xóa đơn đặt lịch',
+      'Sếp đã xóa đơn đặt lịch',
       `${bossName} đã xóa vĩnh viễn đơn #${id} của khách ${target.fullName} (${target.phoneNumber}) - Dịch vụ: ${target.serviceName}`,
       id,
       bossName,
@@ -706,8 +706,8 @@ export const BookingStorage = {
     this.saveLogs([{
       id: `LOG-${Date.now()}`,
       action: 'SYSTEM',
-      actionTitle: '👑 Sếp làm trống lịch sử',
-      actor: '👑 Sếp (admin)',
+      actionTitle: 'Sếp làm trống lịch sử',
+      actor: 'Sếp (admin)',
       actorRole: 'boss',
       details: 'Sếp đã làm trống toàn bộ nhật ký thao tác audit log',
       timestamp: new Date().toISOString()

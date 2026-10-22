@@ -93,7 +93,7 @@ export default function Footer({ onOpenAdmin }) {
               className="footer-admin-btn"
               title="Đăng nhập quản trị đơn đặt lịch"
             >
-              🔒 Quản Trị Đơn
+              Quản Trị Đơn
             </button>
           </div>
         </div>

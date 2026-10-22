@@ -235,7 +235,7 @@ export default function AdminPanel({ isOpen, onClose }) {
   // Trigger Delete (Check role permission)
   const handleAttemptDelete = async (id) => {
     if (!isBoss) {
-      alert('⛔ BỊ CHẶN QUYỀN HẠN:\nChỉ Sếp (tài khoản admin) mới có quyền xóa đơn đặt lịch!\nNhân viên chỉ có quyền xem, tiếp nhận và chỉnh sửa thông tin.');
+      alert('BỊ CHẶN QUYỀN HẠN:\nChỉ Sếp (tài khoản admin) mới có quyền xóa đơn đặt lịch!\nNhân viên chỉ có quyền xem, tiếp nhận và chỉnh sửa thông tin.');
       await BookingStorage.deleteBooking(id); // will register security alert in audit log
       refreshData();
       return;
@@ -333,9 +333,9 @@ export default function AdminPanel({ isOpen, onClose }) {
           <div className="admin-branding">
             {isAuthenticated ? (
               isBoss ? (
-                <span className="admin-role-pill boss">👑 SẾP (ADMIN)</span>
+                <span className="admin-role-pill boss">SẾP (ADMIN)</span>
               ) : (
-                <span className="admin-role-pill staff">💼 {session?.fullName || 'NHÂN VIÊN'}</span>
+                <span className="admin-role-pill staff">{session?.fullName || 'NHÂN VIÊN'}</span>
               )
             ) : (
               <span className="admin-badge-role">ADMIN PANEL</span>
@@ -412,10 +412,10 @@ export default function AdminPanel({ isOpen, onClose }) {
                 </div>
 
                 <div className="role-pwd-hint-box">
-                  <p>👑 <strong>Tài khoản Sếp:</strong> <code>admin</code> (Mật khẩu mặc định: <code>forheradmin</code>)</p>
-                  <p style={{ marginTop: '4px' }}>💼 <strong>Tài khoản Nhân viên:</strong> do Sếp tạo (Mẫu: <code>nhanvien1</code> / <code>forhernv</code>)</p>
+                  <p><strong>Tài khoản Quản lý (Sếp):</strong> <code>admin</code> (Mật khẩu mặc định: <code>forheradmin</code>)</p>
+                  <p style={{ marginTop: '4px' }}><strong>Tài khoản Nhân viên:</strong> do Quản lý tạo (Mẫu: <code>nhanvien1</code> / <code>forhernv</code>)</p>
                   <small style={{ color: '#059669', display: 'block', marginTop: '6px' }}>
-                    ☁️ Kết nối cơ sở dữ liệu Supabase: <strong>{SUPABASE_URL.split('//')[1]}</strong>
+                    Kết nối cơ sở dữ liệu Supabase: <strong>{SUPABASE_URL.split('//')[1]}</strong>
                   </small>
                 </div>
 
@@ -439,7 +439,6 @@ export default function AdminPanel({ isOpen, onClose }) {
             <div className={`role-notice-banner ${isBoss ? 'banner-boss' : 'banner-staff'}`}>
               {isBoss ? (
                 <div className="role-notice-inner">
-                  <span className="notice-icon">👑</span>
                   <div>
                     <strong>Tài khoản Sếp (admin):</strong>
                     <span> Toàn quyền quản trị tối cao — Có quyền <strong>XÓA ĐƠN</strong>, <strong>TẠO TÀI KHOẢN NHÂN VIÊN</strong> và quản lý toàn bộ hệ thống Supabase Cloud.</span>
@@ -447,7 +446,6 @@ export default function AdminPanel({ isOpen, onClose }) {
                 </div>
               ) : (
                 <div className="role-notice-inner">
-                  <span className="notice-icon">💼</span>
                   <div>
                     <strong>Tài khoản Nhân viên ({session?.fullName}):</strong>
                     <span> Tiếp nhận khách, thêm đơn, sửa thông tin & đổi trạng thái. <strong>Thao tác Xóa đơn bị vô hiệu hóa</strong> (Chỉ Sếp admin mới có quyền xóa).</span>
@@ -497,7 +495,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                     className={`admin-tab-btn ${activeTab === 'staff' ? 'active' : ''}`}
                     onClick={() => setActiveTab('staff')}
                   >
-                    👑 Quản Lý Nhân Viên ({staffAccounts.length})
+                    Quản Lý Nhân Viên ({staffAccounts.length})
                   </button>
                 )}
 
@@ -727,7 +725,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                                       type="button"
                                       className="btn-tbl-action delete"
                                       onClick={() => handleAttemptDelete(b.id)}
-                                      title="👑 Sếp có quyền xóa đơn này"
+                                      title="Quyền Sếp: Xóa đơn này"
                                     >
                                       Xóa
                                     </button>
@@ -736,9 +734,9 @@ export default function AdminPanel({ isOpen, onClose }) {
                                       type="button"
                                       className="btn-tbl-action delete-disabled"
                                       onClick={() => handleAttemptDelete(b.id)}
-                                      title="🔒 Bị khóa: Chỉ Sếp admin mới có quyền xóa đơn!"
+                                      title="Bị khóa: Chỉ Sếp admin mới có quyền xóa đơn!"
                                     >
-                                      🔒 Xóa
+                                      Khóa Xóa
                                     </button>
                                   )}
                                 </div>
@@ -795,9 +793,9 @@ export default function AdminPanel({ isOpen, onClose }) {
                             </td>
                             <td>
                               {acc.role === 'boss' ? (
-                                <span className="admin-role-pill boss">👑 SẾP (QUẢN LÝ)</span>
+                                <span className="admin-role-pill boss">SẾP (QUẢN LÝ)</span>
                               ) : (
-                                <span className="admin-role-pill staff">💼 NHÂN VIÊN</span>
+                                <span className="admin-role-pill staff">NHÂN VIÊN</span>
                               )}
                             </td>
                             <td>
@@ -865,7 +863,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                         }
                       }}
                     >
-                      👑 Sếp Làm Trống Lịch Sử
+                      Làm Trống Lịch Sử (Quyền Sếp)
                     </button>
                   )}
                 </div>
@@ -912,7 +910,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                 <div className="backup-sections-grid">
                   {/* Supabase Cloud Connection Box */}
                   <div className="backup-card supabase-highlight-card">
-                    <h4>☁️ Kết Nối Supabase Cloud Database</h4>
+                    <h4>Kết Nối Supabase Cloud Database</h4>
                     <p>
                       Dự án Supabase: <strong>{SUPABASE_URL}</strong><br />
                       Để đồng bộ dữ liệu vĩnh viễn trên đám mây, hãy chạy script SQL tạo bảng trong Supabase SQL Editor.
@@ -923,7 +921,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                         className="btn-primary-gold"
                         onClick={handleCopySql}
                       >
-                        {sqlCopied ? '✓ Đã Sao Chép Mã SQL!' : '📋 Sao Chép Mã Tạo Bảng SQL'}
+                        {sqlCopied ? 'Đã Sao Chép Mã SQL' : 'Sao Chép Mã Tạo Bảng SQL'}
                       </button>
                       <a 
                         href="https://supabase.com/dashboard/project/lrjumrqjpepxmlwaiwvq/sql" 
@@ -936,7 +934,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                     </div>
                     {sqlCopied && (
                       <small style={{ color: '#059669', display: 'block', marginTop: '8px' }}>
-                        👉 Đã chép mã SQL vào clipboard. Hãy dán vào Supabase và bấm <strong>Run</strong>!
+                        Đã chép mã SQL vào clipboard. Hãy dán vào Supabase và bấm <strong>Run</strong>!
                       </small>
                     )}
                   </div>
@@ -1110,7 +1108,7 @@ export default function AdminPanel({ isOpen, onClose }) {
           <div className="admin-submodal-backdrop">
             <div className="admin-submodal-card">
               <div className="admin-submodal-header">
-                <h3>👑 Sếp Tạo Tài Khoản Nhân Viên Mới</h3>
+                <h3>Tạo Tài Khoản Nhân Viên Mới</h3>
                 <button type="button" className="btn-close-submodal" onClick={() => setIsStaffModalOpen(false)}>
                   ✕
                 </button>
@@ -1170,10 +1168,9 @@ export default function AdminPanel({ isOpen, onClose }) {
         {deletingId && isBoss && (
           <div className="admin-submodal-backdrop">
             <div className="admin-submodal-card delete-confirm">
-              <span className="delete-alert-icon">⚠️</span>
               <h3>Xác Nhận Xóa Đơn Đặt Lịch (Quyền Sếp)</h3>
               <p>
-                Bạn đang sử dụng quyền <strong>👑 Sếp (admin)</strong> để xóa đơn <strong>#{deletingId}</strong>.
+                Bạn đang sử dụng quyền <strong>Sếp (admin)</strong> để xóa đơn <strong>#{deletingId}</strong>.
                 Hành vi này sẽ được lưu lại vĩnh viễn trong nhật ký thao tác (Audit Log).
               </p>
               <div className="submodal-actions">
