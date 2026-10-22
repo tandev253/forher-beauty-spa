@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import AboutSection from './components/AboutSection';
 import ServicesPricing from './components/ServicesPricing';
 import BookingSection from './components/BookingSection';
+import FaqSection from './components/FaqSection';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import FloatingActions from './components/FloatingActions';
@@ -53,7 +54,12 @@ export default function App() {
           onClearSelectedService={() => setSelectedService(null)}
         />
 
-        {/* 6. Contact & Location: Address, Opening Hours, Map & Social Links */}
+        {/* 6. FAQ & Local SEO Section: Questions & answers for District 10 spa searches */}
+        <FaqSection 
+          onBookClick={() => scrollToSection('booking')}
+        />
+
+        {/* 7. Contact & Location: Address, Opening Hours, Map & Social Links */}
         <ContactSection />
       </main>
 

@@ -11,20 +11,20 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
   const visualTreatments = [
     {
       id: 'storefront',
-      title: 'Mặt Tiền FORHER Beauty & Spa',
-      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P. Diên Hồng, TP.HCM. Điểm đến làm đẹp ấm cúng, sang trọng với trọn vẹn 3 tầng trải nghiệm thư giãn dành riêng cho bạn.',
+      title: 'Mặt Tiền FORHER Beauty & Spa – 515 Bà Hạt (Quận 10)',
+      desc: 'Tọa lạc tại mặt tiền 515 Bà Hạt, P. Diên Hồng, TP.HCM (khu vực Quận 10 thuận tiện). Điểm đến spa làm đẹp ấm cúng, sang trọng với trọn vẹn 3 tầng trải nghiệm thư giãn dành riêng cho bạn.',
       image: forherStorefrontReal,
-      tag: '515 BÀ HẠT, P. DIÊN HỒNG',
+      tag: '515 BÀ HẠT, P. DIÊN HỒNG • QUẬN 10',
       btnText: 'Đặt lịch ghé spa →',
       action: 'book'
     },
     {
       id: 'nail',
-      title: 'Three House Nails – Đa Dạng Màu Sắc, Trọn Vẹn Cá Tính',
+      title: 'Three House Nails – Làm Móng Nghệ Thuật & Đa Dạng Cá Tính',
       desc: 'Ngay từ cửa bước vào là không gian Three House Nails trẻ trung, hiện đại với đa dạng bảng màu sơn được cập nhật thường xuyên, từ những gam màu nhẹ nhàng, thanh lịch đến những sắc màu nổi bật, cá tính. Bạn có thể thoải mái lựa chọn màu yêu thích, kết hợp cùng nhiều kiểu design, mắt mèo, thạch, nhũ, French, ombre, charm và đính đá để tạo nên một bộ móng mang dấu ấn riêng.',
       slogan: 'Nhiều màu để chọn – nhiều kiểu để yêu – một bộ nail dành riêng cho bạn.',
       image: forherNailReal,
-      tag: 'TẦNG TRỆT • THREE HOUSE NAILS',
+      tag: 'TẦNG TRỆT • THREE HOUSE NAILS QUẬN 10',
       btnText: 'Xem Mẫu Móng Three House Nails ↗',
       action: 'external',
       fbUrl: 'https://www.facebook.com/threehousenails',
@@ -32,17 +32,17 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
     },
     {
       id: 'goidau',
-      title: 'Gội Đầu Dưỡng Sinh & Thư Giãn Nhẹ Nhàng',
+      title: 'Gội Đầu Dưỡng Sinh Thảo Dược & Massage Thư Giãn',
       desc: 'Tiếp nối hành trình thư giãn tại lầu 1, là không gian gội đầu dưỡng sinh & thư giãn nhẹ nhàng với giường êm ái, bồn gội thư giãn, nước bồ kết thảo mộc nấu ấm, massage ấn huyệt giải tỏa đau mỏi cổ vai gáy, giúp bạn tạm gác lại những bộn bề và tận hưởng những phút giây chăm sóc bản thân.',
       image: forherGoidauReal,
-      tag: 'LẦU 1 • DƯỠNG SINH THẢO MỘC',
+      tag: 'LẦU 1 • DƯỠNG SINH THẢO MỘC QUẬN 10',
       btnText: 'Khám phá không gian Lầu 1 →',
       action: 'book'
     },
     {
       id: 'khonggian-spa',
-      title: 'Phòng Spa Chăm Sóc Da & Triệt Lông',
-      desc: 'Tại lầu 2, không gian Spa mang đến các liệu trình chăm sóc da chuyên sâu và triệt lông Diode Laser. Giường spa êm ái với rèm che ngăn cách từng giường kín đáo, không gian yên tĩnh thư giãn tối đa cho khách hàng.',
+      title: 'Phòng Spa Chăm Sóc Da & Triệt Lông Diode Laser',
+      desc: 'Tại lầu 2, không gian Spa mang đến các liệu trình chăm sóc da chuyên sâu và triệt lông Diode Laser bảo hành 2 năm. Giường spa êm ái với rèm che ngăn cách từng giường kín đáo, không gian yên tĩnh thư giãn tối đa cho khách hàng.',
       image: forherSpaRoomReal,
       tag: 'LẦU 2 • RÈM NGĂN RIÊNG BIỆT',
       btnText: 'Xem bảng giá dịch vụ Spa →',
@@ -50,8 +50,8 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
     },
     {
       id: 'chamsoc-da',
-      title: 'Chăm Sóc & Lấy Mụn Kỹ Thuật Cao',
-      desc: 'Tại lầu 2, quy trình lấy mụn chuẩn y khoa với dụng cụ tiệt trùng 1 lần riêng biệt, kỹ thuật viên tay nghề êm ái, kết hợp tia điện tím và ánh sáng sinh học giúp làm dịu da nhanh chóng, phục hồi da sạch mụn và khỏe đẹp.',
+      title: 'Chăm Sóc & Lấy Nhân Mụn Kỹ Thuật Cao Chuẩn Y Khoa',
+      desc: 'Tại lầu 2, quy trình lấy nhân mụn chuẩn y khoa với dụng cụ tiệt trùng 1 lần riêng biệt, kỹ thuật viên tay nghề êm ái, kết hợp tia điện tím và ánh sáng sinh học giúp làm dịu da nhanh chóng, phục hồi da sạch mụn và khỏe đẹp.',
       image: forherFacialTreatmentReal,
       tag: 'LẦU 2 • TIỆT TRÙNG 100%',
       btnText: 'Xem bảng giá dịch vụ Spa →',
@@ -83,7 +83,7 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
       <div className="site-container">
         {/* Section Header */}
         <div className="section-header-center">
-          <span className="section-subtitle">VỀ FORHER BEAUTY & SPA • {COMPANY_INFO.addressShort}</span>
+          <span className="section-subtitle">VỀ FORHER BEAUTY & SPA • SPA LÀM ĐẸP UY TÍN TẠI QUẬN 10</span>
           <h2 className="section-title">Một Không Gian – Trọn Vẹn Hành Trình Chăm Sóc Bản Thân</h2>
           <div className="section-divider-gold"></div>
         </div>
@@ -94,7 +94,7 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
             {/* Floor 0: Ground Floor Nail */}
             <div className="journey-floor-card">
               <div className="floor-badge">TẦNG TRỆT</div>
-              <h4 className="floor-title">Three House Nails Hiện Đại</h4>
+              <h4 className="floor-title">Three House Nails Hiện Đại (Quận 10)</h4>
               <p className="floor-desc">
                 Từ khi bước vào, bạn sẽ được chào đón bởi không gian Nail hiện đại, nơi chăm chút đôi tay và đôi chân với những thiết kế xinh xắn, tinh tế và phù hợp với phong cách riêng của mỗi khách hàng.
               </p>
@@ -103,18 +103,18 @@ export default function AboutSection({ onBookClick, onPricingClick }) {
             {/* Floor 1: First Floor Head Spa */}
             <div className="journey-floor-card">
               <div className="floor-badge">LẦU 1</div>
-              <h4 className="floor-title">Gội Đầu Dưỡng Sinh & Thư Giãn</h4>
+              <h4 className="floor-title">Gội Đầu Dưỡng Sinh Thảo Mộc</h4>
               <p className="floor-desc">
-                Tiếp nối hành trình thư giãn tại lầu 1, là không gian gội đầu dưỡng sinh & thư giãn nhẹ nhàng, giúp bạn tạm gác lại những bộn bề và tận hưởng những phút giây chăm sóc bản thân.
+                Tiếp nối hành trình thư giãn tại lầu 1, là không gian gội đầu dưỡng sinh & thư giãn nhẹ nhàng, gội đầu thảo dược ấm áp, massage ấn huyệt giải tỏa đau mỏi cổ vai gáy.
               </p>
             </div>
 
             {/* Floor 2: Second Floor Skincare Spa */}
             <div className="journey-floor-card">
               <div className="floor-badge">LẦU 2</div>
-              <h4 className="floor-title">Spa Chăm Sóc Da Chuyên Sâu</h4>
+              <h4 className="floor-title">Spa Chăm Sóc Da & Triệt Lông Uy Tín</h4>
               <p className="floor-desc">
-                Tại lầu 2, không gian Spa chăm sóc da mang đến các liệu trình chăm sóc da chuyên sâu, từ làm sạch, chăm sóc da mụn đến phục hồi và nuôi dưỡng làn da khỏe đẹp.
+                Tại lầu 2, không gian Spa chuyên sâu mang đến các liệu trình chăm sóc da chuẩn y khoa, lấy nhân mụn tiệt trùng, phục hồi da và triệt lông Diode Laser bảo hành 2 năm.
               </p>
             </div>
           </div>

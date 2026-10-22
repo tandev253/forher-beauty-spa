@@ -56,6 +56,9 @@ export default function Header({ onBookClick }) {
               <a href="#booking" onClick={(e) => handleNavClick(e, 'booking')}>Đặt Lịch Hẹn</a>
             </li>
             <li>
+              <a href="#faq" onClick={(e) => handleNavClick(e, 'faq')}>Hỏi Đáp</a>
+            </li>
+            <li>
               <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')}>Liên Hệ</a>
             </li>
             <li className="mobile-cta-item">

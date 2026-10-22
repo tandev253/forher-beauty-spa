@@ -20,11 +20,11 @@ export default function ServicesPricing({ onSelectServiceToBook }) {
     <section id="services" className="section-padding bg-soft-beige">
       <div className="site-container">
         <div className="section-header-center">
-          <span className="section-subtitle">BẢNG GIÁ NIÊM YẾT CHÍNH THỨC</span>
+          <span className="section-subtitle">BẢNG GIÁ DỊCH VỤ SPA QUẬN 10 NIÊM YẾT</span>
           <h2 className="section-title">Danh Mục Dịch Vụ & Chi Phí Liệu Trình</h2>
           <div className="section-divider-gold"></div>
           <p className="section-lead-text">
-            Bảng giá các liệu trình chăm sóc da chuyên sâu & triệt lông Diode Laser tại FORHER Beauty & Spa được niêm yết minh bạch. 
+            Bảng giá các liệu trình chăm sóc da chuyên sâu, lấy nhân mụn & triệt lông Diode Laser tại FORHER Beauty & Spa (Quận 10) được niêm yết minh bạch. 
             Quý khách có thể bấm <strong>"Đặt Lịch Dịch Vụ Này"</strong> ở bất kỳ dịch vụ nào để điền thông tin hẹn giờ tiếp đón chu đáo.
           </p>
         </div>
@@ -38,7 +38,7 @@ export default function ServicesPricing({ onSelectServiceToBook }) {
             </svg>
             <input 
               type="text" 
-              placeholder="Tìm nhanh liệu trình (ví dụ: Nách, Mụn, Trẻ hóa, Peel, Vùng mắt, Môi...)"
+              placeholder="Tìm nhanh dịch vụ Spa Quận 10 (ví dụ: Nách, Mụn, Trẻ hóa, Peel, Vùng mắt, Môi...)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-label="Tìm kiếm dịch vụ"

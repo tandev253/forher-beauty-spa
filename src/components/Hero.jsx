@@ -9,7 +9,7 @@ export default function Hero({ onBookClick, onPricingClick }) {
         {/* Left Column: Brand Message & CTAs */}
         <div className="hero-text-col">
           <div className="hero-badge">
-            <span>CHĂM SÓC DA • TRIỆT LÔNG DIODE LASER • GỘI ĐẦU DƯỠNG SINH & NAIL</span>
+            <span>SPA UY TÍN QUẬN 10 • CHĂM SÓC DA • TRIỆT LÔNG DIODE LASER • DƯỠNG SINH & NAIL</span>
           </div>
 
           <h1 className="hero-title">
@@ -18,9 +18,9 @@ export default function Hero({ onBookClick, onPricingClick }) {
           </h1>
 
           <p className="hero-description">
-            Chào mừng bạn đến với <strong>FORHER Beauty & Spa</strong> tại <strong>515 Bà Hạt, P. Diên Hồng, TP.HCM</strong>. 
-            Không gian làm đẹp ấm cúng, thư thái với dịch vụ chăm sóc toàn diện: <strong>Triệt lông Diode Laser bảo hành 2 năm</strong>, 
-            chăm sóc & lấy mụn vô trùng, Chemical Peel tái tạo da, cùng <strong>Gội đầu dưỡng sinh thảo dược</strong> và <strong>Nail nghệ thuật</strong>.
+            Chào mừng bạn đến với <strong>FORHER Beauty & Spa</strong> – địa chỉ spa chăm sóc da & triệt lông uy tín tại <strong>515 Bà Hạt, P. Diên Hồng, TP.HCM (khu vực Quận 10)</strong>. 
+            Không gian làm đẹp thư thái 3 tầng chuyên biệt: <strong>Triệt lông Diode Laser bảo hành 2 năm</strong>, 
+            chăm sóc & lấy nhân mụn chuẩn y khoa vô trùng, Chemical Peel tái tạo da, cùng <strong>Gội đầu dưỡng sinh thảo dược</strong> và <strong>Three House Nails</strong> nghệ thuật.
           </p>
 
           {/* Action buttons */}

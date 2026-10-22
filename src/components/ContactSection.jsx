@@ -6,11 +6,11 @@ export default function ContactSection() {
     <section id="contact" className="section-padding bg-soft-beige">
       <div className="site-container">
         <div className="section-header-center">
-          <span className="section-subtitle">THÔNG TIN ĐỊA CHỈ & LIÊN HỆ</span>
+          <span className="section-subtitle">ĐỊA CHỈ SPA QUẬN 10 & THÔNG TIN LIÊN HỆ</span>
           <h2 className="section-title">Ghé Thăm FORHER Beauty & Spa</h2>
           <div className="section-divider-gold"></div>
           <p className="section-lead-text">
-            Cơ sở tọa lạc tại mặt tiền 515 Bà Hạt, Phường Diên Hồng, thuận tiện di chuyển, có chỗ để xe máy & ô tô an ninh.
+            Cơ sở tọa lạc tại mặt tiền 515 Bà Hạt, Phường Diên Hồng, TP.HCM (khu vực Quận 10), giao thông thuận tiện từ các quận trung tâm, có chỗ để xe máy & ô tô an ninh.
           </p>
         </div>
 
@@ -24,7 +24,7 @@ export default function ContactSection() {
                   <strong>{COMPANY_INFO.address}</strong>
                 </p>
                 <small className="contact-card-hint">
-                  (Gần ngã tư Ngô Quyền - Bà Hạt, thuận tiện di chuyển & đỗ xe)
+                  (Khu vực Quận 10 – Gần ngã tư Ngô Quyền & Bà Hạt, thuận tiện di chuyển & đỗ xe)
                 </small>
               </div>
             </div>

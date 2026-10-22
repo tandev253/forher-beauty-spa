@@ -1564,6 +1564,154 @@ button {
 }
 
 /* ==========================================================================
+   6.5. FAQ & LOCAL SEO ACCORDION
+   ========================================================================== */
+.faq-accordion-container {
+  max-width: 860px;
+  margin: 0 auto 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.faq-card-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.faq-card-item:hover,
+.faq-card-item.active {
+  border-color: var(--primary-gold);
+  box-shadow: 0 4px 18px rgba(197, 155, 39, 0.12);
+}
+
+.faq-question-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  text-align: left;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  gap: 16px;
+}
+
+.faq-question-btn:hover {
+  color: var(--primary-gold-dark);
+}
+
+.faq-icon-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--primary-gold-dark);
+  font-size: 1.3rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.faq-card-item.active .faq-icon-indicator {
+  background: var(--primary-gold);
+  color: #FFFFFF;
+}
+
+.faq-answer-pane {
+  padding: 0 22px 20px;
+  border-top: 1px dashed rgba(197, 155, 39, 0.2);
+  margin-top: -2px;
+}
+
+.faq-answer-pane p {
+  padding-top: 14px;
+  font-size: 0.94rem;
+  line-height: 1.7;
+  color: var(--text-body);
+}
+
+.faq-cta-banner {
+  max-width: 860px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #FAF6F0 0%, #F5EFE6 100%);
+  border: 1px solid var(--border-gold);
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.faq-cta-content h4 {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  color: var(--text-heading);
+  margin-bottom: 6px;
+}
+
+.faq-cta-content p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.faq-cta-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Footer SEO Keywords Cluster */
+.footer-seo-cluster {
+  padding: 24px 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.seo-cluster-title {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary-gold-light);
+  margin-bottom: 10px;
+}
+
+.seo-cluster-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.seo-tag {
+  font-size: 0.82rem;
+  color: #A39991;
+  transition: color 0.2s ease;
+}
+
+.seo-tag:hover {
+  color: #FFFFFF;
+}
+
+.seo-dot {
+  color: rgba(197, 155, 39, 0.5);
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
    8. FLOATING QUICK DOCK
    ========================================================================== */
 .floating-quick-dock {
