@@ -60,6 +60,26 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 4. Bảng Chấm Công Nhân Viên (Staff Attendance)
+CREATE TABLE IF NOT EXISTS public.staff_attendance (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    staff_name TEXT NOT NULL,
+    date DATE NOT NULL,
+    check_in_time TEXT NOT NULL,
+    check_out_time TEXT,
+    status TEXT NOT NULL DEFAULT 'working', -- 'working' | 'completed' | 'leave'
+    working_hours NUMERIC,
+    shift_name TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Bổ sung cột nhân viên phụ trách vào bookings (nếu chưa có)
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS assigned_staff TEXT;
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS assigned_staff_name TEXT;
+
 -- Khởi tạo tài khoản Sếp 'admin' mặc định nếu chưa có
 INSERT INTO public.staff_accounts (username, password, full_name, role)
 VALUES ('admin', 'forheradmin', 'Sếp / Quản Lý Tối Cao', 'boss')
@@ -69,6 +89,7 @@ ON CONFLICT (username) DO NOTHING;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.staff_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff_attendance ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow anon on bookings" ON public.bookings;
 CREATE POLICY "Allow anon on bookings" ON public.bookings FOR ALL USING (true) WITH CHECK (true);
@@ -78,4 +99,7 @@ CREATE POLICY "Allow anon on staff_accounts" ON public.staff_accounts FOR ALL US
 
 DROP POLICY IF EXISTS "Allow anon on audit_logs" ON public.audit_logs;
 CREATE POLICY "Allow anon on audit_logs" ON public.audit_logs FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon on staff_attendance" ON public.staff_attendance;
+CREATE POLICY "Allow anon on staff_attendance" ON public.staff_attendance FOR ALL USING (true) WITH CHECK (true);
 `;

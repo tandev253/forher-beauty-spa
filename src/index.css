@@ -6775,6 +6775,410 @@ button {
   color: #1E40AF;
 }
 
+/* ==============================================================================
+   STAFF ATTENDANCE, PERSONAL REVENUE & LEADERBOARD STYLES
+   ============================================================================== */
+
+/* Personal Badge Tag */
+.personal-badge-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: #FEF3C7;
+  color: #92400E;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+  border: 1px solid #FDE68A;
+}
+
+/* Mobile Attendance Quick Action in Executive Card */
+.mobile-attendance-quick-action {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.25);
+}
+
+.btn-mobile-quick-checkin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-mobile-quick-checkin:active {
+  transform: scale(0.98);
+}
+
+.mobile-working-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-working-row .working-pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ECFDF5;
+  background: rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.btn-mobile-quick-checkout {
+  padding: 6px 14px;
+  background: #EF4444;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-mobile-quick-checkout:active {
+  transform: scale(0.96);
+}
+
+.mobile-done-row .done-pill {
+  font-size: 0.75rem;
+  color: #D1FAE5;
+  font-weight: 600;
+}
+
+/* Pulsing Green Dot */
+.dot-pulse {
+  width: 8px;
+  height: 8px;
+  background: #10B981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-green 1.6s infinite;
+  display: inline-block;
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Strip cards */
+.admin-revenue-strip.staff-strip .revenue-stat-card.personal {
+  background: linear-gradient(135deg, #FFFFFF, #FDF8F0);
+  border-color: #FDE68A;
+}
+
+.admin-revenue-strip.staff-strip .revenue-stat-card.hours {
+  background: linear-gradient(135deg, #FFFFFF, #F0FDF4);
+  border-color: #BBF7D0;
+}
+
+.admin-revenue-strip.staff-strip .revenue-stat-card.attendance-card {
+  background: linear-gradient(135deg, #FFFFFF, #F0FDF4);
+  border-color: #86EFAC;
+}
+
+.btn-attendance-action.checkin {
+  padding: 8px 12px;
+  background: #10B981;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-attendance-action.checkin:hover {
+  background: #059669;
+}
+
+.btn-attendance-action.checkout {
+  padding: 7px 12px;
+  background: #DC2626;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-attendance-action.checkout:hover {
+  background: #B91C1C;
+}
+
+/* Performance Tab Header */
+.performance-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.perf-header-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.staff-role-chip {
+  padding: 2px 8px;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 4px;
+}
+
+.staff-acc-chip {
+  padding: 2px 8px;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.performance-tab-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.25rem;
+  color: #1E293B;
+  font-weight: 800;
+}
+
+.performance-tab-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748B;
+}
+
+.btn-attendance-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.btn-attendance-hero.checkin {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+}
+
+.btn-attendance-hero.checkout {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: #FFFFFF;
+}
+
+.btn-attendance-hero:hover {
+  transform: translateY(-1px);
+}
+
+.hero-working-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-working-pill {
+  padding: 8px 14px;
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.hero-done-pill {
+  padding: 8px 14px;
+  background: #F8FAFC;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+/* Staff Section Card */
+.staff-section-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.staff-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.staff-section-header h4 {
+  margin: 0 0 2px 0;
+  font-size: 1.05rem;
+  color: #1E293B;
+  font-weight: 800;
+}
+
+/* Status Pills */
+.status-working-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-done-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-off-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #F3F4F6;
+  color: #9CA3AF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Time Badges */
+.time-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+.time-badge.in {
+  background: #ECFDF5;
+  color: #047857;
+}
+
+.time-badge.out {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.time-badge.active {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+/* Table Assigned Staff */
+.table-assigned-staff {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #0369A1;
+  background: #F0F9FF;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #BAE6FD;
+}
+
+.mobile-summary-staff-pill {
+  color: #0284C7;
+  font-weight: 600;
+  font-size: 0.74rem;
+}
+
+.mobile-card-staff-assigned {
+  margin-top: 6px;
+  padding: 5px 8px;
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  color: #0369A1;
+}
+
+.inspecting-orders-card {
+  border: 2px solid #D97706;
+  background: #FFFDF9;
+}
+
+.selected-staff-row {
+  background: #FFFBEB !important;
+}
+
+.staff-filter-select {
+  padding: 6px 10px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #1E293B;
+  background: #FFFFFF;
+}
+
+
 
 
 

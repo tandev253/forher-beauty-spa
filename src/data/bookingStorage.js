@@ -16,7 +16,8 @@ const STORAGE_KEYS = {
   ACCOUNTS: 'forher_staff_accounts_v2',
   SESSION: 'forher_auth_session_v2',
   CLOUD_STATUS: 'forher_cloud_status_v2',
-  BANK_CONFIG: 'forher_bank_config_v2'
+  BANK_CONFIG: 'forher_bank_config_v2',
+  ATTENDANCE: 'forher_staff_attendance_v2'
 };
 
 // Default Spa Bank Configuration for VietQR
@@ -86,6 +87,55 @@ const DEFAULT_ACCOUNTS = [
   }
 ];
 
+const todayDateStr = new Date().toISOString().split('T')[0];
+const yesterdayDateStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+const twoDaysAgoDateStr = new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0];
+
+const DEFAULT_ATTENDANCE = [
+  {
+    id: 'ATT-SAMPLE-01',
+    username: 'nhanvien1',
+    staffName: 'Lê Thị Thu Thảo',
+    date: todayDateStr,
+    checkInTime: '08:30',
+    checkOutTime: null,
+    status: 'working',
+    workingHours: null,
+    shiftName: 'Ca Hành Chính (08:30 - 17:30)',
+    notes: 'Đi làm đúng giờ',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'ATT-SAMPLE-02',
+    username: 'nhanvien1',
+    staffName: 'Lê Thị Thu Thảo',
+    date: yesterdayDateStr,
+    checkInTime: '08:25',
+    checkOutTime: '17:35',
+    status: 'completed',
+    workingHours: 9.2,
+    shiftName: 'Ca Hành Chính (08:30 - 17:30)',
+    notes: 'Phục vụ 4 khách hàng chu đáo',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'ATT-SAMPLE-03',
+    username: 'nhanvien1',
+    staffName: 'Lê Thị Thu Thảo',
+    date: twoDaysAgoDateStr,
+    checkInTime: '08:30',
+    checkOutTime: '17:30',
+    status: 'completed',
+    workingHours: 9.0,
+    shiftName: 'Ca Hành Chính (08:30 - 17:30)',
+    notes: 'Hoàn thành ca làm tốt',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  }
+];
+
 const SAMPLE_BOOKINGS = [
   {
     id: 'FH-839201',
@@ -98,7 +148,9 @@ const SAMPLE_BOOKINGS = [
     priceDisplay: '500.000đ',
     isPaid: false,
     paidAmount: 0,
-    bookingDate: new Date().toISOString().split('T')[0],
+    assignedStaff: 'nhanvien1',
+    assignedStaffName: 'Lê Thị Thu Thảo',
+    bookingDate: todayDateStr,
     bookingTime: '15:30',
     skinNotes: 'Lần đầu ghé spa, da nhạy cảm cần chuyên viên tư vấn kỹ',
     adminNotes: 'Đã gọi điện xác nhận, xếp giường phòng số 2 lầu 2',
@@ -118,6 +170,8 @@ const SAMPLE_BOOKINGS = [
     priceDisplay: '1.200.000đ',
     isPaid: false,
     paidAmount: 0,
+    assignedStaff: 'nhanvien1',
+    assignedStaffName: 'Lê Thị Thu Thảo',
     bookingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     bookingTime: '17:00',
     skinNotes: 'Mụn viêm nhiều vùng cằm và má, ưu tiên tiệt trùng tia điện tím',
@@ -141,7 +195,9 @@ const SAMPLE_BOOKINGS = [
     paymentMethod: 'cash',
     paidAt: new Date().toISOString(),
     cashier: 'Lê Thị Thu Thảo',
-    bookingDate: new Date().toISOString().split('T')[0],
+    assignedStaff: 'nhanvien1',
+    assignedStaffName: 'Lê Thị Thu Thảo',
+    bookingDate: todayDateStr,
     bookingTime: '11:00',
     skinNotes: 'Chăm sóc thư giãn buổi trưa',
     adminNotes: 'Khách rất hài lòng, đã thanh toán đủ tiền mặt',
@@ -164,7 +220,9 @@ const SAMPLE_BOOKINGS = [
     paymentMethod: 'transfer',
     paidAt: new Date(Date.now() - 86400000).toISOString(),
     cashier: 'Sếp / Quản Lý Tối Cao',
-    bookingDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    assignedStaff: 'admin',
+    assignedStaffName: 'Sếp / Quản Lý Tối Cao',
+    bookingDate: yesterdayDateStr,
     bookingTime: '14:30',
     skinNotes: 'Bảo hành 2 năm, cấp sổ bảo hành',
     adminNotes: 'Đã quét mã VietQR thành công',
@@ -172,6 +230,31 @@ const SAMPLE_BOOKINGS = [
     createdBy: 'Nhân viên lễ tân',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     updatedAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'FH-839205',
+    fullName: 'Hoàng Thùy Dương',
+    phoneNumber: '0977889900',
+    serviceId: 'sk-c-glow',
+    serviceName: 'Điện Di Vitamin C Sáng Da',
+    categoryName: 'Skincare & Phục Hồi',
+    modeLabel: 'Buổi Đơn Lẻ',
+    priceDisplay: '350.000đ',
+    isPaid: true,
+    paidAmount: 350000,
+    paymentMethod: 'transfer',
+    paidAt: new Date().toISOString(),
+    cashier: 'Lê Thị Thu Thảo',
+    assignedStaff: 'nhanvien1',
+    assignedStaffName: 'Lê Thị Thu Thảo',
+    bookingDate: todayDateStr,
+    bookingTime: '16:00',
+    skinNotes: 'Da sạm nhẹ sau chuyến đi biển, cần cấp ẩm phục hồi',
+    adminNotes: 'Đã hoàn thành dịch vụ và thu tiền chuyển khoản VietQR',
+    status: 'completed',
+    createdBy: 'Lê Thị Thu Thảo',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ];
 
@@ -523,6 +606,8 @@ export const BookingStorage = {
           skinNotes: item.skin_notes || '',
           adminNotes: item.admin_notes || '',
           status: item.status || 'pending',
+          assignedStaff: item.assigned_staff || '',
+          assignedStaffName: item.assigned_staff_name || '',
           createdBy: item.created_by || 'Khách hàng',
           createdAt: item.created_at,
           updatedAt: item.updated_at
@@ -550,6 +635,9 @@ export const BookingStorage = {
       actorRole = session.role;
     }
 
+    const defaultStaff = source === 'admin' && session ? session.username : '';
+    const defaultStaffName = source === 'admin' && session ? session.fullName : '';
+
     const newBooking = {
       id,
       fullName: bookingData.fullName || 'Khách hàng',
@@ -564,6 +652,8 @@ export const BookingStorage = {
       skinNotes: bookingData.skinNotes || '',
       adminNotes: bookingData.adminNotes || (source === 'customer' ? 'Khách đặt qua Website' : 'Tạo đơn tại quầy'),
       status: bookingData.status || 'pending',
+      assignedStaff: bookingData.assignedStaff || defaultStaff,
+      assignedStaffName: bookingData.assignedStaffName || defaultStaffName,
       createdBy: actor,
       createdAt: nowIso,
       updatedAt: nowIso
@@ -644,6 +734,8 @@ export const BookingStorage = {
       if (updateFields.skinNotes !== undefined) dbFields.skin_notes = updateFields.skinNotes;
       if (updateFields.adminNotes !== undefined) dbFields.admin_notes = updateFields.adminNotes;
       if (updateFields.status) dbFields.status = updateFields.status;
+      if (updateFields.assignedStaff !== undefined) dbFields.assigned_staff = updateFields.assignedStaff;
+      if (updateFields.assignedStaffName !== undefined) dbFields.assigned_staff_name = updateFields.assignedStaffName;
       dbFields.updated_at = updatedBooking.updatedAt;
 
       await supabase.from('bookings').update(dbFields).eq('id', id);
@@ -872,7 +964,8 @@ export const BookingStorage = {
     const paymentMethod = paymentData.paymentMethod || 'transfer'; // 'transfer' | 'cash'
     const discountAmount = Number(paymentData.discountAmount || 0);
     const surchargeAmount = Number(paymentData.surchargeAmount || 0);
-    const paymentNote = (paymentData.paymentNote || '').trim();
+    const assignedStaff = paymentData.assignedStaff || old.assignedStaff || (session ? session.username : '');
+    const assignedStaffName = paymentData.assignedStaffName || old.assignedStaffName || (session ? session.fullName : '');
 
     const updated = {
       ...old,
@@ -883,6 +976,8 @@ export const BookingStorage = {
       surchargeAmount,
       paymentNote,
       cashier: cashierName,
+      assignedStaff,
+      assignedStaffName,
       paidAt: nowIso,
       status: 'completed',
       updatedAt: nowIso
@@ -978,6 +1073,272 @@ export const BookingStorage = {
       totalCash,
       totalTransfer,
       paidList
+    };
+  },
+
+  // --- STAFF ATTENDANCE (CHẤM CÔNG NHÂN VIÊN) ---
+  getAllAttendance() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.ATTENDANCE);
+      if (!data) {
+        this.saveAttendance(DEFAULT_ATTENDANCE);
+        return DEFAULT_ATTENDANCE;
+      }
+      return JSON.parse(data);
+    } catch {
+      return DEFAULT_ATTENDANCE;
+    }
+  },
+
+  saveAttendance(records) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(records));
+    } catch (e) {
+      console.error('Error saving attendance:', e);
+    }
+  },
+
+  getTodayAttendance(username = null) {
+    const list = this.getAllAttendance();
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (username) {
+      return list.find(a => a.username === username && a.date === todayStr) || null;
+    }
+    return list.filter(a => a.date === todayStr);
+  },
+
+  async checkInStaff(username, shiftName = 'Ca Hành Chính', notes = '') {
+    const session = this.getCurrentSession();
+    const accounts = this.getAllAccounts();
+    const staff = accounts.find(a => a.username === username) || session;
+    const staffName = staff?.fullName || username;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const list = this.getAllAttendance();
+    const existingIndex = list.findIndex(a => a.username === username && a.date === todayStr);
+
+    if (existingIndex !== -1 && list[existingIndex].status === 'working') {
+      return { 
+        success: false, 
+        message: `Bạn đã chấm công vào ca hôm nay lúc ${list[existingIndex].checkInTime} rồi!` 
+      };
+    }
+
+    const newRecord = {
+      id: `ATT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      username,
+      staffName,
+      date: todayStr,
+      checkInTime: timeStr,
+      checkOutTime: null,
+      status: 'working',
+      workingHours: null,
+      shiftName,
+      notes: notes || 'Vào ca đúng giờ',
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
+    };
+
+    let updatedList;
+    if (existingIndex !== -1) {
+      updatedList = [...list];
+      updatedList[existingIndex] = { ...list[existingIndex], ...newRecord };
+    } else {
+      updatedList = [newRecord, ...list];
+    }
+
+    this.saveAttendance(updatedList);
+
+    this.addLog(
+      'ATTENDANCE',
+      'Chấm công vào ca',
+      `Nhân viên ${staffName} (${username}) đã chấm công VÀO CA lúc ${timeStr} ngày ${todayStr}`,
+      null,
+      staffName,
+      staff?.role || 'staff'
+    );
+
+    return { success: true, record: newRecord };
+  },
+
+  async checkOutStaff(username, notes = '') {
+    const session = this.getCurrentSession();
+    const accounts = this.getAllAccounts();
+    const staff = accounts.find(a => a.username === username) || session;
+    const staffName = staff?.fullName || username;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const list = this.getAllAttendance();
+    const index = list.findIndex(a => a.username === username && a.date === todayStr);
+
+    if (index === -1) {
+      return { 
+        success: false, 
+        message: 'Bạn chưa chấm công vào ca hôm nay nên không thể bấm tan ca!' 
+      };
+    }
+
+    const target = list[index];
+    let hours = 0;
+    try {
+      const [inH, inM] = target.checkInTime.split(':').map(Number);
+      const [outH, outM] = timeStr.split(':').map(Number);
+      const diffMinutes = (outH * 60 + outM) - (inH * 60 + inM);
+      hours = Math.max(0, +(diffMinutes / 60).toFixed(1));
+    } catch {
+      hours = 8;
+    }
+
+    const updatedRecord = {
+      ...target,
+      checkOutTime: timeStr,
+      status: 'completed',
+      workingHours: hours,
+      notes: notes ? `${target.notes || ''} | Tan ca: ${notes}` : target.notes,
+      updatedAt: now.toISOString()
+    };
+
+    list[index] = updatedRecord;
+    this.saveAttendance(list);
+
+    this.addLog(
+      'ATTENDANCE',
+      'Chấm công tan ca',
+      `Nhân viên ${staffName} (${username}) đã chấm công TAN CA lúc ${timeStr} (Tổng cộng: ${hours} giờ)`,
+      null,
+      staffName,
+      staff?.role || 'staff'
+    );
+
+    return { success: true, record: updatedRecord };
+  },
+
+  async adminMarkAttendance(recordData) {
+    if (!this.isBoss()) {
+      return { success: false, message: 'Chỉ Quản lý (Sếp) mới có quyền chỉnh sửa chấm công!' };
+    }
+    const list = this.getAllAttendance();
+    const id = recordData.id || `ATT-${Date.now()}`;
+    const nowIso = new Date().toISOString();
+
+    const record = {
+      id,
+      username: recordData.username,
+      staffName: recordData.staffName,
+      date: recordData.date || nowIso.split('T')[0],
+      checkInTime: recordData.checkInTime || '08:30',
+      checkOutTime: recordData.checkOutTime || '17:30',
+      status: recordData.status || 'completed',
+      workingHours: Number(recordData.workingHours || 8),
+      shiftName: recordData.shiftName || 'Ca Hành Chính',
+      notes: recordData.notes || 'Sếp điều chỉnh chấm công',
+      updatedAt: nowIso
+    };
+
+    const index = list.findIndex(a => a.id === id);
+    if (index !== -1) {
+      list[index] = { ...list[index], ...record };
+    } else {
+      list.unshift(record);
+    }
+
+    this.saveAttendance(list);
+    return { success: true, record };
+  },
+
+  // --- STAFF PERFORMANCE & REVENUE ATTRIBUTION ---
+  getStaffPerformance(targetUsername = null, targetMonth = null) {
+    const bookings = this.getAllBookings();
+    const accounts = this.getAllAccounts();
+    const attendance = this.getAllAttendance();
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const monthPrefix = targetMonth || todayStr.substring(0, 7);
+
+    // Filter paid or completed bookings
+    const paidList = bookings.filter(b => b.isPaid || b.status === 'completed');
+
+    const evaluateStaff = (acc) => {
+      const u = acc.username;
+      const fn = acc.fullName;
+
+      const staffBookings = paidList.filter(b => {
+        if (b.assignedStaff) {
+          return b.assignedStaff.toLowerCase() === u.toLowerCase();
+        }
+        return (b.cashier && b.cashier === fn) || (b.createdBy && b.createdBy.includes(fn));
+      });
+
+      let todayRev = 0;
+      let todayCount = 0;
+      let monthRev = 0;
+      let monthCount = 0;
+      let totalRev = 0;
+
+      const todayOrders = [];
+      const monthOrders = [];
+
+      staffBookings.forEach(b => {
+        const amt = Number(b.paidAmount) || parsePriceToNumber(b.priceDisplay);
+        const bDate = b.paidAt ? b.paidAt.split('T')[0] : b.bookingDate;
+
+        totalRev += amt;
+
+        if (bDate === todayStr) {
+          todayRev += amt;
+          todayCount++;
+          todayOrders.push(b);
+        }
+
+        if (bDate && bDate.startsWith(monthPrefix)) {
+          monthRev += amt;
+          monthCount++;
+          monthOrders.push(b);
+        }
+      });
+
+      const staffAttendance = attendance.filter(a => a.username === u && a.date.startsWith(monthPrefix));
+      const todayAtt = attendance.find(a => a.username === u && a.date === todayStr) || null;
+      const totalHours = staffAttendance.reduce((sum, a) => sum + (Number(a.workingHours) || 0), 0);
+
+      return {
+        username: u,
+        fullName: fn,
+        role: acc.role,
+        todayRevenue: todayRev,
+        todayOrdersCount: todayCount,
+        todayOrders,
+        monthRevenue: monthRev,
+        monthOrdersCount: monthCount,
+        monthOrders,
+        totalRevenue: totalRev,
+        totalOrdersCount: staffBookings.length,
+        allOrders: staffBookings,
+        attendanceHistory: staffAttendance,
+        todayAttendance: todayAtt,
+        monthWorkingDays: staffAttendance.filter(a => a.status === 'completed' || a.status === 'working').length,
+        monthTotalHours: +totalHours.toFixed(1)
+      };
+    };
+
+    if (targetUsername) {
+      const acc = accounts.find(a => a.username.toLowerCase() === targetUsername.toLowerCase()) || {
+        username: targetUsername,
+        fullName: targetUsername,
+        role: 'staff'
+      };
+      return evaluateStaff(acc);
+    }
+
+    const staffList = accounts.map(evaluateStaff);
+    return {
+      monthPrefix,
+      todayStr,
+      staffList
     };
   },
 

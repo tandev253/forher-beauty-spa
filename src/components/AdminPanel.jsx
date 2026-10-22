@@ -10,6 +10,14 @@ import {
 import { SERVICES_CATALOG, COMPANY_INFO } from '../data/servicesData';
 import { SUPABASE_URL } from '../config/supabaseClient';
 
+export const SHIFT_OPTIONS = [
+  'Ca Hành Chính (08:30 - 17:30)',
+  'Ca Sáng (08:30 - 13:00)',
+  'Ca Chiều (13:00 - 17:30)',
+  'Ca Tối (17:30 - 21:00)',
+  'Ca Toàn Thời Gian (08:30 - 20:30)'
+];
+
 export default function AdminPanel({ 
   isOpen = true, 
   onClose, 
@@ -95,11 +103,33 @@ export default function AdminPanel({
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Navigation Tabs: 'bookings' | 'revenue' | 'bank' | 'logs' | 'staff' | 'backup'
+  // Navigation Tabs: 'bookings' | 'revenue' | 'attendance' | 'my_performance' | 'bank' | 'logs' | 'staff' | 'backup'
   const [activeTab, setActiveTab] = useState('bookings');
   const [bookings, setBookings] = useState([]);
   const [logs, setLogs] = useState([]);
   const [staffAccounts, setStaffAccounts] = useState([]);
+  const [attendanceList, setAttendanceList] = useState([]);
+
+  // Attendance & Shifts State
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [selectedShift, setSelectedShift] = useState(SHIFT_OPTIONS[0]);
+  const [checkInNotes, setCheckInNotes] = useState('');
+  const [isAdminAttendanceModalOpen, setIsAdminAttendanceModalOpen] = useState(false);
+  const [adminAttendanceForm, setAdminAttendanceForm] = useState({
+    id: null,
+    username: '',
+    staffName: '',
+    date: new Date().toISOString().split('T')[0],
+    checkInTime: '08:30',
+    checkOutTime: '17:30',
+    shiftName: SHIFT_OPTIONS[0],
+    status: 'completed',
+    workingHours: 8,
+    notes: ''
+  });
+  const [bossInspectingStaff, setBossInspectingStaff] = useState(null);
+  const [staffOrderPeriod, setStaffOrderPeriod] = useState('month'); // 'today' | 'month' | 'all'
+  const [attendanceFilterStaff, setAttendanceFilterStaff] = useState('all');
 
   // Search & Filters for Bookings
   const [searchTerm, setSearchTerm] = useState('');
@@ -179,7 +209,9 @@ export default function AdminPanel({
     bookingTime: '14:00',
     skinNotes: '',
     adminNotes: '',
-    status: 'pending'
+    status: 'pending',
+    assignedStaff: '',
+    assignedStaffName: ''
   });
 
   const isBoss = session?.role === 'boss' || session?.username === 'admin';
@@ -191,6 +223,7 @@ export default function AdminPanel({
     setStaffAccounts(BookingStorage.getAllAccounts());
     setSession(BookingStorage.getCurrentSession());
     setBankConfig(BookingStorage.getBankConfig());
+    setAttendanceList(BookingStorage.getAllAttendance());
 
     // Background sync with Supabase
     try {
@@ -198,6 +231,7 @@ export default function AdminPanel({
       await BookingStorage.syncAccountsFromSupabase();
       setBookings(BookingStorage.getAllBookings());
       setStaffAccounts(BookingStorage.getAllAccounts());
+      setAttendanceList(BookingStorage.getAllAttendance());
     } catch (e) {
       // offline
     }
@@ -212,6 +246,15 @@ export default function AdminPanel({
       }
     }
   }, [isOpen]);
+
+  // Strict Role Redirection: Staff NEVER sees whole spa revenue
+  useEffect(() => {
+    if (isAuthenticated && !isBoss) {
+      if (activeTab === 'revenue' || activeTab === 'staff' || activeTab === 'attendance') {
+        setActiveTab('my_performance');
+      }
+    }
+  }, [isAuthenticated, isBoss, activeTab]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -242,6 +285,83 @@ export default function AdminPanel({
     setSession(null);
   };
 
+  // Staff Check-in Action
+  const handleStaffCheckIn = async (shift = selectedShift, notes = checkInNotes) => {
+    if (!session?.username) return;
+    const res = await BookingStorage.checkInStaff(session.username, shift, notes);
+    if (res.success) {
+      setIsCheckInModalOpen(false);
+      setCheckInNotes('');
+      refreshData();
+      alert(`Chấm công VÀO CA thành công lúc ${res.record.checkInTime} (${res.record.shiftName})! Chúc bạn làm việc tốt lành.`);
+    } else {
+      alert(res.message);
+    }
+  };
+
+  // Staff Check-out Action
+  const handleStaffCheckOut = async () => {
+    if (!session?.username) return;
+    if (!window.confirm('Bạn có chắc chắn muốn kết thúc ca làm việc và TAN CA?')) return;
+    const res = await BookingStorage.checkOutStaff(session.username, '');
+    if (res.success) {
+      refreshData();
+      alert(`Chấm công TAN CA thành công lúc ${res.record.checkOutTime}! Tổng thời gian làm việc: ${res.record.workingHours} giờ.`);
+    } else {
+      alert(res.message);
+    }
+  };
+
+  // Boss Adjust Attendance
+  const handleAdminOpenAttendanceModal = (record = null) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (record) {
+      setAdminAttendanceForm({
+        id: record.id,
+        username: record.username,
+        staffName: record.staffName,
+        date: record.date,
+        checkInTime: record.checkInTime || '08:30',
+        checkOutTime: record.checkOutTime || '17:30',
+        shiftName: record.shiftName || SHIFT_OPTIONS[0],
+        status: record.status || 'completed',
+        workingHours: record.workingHours || 8,
+        notes: record.notes || ''
+      });
+    } else {
+      const firstStaff = staffAccounts.find(s => s.role !== 'boss') || staffAccounts[0];
+      setAdminAttendanceForm({
+        id: null,
+        username: firstStaff ? firstStaff.username : '',
+        staffName: firstStaff ? firstStaff.fullName : '',
+        date: todayStr,
+        checkInTime: '08:30',
+        checkOutTime: '17:30',
+        shiftName: SHIFT_OPTIONS[0],
+        status: 'completed',
+        workingHours: 8,
+        notes: 'Sếp điều chỉnh chấm công'
+      });
+    }
+    setIsAdminAttendanceModalOpen(true);
+  };
+
+  const handleAdminSaveAttendance = async (e) => {
+    e.preventDefault();
+    if (!isBoss) {
+      alert('Chỉ Quản lý (Sếp) mới có quyền chỉnh sửa chấm công!');
+      return;
+    }
+    const res = await BookingStorage.adminMarkAttendance(adminAttendanceForm);
+    if (res.success) {
+      setIsAdminAttendanceModalOpen(false);
+      refreshData();
+      alert('Đã cập nhật bản ghi chấm công thành công!');
+    } else {
+      alert(res.message);
+    }
+  };
+
   // Status counters
   const stats = useMemo(() => {
     const total = bookings.length;
@@ -252,10 +372,28 @@ export default function AdminPanel({
     return { total, pending, confirmed, completed, cancelled };
   }, [bookings]);
 
-  // Real-time Revenue Calculations
+  // Real-time Revenue Calculations (Whole Spa - Admin Only)
   const revenueStats = useMemo(() => {
     return BookingStorage.getRevenueStats();
   }, [bookings]);
+
+  // Personal Staff Performance (Only accessible to this staff & admin)
+  const myPerformance = useMemo(() => {
+    if (!session?.username) return null;
+    return BookingStorage.getStaffPerformance(session.username);
+  }, [bookings, attendanceList, session]);
+
+  // All Staff Performance & Revenue Breakdown (Admin Only)
+  const allStaffPerformance = useMemo(() => {
+    if (!isBoss) return null;
+    return BookingStorage.getStaffPerformance(null);
+  }, [bookings, attendanceList, staffAccounts, isBoss]);
+
+  // Today's attendance of current user
+  const todayMyAttendance = useMemo(() => {
+    if (!session?.username) return null;
+    return BookingStorage.getTodayAttendance(session.username);
+  }, [attendanceList, session]);
 
   // Filtered revenue list for Revenue Tab
   const filteredRevenueList = useMemo(() => {
@@ -415,7 +553,9 @@ export default function AdminPanel({
       bookingTime: '14:00',
       skinNotes: '',
       adminNotes: '',
-      status: 'pending'
+      status: 'pending',
+      assignedStaff: isBoss ? '' : (session?.username || ''),
+      assignedStaffName: isBoss ? '' : (session?.fullName || '')
     });
     setIsFormModalOpen(true);
   };
@@ -435,7 +575,9 @@ export default function AdminPanel({
       bookingTime: booking.bookingTime || '',
       skinNotes: booking.skinNotes || '',
       adminNotes: booking.adminNotes || '',
-      status: booking.status || 'pending'
+      status: booking.status || 'pending',
+      assignedStaff: booking.assignedStaff || '',
+      assignedStaffName: booking.assignedStaffName || ''
     });
     setIsFormModalOpen(true);
   };
@@ -686,13 +828,32 @@ export default function AdminPanel({
                     >
                       Quản Lý Đơn Đặt ({bookings.length})
                     </button>
-                    <button 
-                      type="button" 
-                      className={`drawer-link-item ${activeTab === 'revenue' ? 'active-tab-drawer' : ''}`}
-                      onClick={() => { setActiveTab('revenue'); setIsMobileMenuOpen(false); }}
-                    >
-                      Báo Cáo Doanh Thu
-                    </button>
+                    {isBoss ? (
+                      <>
+                        <button 
+                          type="button" 
+                          className={`drawer-link-item ${activeTab === 'revenue' ? 'active-tab-drawer' : ''}`}
+                          onClick={() => { setActiveTab('revenue'); setIsMobileMenuOpen(false); }}
+                        >
+                          Báo Cáo Doanh Thu (Toàn Spa)
+                        </button>
+                        <button 
+                          type="button" 
+                          className={`drawer-link-item ${activeTab === 'attendance' ? 'active-tab-drawer' : ''}`}
+                          onClick={() => { setActiveTab('attendance'); setIsMobileMenuOpen(false); }}
+                        >
+                          Chấm Công & Hiệu Suất NV
+                        </button>
+                      </>
+                    ) : (
+                      <button 
+                        type="button" 
+                        className={`drawer-link-item ${activeTab === 'my_performance' ? 'active-tab-drawer' : ''}`}
+                        onClick={() => { setActiveTab('my_performance'); setIsMobileMenuOpen(false); }}
+                      >
+                        Chấm Công & Doanh Thu Của Tôi
+                      </button>
+                    )}
                     <button 
                       type="button" 
                       className={`drawer-link-item ${activeTab === 'bank' ? 'active-tab-drawer' : ''}`}
@@ -890,43 +1051,109 @@ export default function AdminPanel({
         ) : (
           /* AUTHENTICATED ADMIN DASHBOARD */
           <div className="admin-dashboard-body">
-            {/* MOBILE COMPACT EXECUTIVE SUMMARY (Chỉ hiển thị trên mobile, gọn gàng, sang trọng) */}
+            {/* MOBILE COMPACT EXECUTIVE SUMMARY (Tách biệt Sếp xem cả spa, Nhân viên chỉ thấy của mình) */}
             <div className="mobile-exec-summary">
-              <div className="mobile-exec-card">
-                <div className="mobile-exec-top">
-                  <div className="mobile-exec-label">
-                    <span>DOANH THU {mobileRevenuePeriod === 'today' ? 'HÔM NAY' : `THÁNG ${revenueStats.currentMonthPrefix.split('-')[1]}`}</span>
+              {isBoss ? (
+                <div className="mobile-exec-card boss-card">
+                  <div className="mobile-exec-top">
+                    <div className="mobile-exec-label">
+                      <span>DOANH THU SPA {mobileRevenuePeriod === 'today' ? 'HÔM NAY' : `THÁNG ${revenueStats.currentMonthPrefix.split('-')[1]}`}</span>
+                    </div>
+                    <div className="mobile-period-pills">
+                      <button 
+                        type="button" 
+                        className={`period-pill ${mobileRevenuePeriod === 'today' ? 'active' : ''}`}
+                        onClick={() => setMobileRevenuePeriod('today')}
+                      >
+                        Hôm Nay
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`period-pill ${mobileRevenuePeriod === 'month' ? 'active' : ''}`}
+                        onClick={() => setMobileRevenuePeriod('month')}
+                      >
+                        Tháng {revenueStats.currentMonthPrefix.split('-')[1]}
+                      </button>
+                    </div>
                   </div>
-                  <div className="mobile-period-pills">
-                    <button 
-                      type="button" 
-                      className={`period-pill ${mobileRevenuePeriod === 'today' ? 'active' : ''}`}
-                      onClick={() => setMobileRevenuePeriod('today')}
-                    >
-                      Hôm Nay
-                    </button>
-                    <button 
-                      type="button" 
-                      className={`period-pill ${mobileRevenuePeriod === 'month' ? 'active' : ''}`}
-                      onClick={() => setMobileRevenuePeriod('month')}
-                    >
-                      Tháng {revenueStats.currentMonthPrefix.split('-')[1]}
-                    </button>
+
+                  <div className="mobile-exec-big-num">
+                    {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayRevenue : revenueStats.monthRevenue)}
+                  </div>
+
+                  <div className="mobile-exec-details">
+                    <span>{mobileRevenuePeriod === 'today' ? revenueStats.todayPaidCount : revenueStats.monthPaidCount} đơn đã thu</span>
+                    <span className="dot">•</span>
+                    <span>CK: {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayTransfer : revenueStats.monthTransfer)}</span>
+                    <span className="dot">•</span>
+                    <span>TM: {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayCash : revenueStats.monthCash)}</span>
                   </div>
                 </div>
+              ) : (
+                <div className="mobile-exec-card staff-card">
+                  <div className="mobile-exec-top">
+                    <div className="mobile-exec-label">
+                      <span className="personal-badge-tag">CỦA BẠN</span>
+                      <span>DOANH THU & CA LÀM</span>
+                    </div>
+                    <div className="mobile-period-pills">
+                      <button 
+                        type="button" 
+                        className={`period-pill ${mobileRevenuePeriod === 'today' ? 'active' : ''}`}
+                        onClick={() => setMobileRevenuePeriod('today')}
+                      >
+                        Hôm Nay
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`period-pill ${mobileRevenuePeriod === 'month' ? 'active' : ''}`}
+                        onClick={() => setMobileRevenuePeriod('month')}
+                      >
+                        Tháng {new Date().getMonth() + 1}
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="mobile-exec-big-num">
-                  {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayRevenue : revenueStats.monthRevenue)}
-                </div>
+                  <div className="mobile-exec-big-num">
+                    {formatVnd(mobileRevenuePeriod === 'today' ? myPerformance?.todayRevenue || 0 : myPerformance?.monthRevenue || 0)}
+                  </div>
 
-                <div className="mobile-exec-details">
-                  <span>{mobileRevenuePeriod === 'today' ? revenueStats.todayPaidCount : revenueStats.monthPaidCount} đơn đã thu</span>
-                  <span className="dot">•</span>
-                  <span>CK: {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayTransfer : revenueStats.monthTransfer)}</span>
-                  <span className="dot">•</span>
-                  <span>TM: {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayCash : revenueStats.monthCash)}</span>
+                  <div className="mobile-exec-details">
+                    <span><strong>{mobileRevenuePeriod === 'today' ? myPerformance?.todayOrdersCount || 0 : myPerformance?.monthOrdersCount || 0}</strong> đơn bạn làm</span>
+                    <span className="dot">•</span>
+                    <span>Công tháng: <strong>{myPerformance?.monthWorkingDays || 0}</strong> ngày ({myPerformance?.monthTotalHours || 0}h)</span>
+                  </div>
+
+                  {/* Quick Attendance action bar for Staff on Mobile */}
+                  <div className="mobile-attendance-quick-action">
+                    {!todayMyAttendance ? (
+                      <button 
+                        type="button" 
+                        className="btn-mobile-quick-checkin"
+                        onClick={() => setIsCheckInModalOpen(true)}
+                      >
+                        <span className="dot-pulse green"></span>
+                        <span>Bấm Điểm Danh Vào Ca</span>
+                      </button>
+                    ) : todayMyAttendance.status === 'working' ? (
+                      <div className="mobile-working-row">
+                        <span className="working-pill">🟢 Đang trong ca ({todayMyAttendance.checkInTime})</span>
+                        <button 
+                          type="button" 
+                          className="btn-mobile-quick-checkout"
+                          onClick={handleStaffCheckOut}
+                        >
+                          Tan Ca
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mobile-done-row">
+                        <span className="done-pill">✓ Đã tan ca ({todayMyAttendance.checkInTime} - {todayMyAttendance.checkOutTime} | {todayMyAttendance.workingHours}h)</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* MOBILE QUICK STATUS FILTER CHIPS */}
               <div className="mobile-status-chips-scroll">
@@ -968,42 +1195,105 @@ export default function AdminPanel({
               </div>
             </div>
 
-            {/* REVENUE STATS STRIP (DOANH THU NGÀY VÀ THÁNG) */}
-            <div className="admin-revenue-strip">
-              <div className="revenue-stat-card today">
-                <span className="rev-card-title">Doanh Thu Hôm Nay</span>
-                <span className="rev-card-amount">{formatVnd(revenueStats.todayRevenue)}</span>
-                <div className="rev-card-meta">
-                  <span>{revenueStats.todayPaidCount} đơn đã thu tiền</span>
-                  <span>TM: {formatVnd(revenueStats.todayCash)} | CK: {formatVnd(revenueStats.todayTransfer)}</span>
+            {/* REVENUE STATS STRIP (DOANH THU TOÀN SPA CHO SẾP - DOANH THU CÁ NHÂN CHO NHÂN VIÊN) */}
+            {isBoss ? (
+              <div className="admin-revenue-strip boss-strip">
+                <div className="revenue-stat-card today">
+                  <span className="rev-card-title">Doanh Thu Toàn Spa Hôm Nay</span>
+                  <span className="rev-card-amount">{formatVnd(revenueStats.todayRevenue)}</span>
+                  <div className="rev-card-meta">
+                    <span>{revenueStats.todayPaidCount} đơn đã thu tiền</span>
+                    <span>TM: {formatVnd(revenueStats.todayCash)} | CK: {formatVnd(revenueStats.todayTransfer)}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="revenue-stat-card month">
-                <span className="rev-card-title">Doanh Thu Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
-                <span className="rev-card-amount">{formatVnd(revenueStats.monthRevenue)}</span>
-                <div className="rev-card-meta">
-                  <span>{revenueStats.monthPaidCount} đơn đã thu tiền</span>
-                  <span>TM: {formatVnd(revenueStats.monthCash)} | CK: {formatVnd(revenueStats.monthTransfer)}</span>
+                <div className="revenue-stat-card month">
+                  <span className="rev-card-title">Doanh Thu Spa Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
+                  <span className="rev-card-amount">{formatVnd(revenueStats.monthRevenue)}</span>
+                  <div className="rev-card-meta">
+                    <span>{revenueStats.monthPaidCount} đơn đã thu tiền</span>
+                    <span>TM: {formatVnd(revenueStats.monthCash)} | CK: {formatVnd(revenueStats.monthTransfer)}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="revenue-stat-card cash">
-                <span className="rev-card-title">Tiền Mặt Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
-                <span className="rev-card-amount">{formatVnd(revenueStats.monthCash)}</span>
-                <div className="rev-card-meta">
-                  <span>Thu tại quầy lễ tân</span>
+                <div className="revenue-stat-card cash">
+                  <span className="rev-card-title">Tiền Mặt Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
+                  <span className="rev-card-amount">{formatVnd(revenueStats.monthCash)}</span>
+                  <div className="rev-card-meta">
+                    <span>Thu tại quầy lễ tân</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="revenue-stat-card transfer">
-                <span className="rev-card-title">VietQR Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
-                <span className="rev-card-amount">{formatVnd(revenueStats.monthTransfer)}</span>
-                <div className="rev-card-meta">
-                  <span>TK: {bankConfig.accountNumber} ({bankConfig.bankId})</span>
+                <div className="revenue-stat-card transfer">
+                  <span className="rev-card-title">VietQR Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
+                  <span className="rev-card-amount">{formatVnd(revenueStats.monthTransfer)}</span>
+                  <div className="rev-card-meta">
+                    <span>TK: {bankConfig.accountNumber} ({bankConfig.bankId})</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="admin-revenue-strip staff-strip">
+                <div className="revenue-stat-card today personal">
+                  <span className="rev-card-title">Doanh Thu Của Bạn Hôm Nay</span>
+                  <span className="rev-card-amount">{formatVnd(myPerformance?.todayRevenue || 0)}</span>
+                  <div className="rev-card-meta">
+                    <span><strong>{myPerformance?.todayOrdersCount || 0}</strong> đơn bạn phục vụ hôm nay</span>
+                  </div>
+                </div>
+
+                <div className="revenue-stat-card month personal">
+                  <span className="rev-card-title">Doanh Thu Của Bạn Tháng {new Date().getMonth() + 1}</span>
+                  <span className="rev-card-amount">{formatVnd(myPerformance?.monthRevenue || 0)}</span>
+                  <div className="rev-card-meta">
+                    <span><strong>{myPerformance?.monthOrdersCount || 0}</strong> đơn bạn phục vụ trong tháng</span>
+                  </div>
+                </div>
+
+                <div className="revenue-stat-card total personal">
+                  <span className="rev-card-title">Ngày Công & Giờ Làm Tháng Này</span>
+                  <span className="rev-card-amount">{myPerformance?.monthWorkingDays || 0} ngày</span>
+                  <div className="rev-card-meta">
+                    <span>Tổng <strong>{myPerformance?.monthTotalHours || 0}</strong> giờ làm việc</span>
+                  </div>
+                </div>
+
+                <div className="revenue-stat-card attendance-card">
+                  <span className="rev-card-title">Chấm Công Hôm Nay</span>
+                  {!todayMyAttendance ? (
+                    <div style={{ marginTop: '8px' }}>
+                      <button 
+                        type="button" 
+                        className="btn-attendance-action checkin w-100"
+                        onClick={() => setIsCheckInModalOpen(true)}
+                      >
+                        🟢 Chấm Công Vào Ca
+                      </button>
+                    </div>
+                  ) : todayMyAttendance.status === 'working' ? (
+                    <div style={{ marginTop: '6px' }}>
+                      <div style={{ fontSize: '0.82rem', color: '#047857', fontWeight: 600, marginBottom: '6px' }}>
+                        🟢 Vào ca: {todayMyAttendance.checkInTime} ({todayMyAttendance.shiftName})
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn-attendance-action checkout w-100"
+                        onClick={handleStaffCheckOut}
+                      >
+                        🏁 Tan Ca Làm Việc
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#065F46', fontWeight: 600 }}>
+                      ✓ Đã tan ca ({todayMyAttendance.checkInTime} - {todayMyAttendance.checkOutTime})
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                        Tổng: {todayMyAttendance.workingHours}h làm việc
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* STATUS STATS STRIP */}
             <div className="admin-stats-strip">
@@ -1040,13 +1330,33 @@ export default function AdminPanel({
                   Quản Lý Đơn Đặt ({bookings.length})
                 </button>
 
-                <button
-                  type="button"
-                  className={`admin-tab-btn ${activeTab === 'revenue' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('revenue')}
-                >
-                  Báo Cáo Doanh Thu
-                </button>
+                {isBoss ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`admin-tab-btn ${activeTab === 'revenue' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('revenue')}
+                    >
+                      Báo Cáo Doanh Thu (Toàn Spa)
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`admin-tab-btn ${activeTab === 'attendance' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('attendance')}
+                    >
+                      Chấm Công & Hiệu Suất NV
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className={`admin-tab-btn ${activeTab === 'my_performance' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('my_performance')}
+                  >
+                    Chấm Công & Doanh Thu Của Tôi
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -1255,6 +1565,12 @@ export default function AdminPanel({
                                   <span className="mode-pill">{b.modeLabel}</span>
                                   <span className="price-tag">{b.priceDisplay}</span>
                                 </div>
+                                {b.assignedStaffName && (
+                                  <div className="table-assigned-staff" title={`Kỹ thuật viên: ${b.assignedStaffName}`}>
+                                    <span className="staff-icon">👤</span>
+                                    <span>NV: <strong>{b.assignedStaffName}</strong></span>
+                                  </div>
+                                )}
                               </td>
 
                               <td className="col-datetime">
@@ -1414,6 +1730,7 @@ export default function AdminPanel({
                               <div className="mobile-summary-service-row">
                                 <span className="mobile-summary-service">{b.serviceName}</span>
                                 {b.bookingTime && <span className="mobile-summary-time">• {b.bookingTime}</span>}
+                                {b.assignedStaffName && <span className="mobile-summary-staff-pill">• NV: {b.assignedStaffName}</span>}
                               </div>
                             </div>
 
@@ -1577,8 +1894,8 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB CONTENT 2: REVENUE REPORTS (BÁO CÁO DOANH THU) */}
-            {activeTab === 'revenue' && (
+            {/* TAB CONTENT 2: REVENUE REPORTS (BÁO CÁO DOANH THU TOÀN SPA - CHỈ SẾP ADMIN THẤY) */}
+            {activeTab === 'revenue' && isBoss && (
               <div className="admin-tab-content">
                 <div className="revenue-tab-header">
                   <div>
@@ -1714,6 +2031,527 @@ export default function AdminPanel({
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: CHẤM CÔNG & DOANH THU CỦA TÔI (STAFF PERSONAL VIEW) */}
+            {activeTab === 'my_performance' && (
+              <div className="admin-tab-content">
+                <div className="performance-tab-header">
+                  <div className="perf-header-info">
+                    <div className="perf-header-badge-row">
+                      <span className="staff-role-chip">KỸ THUẬT VIÊN / LỄ TÂN</span>
+                      <span className="staff-acc-chip">@{session?.username}</span>
+                    </div>
+                    <h3>Bảng Chấm Công & Doanh Thu Cá Nhân: {session?.fullName}</h3>
+                    <p>Theo dõi ngày công, giờ làm việc thực tế, số lượng đơn khách hàng và doanh thu bạn đem lại cho spa.</p>
+                  </div>
+
+                  <div className="perf-header-actions">
+                    {!todayMyAttendance ? (
+                      <button 
+                        type="button" 
+                        className="btn-attendance-hero checkin"
+                        onClick={() => setIsCheckInModalOpen(true)}
+                      >
+                        <span className="btn-icon">🟢</span>
+                        <span>Chấm Công Vào Ca</span>
+                      </button>
+                    ) : todayMyAttendance.status === 'working' ? (
+                      <div className="hero-working-box">
+                        <span className="hero-working-pill">🟢 Đang trong ca từ {todayMyAttendance.checkInTime}</span>
+                        <button 
+                          type="button" 
+                          className="btn-attendance-hero checkout"
+                          onClick={handleStaffCheckOut}
+                        >
+                          <span className="btn-icon">🏁</span>
+                          <span>Chấm Công Tan Ca</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="hero-completed-box">
+                        <span className="hero-done-pill">✓ Đã tan ca ({todayMyAttendance.checkInTime} - {todayMyAttendance.checkOutTime} | {todayMyAttendance.workingHours}h)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* BỘ 4 THẺ CHỈ SỐ DOANH THU & NGÀY CÔNG CÁ NHÂN */}
+                <div className="admin-revenue-strip staff-strip">
+                  <div className="revenue-stat-card today personal">
+                    <span className="rev-card-title">Doanh Thu Của Bạn Hôm Nay</span>
+                    <span className="rev-card-amount">{formatVnd(myPerformance?.todayRevenue || 0)}</span>
+                    <div className="rev-card-meta">
+                      <span><strong>{myPerformance?.todayOrdersCount || 0}</strong> đơn bạn phục vụ hôm nay</span>
+                    </div>
+                  </div>
+
+                  <div className="revenue-stat-card month personal">
+                    <span className="rev-card-title">Doanh Thu Của Bạn Tháng {new Date().getMonth() + 1}</span>
+                    <span className="rev-card-amount">{formatVnd(myPerformance?.monthRevenue || 0)}</span>
+                    <div className="rev-card-meta">
+                      <span><strong>{myPerformance?.monthOrdersCount || 0}</strong> đơn bạn phục vụ trong tháng</span>
+                    </div>
+                  </div>
+
+                  <div className="revenue-stat-card total personal">
+                    <span className="rev-card-title">Tổng Doanh Thu Tích Lũy</span>
+                    <span className="rev-card-amount">{formatVnd(myPerformance?.totalRevenue || 0)}</span>
+                    <div className="rev-card-meta">
+                      <span>Tổng <strong>{myPerformance?.totalOrdersCount || 0}</strong> đơn đã phục vụ</span>
+                    </div>
+                  </div>
+
+                  <div className="revenue-stat-card hours personal">
+                    <span className="rev-card-title">Ngày Công & Giờ Làm Tháng Này</span>
+                    <span className="rev-card-amount">{myPerformance?.monthWorkingDays || 0} ngày</span>
+                    <div className="rev-card-meta">
+                      <span>Tổng <strong>{myPerformance?.monthTotalHours || 0}</strong> giờ làm việc</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BẢNG 1: DANH SÁCH ĐƠN HÀNG CÁ NHÂN PHỤC VỤ */}
+                <div className="staff-section-card">
+                  <div className="staff-section-header">
+                    <div>
+                      <h4>Đơn Hàng Bạn Đã Phục Vụ ({myPerformance?.allOrders?.length || 0})</h4>
+                      <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                        Doanh thu và đơn hàng này được tính vào chỉ số KPI năng suất làm việc của bạn.
+                      </p>
+                    </div>
+                    <div className="revenue-period-selector">
+                      <button
+                        type="button"
+                        className={`rev-period-btn ${staffOrderPeriod === 'today' ? 'active' : ''}`}
+                        onClick={() => setStaffOrderPeriod('today')}
+                      >
+                        Hôm Nay ({myPerformance?.todayOrdersCount || 0})
+                      </button>
+                      <button
+                        type="button"
+                        className={`rev-period-btn ${staffOrderPeriod === 'month' ? 'active' : ''}`}
+                        onClick={() => setStaffOrderPeriod('month')}
+                      >
+                        Tháng Này ({myPerformance?.monthOrdersCount || 0})
+                      </button>
+                      <button
+                        type="button"
+                        className={`rev-period-btn ${staffOrderPeriod === 'all' ? 'active' : ''}`}
+                        onClick={() => setStaffOrderPeriod('all')}
+                      >
+                        Tất Cả ({myPerformance?.totalOrdersCount || 0})
+                      </button>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const displayedOrders = staffOrderPeriod === 'today' 
+                      ? (myPerformance?.todayOrders || [])
+                      : (staffOrderPeriod === 'month' ? (myPerformance?.monthOrders || []) : (myPerformance?.allOrders || []));
+
+                    if (displayedOrders.length === 0) {
+                      return (
+                        <div className="admin-empty-state" style={{ padding: '30px 15px' }}>
+                          <p>Chưa có đơn hàng nào trong khoảng thời gian này.</p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="admin-table-container">
+                        <table className="admin-data-table">
+                          <thead>
+                            <tr>
+                              <th>MÃ ĐƠN</th>
+                              <th>KHÁCH HÀNG</th>
+                              <th>DỊCH VỤ / LIỆU TRÌNH</th>
+                              <th>NGÀY HẸN</th>
+                              <th>DOANH THU ĐƠN</th>
+                              <th>HÌNH THỨC</th>
+                              <th>THAO TÁC</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {displayedOrders.map(b => (
+                              <tr key={b.id}>
+                                <td><strong className="order-id-badge">#{b.id}</strong></td>
+                                <td>
+                                  <strong>{b.fullName}</strong>
+                                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{b.phoneNumber}</div>
+                                </td>
+                                <td>
+                                  <span>{b.serviceName}</span>
+                                  <small style={{ display: 'block', color: 'var(--text-muted)' }}>{b.modeLabel}</small>
+                                </td>
+                                <td>{b.bookingDate} {b.bookingTime}</td>
+                                <td><strong style={{ color: '#047857' }}>{formatVnd(b.paidAmount || b.priceDisplay)}</strong></td>
+                                <td><span className="payment-pill paid">{b.paymentMethod === 'cash' ? 'Tiền mặt' : 'VietQR'}</span></td>
+                                <td>
+                                  <div className="action-buttons-wrap">
+                                    <button type="button" className="btn-tbl-action view" onClick={() => handleOpenDetail(b)}>
+                                      Chi Tiết
+                                    </button>
+                                    <button type="button" className="btn-tbl-action bill" onClick={() => handleOpenReceipt(b)}>
+                                      In Bill
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* BẢNG 2: LỊCH SỬ CHẤM CÔNG CÁ NHÂN */}
+                <div className="staff-section-card" style={{ marginTop: '24px' }}>
+                  <div className="staff-section-header">
+                    <div>
+                      <h4>Nhật Ký Chấm Công Tháng Này ({myPerformance?.attendanceHistory?.length || 0} ca)</h4>
+                      <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                        Tổng hợp các ca làm việc, thời gian vào ca, tan ca và số giờ thực tế được ghi nhận.
+                      </p>
+                    </div>
+                  </div>
+
+                  {(!myPerformance?.attendanceHistory || myPerformance.attendanceHistory.length === 0) ? (
+                    <div className="admin-empty-state" style={{ padding: '30px 15px' }}>
+                      <p>Chưa có dữ liệu chấm công nào trong tháng.</p>
+                    </div>
+                  ) : (
+                    <div className="admin-table-container">
+                      <table className="admin-data-table">
+                        <thead>
+                          <tr>
+                            <th>NGÀY</th>
+                            <th>CA LÀM VIỆC</th>
+                            <th>GIỜ VÀO</th>
+                            <th>GIỜ TAN CA</th>
+                            <th>SỐ GIỜ LÀM</th>
+                            <th>TRẠNG THÁI</th>
+                            <th>GHI CHÚ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {myPerformance.attendanceHistory.map(att => (
+                            <tr key={att.id}>
+                              <td><strong>{att.date}</strong></td>
+                              <td>{att.shiftName}</td>
+                              <td><span className="time-badge in">{att.checkInTime}</span></td>
+                              <td>
+                                {att.checkOutTime ? (
+                                  <span className="time-badge out">{att.checkOutTime}</span>
+                                ) : (
+                                  <span className="time-badge active">Đang làm việc</span>
+                                )}
+                              </td>
+                              <td><strong>{att.workingHours ? `${att.workingHours} giờ` : '—'}</strong></td>
+                              <td>
+                                {att.status === 'completed' ? (
+                                  <span className="admin-role-pill staff" style={{ background: '#ECFDF5', color: '#065F46' }}>Hoàn thành</span>
+                                ) : att.status === 'working' ? (
+                                  <span className="admin-role-pill boss" style={{ background: '#FEF3C7', color: '#92400E' }}>Đang trong ca</span>
+                                ) : (
+                                  <span className="admin-role-pill" style={{ background: '#F3F4F6', color: '#4B5563' }}>Nghỉ phép</span>
+                                )}
+                              </td>
+                              <td><small className="text-muted">{att.notes || '—'}</small></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: QUẢN LÝ CHẤM CÔNG & HIỆU SUẤT TẤT CẢ NHÂN VIÊN (BOSS ONLY) */}
+            {activeTab === 'attendance' && isBoss && (
+              <div className="admin-tab-content">
+                <div className="revenue-tab-header">
+                  <div>
+                    <h3>Quản Lý Chấm Công & Hiệu Suất Từng Nhân Viên</h3>
+                    <p>Bảng xếp hạng doanh thu, số lượng đơn phục vụ và nhật ký thời gian chấm công của tất cả nhân viên trong spa.</p>
+                  </div>
+                  <div className="revenue-header-actions">
+                    <button
+                      type="button"
+                      className="btn-primary-gold"
+                      onClick={() => handleAdminOpenAttendanceModal(null)}
+                    >
+                      + Chấm Công Bổ Sung / Điều Chỉnh
+                    </button>
+                  </div>
+                </div>
+
+                {/* THẺ TỔNG QUAN TÌNH TRẠNG CA HÔM NAY */}
+                {(() => {
+                  const allStaff = allStaffPerformance?.staffList || [];
+                  const workingNow = allStaff.filter(s => s.todayAttendance?.status === 'working').length;
+                  const completedToday = allStaff.filter(s => s.todayAttendance?.status === 'completed').length;
+                  const notInShift = allStaff.filter(s => !s.todayAttendance).length;
+                  const todaySpaStaffRev = allStaff.reduce((sum, s) => sum + s.todayRevenue, 0);
+
+                  return (
+                    <div className="admin-revenue-strip staff-overview-strip">
+                      <div className="revenue-stat-card working">
+                        <span className="rev-card-title">Đang Trong Ca Hôm Nay</span>
+                        <span className="rev-card-amount">{workingNow} nhân viên</span>
+                        <div className="rev-card-meta">
+                          <span>Đang phục vụ khách tại quầy & phòng</span>
+                        </div>
+                      </div>
+
+                      <div className="revenue-stat-card completed">
+                        <span className="rev-card-title">Đã Tan Ca Hôm Nay</span>
+                        <span className="rev-card-amount">{completedToday} nhân viên</span>
+                        <div className="rev-card-meta">
+                          <span>Đã hoàn thành ca làm việc</span>
+                        </div>
+                      </div>
+
+                      <div className="revenue-stat-card off">
+                        <span className="rev-card-title">Chưa Vào Ca Hôm Nay</span>
+                        <span className="rev-card-amount">{notInShift} nhân viên</span>
+                        <div className="rev-card-meta">
+                          <span>Chưa điểm danh vào ca</span>
+                        </div>
+                      </div>
+
+                      <div className="revenue-stat-card today">
+                        <span className="rev-card-title">Doanh Thu NV Hôm Nay</span>
+                        <span className="rev-card-amount">{formatVnd(todaySpaStaffRev)}</span>
+                        <div className="rev-card-meta">
+                          <span>Tổng thu từ đơn do NV phục vụ</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* BẢNG 1: BẢNG XẾP HẠNG DOANH THU & CHẤM CÔNG TỪNG NHÂN VIÊN */}
+                <div className="staff-section-card">
+                  <div className="staff-section-header">
+                    <div>
+                      <h4>Bảng Xếp Hạng & Hiệu Suất Nhân Viên Tháng {new Date().getMonth() + 1}</h4>
+                      <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                        Doanh thu và số đơn riêng của từng nhân viên được phân chia minh bạch và chỉ Sếp mới xem được toàn bộ.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-data-table">
+                      <thead>
+                        <tr>
+                          <th>NHÂN VIÊN</th>
+                          <th>TRẠNG THÁI HÔM NAY</th>
+                          <th>ĐƠN HÔM NAY</th>
+                          <th>DOANH THU HÔM NAY</th>
+                          <th>ĐƠN THÁNG NÀY</th>
+                          <th>DOANH THU THÁNG NÀY</th>
+                          <th>CÔNG THÁNG</th>
+                          <th>TỔNG GIỜ</th>
+                          <th>THAO TÁC</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(allStaffPerformance?.staffList || []).map((st) => {
+                          const isSelected = bossInspectingStaff === st.username;
+                          const att = st.todayAttendance;
+                          return (
+                            <tr key={st.username} className={isSelected ? 'selected-staff-row' : ''}>
+                              <td>
+                                <strong>{st.fullName}</strong>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                  @{st.username} • {st.role === 'boss' ? 'Sếp' : 'Nhân viên'}
+                                </div>
+                              </td>
+                              <td>
+                                {att?.status === 'working' ? (
+                                  <span className="status-working-pill">🟢 Đang làm ({att.checkInTime})</span>
+                                ) : att?.status === 'completed' ? (
+                                  <span className="status-done-pill">✓ Đã tan ca ({att.workingHours}h)</span>
+                                ) : (
+                                  <span className="status-off-pill">⚪ Chưa vào ca</span>
+                                )}
+                              </td>
+                              <td><strong>{st.todayOrdersCount}</strong></td>
+                              <td><strong style={{ color: '#047857' }}>{formatVnd(st.todayRevenue)}</strong></td>
+                              <td><strong>{st.monthOrdersCount}</strong></td>
+                              <td><strong style={{ color: 'var(--primary-gold-dark)' }}>{formatVnd(st.monthRevenue)}</strong></td>
+                              <td>{st.monthWorkingDays} ngày</td>
+                              <td>{st.monthTotalHours}h</td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className={`btn-tbl-action ${isSelected ? 'bill' : 'view'}`}
+                                  onClick={() => setBossInspectingStaff(isSelected ? null : st.username)}
+                                >
+                                  {isSelected ? 'Đóng Đơn' : 'Xem Đơn NV'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* NẾU SẾP ĐANG CHỌN XEM ĐƠN CỦA 1 NHÂN VIÊN CỤ THỂ */}
+                {bossInspectingStaff && (
+                  <div className="staff-section-card inspecting-orders-card" style={{ marginTop: '20px' }}>
+                    {(() => {
+                      const inspectedStaff = (allStaffPerformance?.staffList || []).find(s => s.username === bossInspectingStaff);
+                      const orders = inspectedStaff?.allOrders || [];
+                      return (
+                        <>
+                          <div className="staff-section-header">
+                            <div>
+                              <h4>Chi Tiết Đơn Hàng Do Nhân Viên: {inspectedStaff?.fullName} (@{bossInspectingStaff}) Phục Vụ</h4>
+                              <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                                Tổng cộng: {orders.length} đơn • Doanh thu tích lũy: {formatVnd(inspectedStaff?.totalRevenue || 0)}
+                              </p>
+                            </div>
+                            <button type="button" className="btn-outline-gold" onClick={() => setBossInspectingStaff(null)}>
+                              ✕ Đóng Chi Tiết
+                            </button>
+                          </div>
+
+                          {orders.length === 0 ? (
+                            <div className="admin-empty-state" style={{ padding: '24px' }}>
+                              <p>Nhân viên này chưa phụ trách đơn hàng nào.</p>
+                            </div>
+                          ) : (
+                            <div className="admin-table-container">
+                              <table className="admin-data-table">
+                                <thead>
+                                  <tr>
+                                    <th>MÃ ĐƠN</th>
+                                    <th>KHÁCH HÀNG</th>
+                                    <th>DỊCH VỤ</th>
+                                    <th>NGÀY HẸN</th>
+                                    <th>DOANH THU</th>
+                                    <th>HÌNH THỨC</th>
+                                    <th>THAO TÁC</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {orders.map(b => (
+                                    <tr key={b.id}>
+                                      <td><strong>#{b.id}</strong></td>
+                                      <td>{b.fullName} ({b.phoneNumber})</td>
+                                      <td>{b.serviceName}</td>
+                                      <td>{b.bookingDate} {b.bookingTime}</td>
+                                      <td><strong style={{ color: '#047857' }}>{formatVnd(b.paidAmount || b.priceDisplay)}</strong></td>
+                                      <td>{b.paymentMethod === 'cash' ? 'Tiền mặt' : 'VietQR'}</td>
+                                      <td>
+                                        <button type="button" className="btn-tbl-action view" onClick={() => handleOpenDetail(b)}>
+                                          Xem
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* BẢNG 2: NHẬT KÝ CHẤM CÔNG TOÀN BỘ CƠ SỞ */}
+                <div className="staff-section-card" style={{ marginTop: '24px' }}>
+                  <div className="staff-section-header">
+                    <div>
+                      <h4>Nhật Ký Chấm Công Toàn Cơ Sở ({attendanceList.length} lượt)</h4>
+                      <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                        Chi tiết giờ vào ca, tan ca và số giờ làm việc thực tế của từng nhân viên.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select 
+                        value={attendanceFilterStaff} 
+                        onChange={(e) => setAttendanceFilterStaff(e.target.value)}
+                        className="staff-filter-select"
+                      >
+                        <option value="all">Tất cả nhân viên</option>
+                        {staffAccounts.map(a => (
+                          <option key={a.username} value={a.username}>{a.fullName} (@{a.username})</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-data-table">
+                      <thead>
+                        <tr>
+                          <th>NHÂN VIÊN</th>
+                          <th>NGÀY</th>
+                          <th>CA LÀM VIỆC</th>
+                          <th>GIỜ VÀO</th>
+                          <th>GIỜ RA</th>
+                          <th>SỐ GIỜ</th>
+                          <th>TRẠNG THÁI</th>
+                          <th>GHI CHÚ</th>
+                          <th>THAO TÁC</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {attendanceList
+                          .filter(a => attendanceFilterStaff === 'all' || a.username === attendanceFilterStaff)
+                          .map((att) => (
+                            <tr key={att.id}>
+                              <td>
+                                <strong>{att.staffName}</strong>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{att.username}</div>
+                              </td>
+                              <td><strong>{att.date}</strong></td>
+                              <td>{att.shiftName}</td>
+                              <td><span className="time-badge in">{att.checkInTime}</span></td>
+                              <td>
+                                {att.checkOutTime ? (
+                                  <span className="time-badge out">{att.checkOutTime}</span>
+                                ) : (
+                                  <span className="time-badge active">Đang làm việc</span>
+                                )}
+                              </td>
+                              <td><strong>{att.workingHours ? `${att.workingHours}h` : '—'}</strong></td>
+                              <td>
+                                {att.status === 'completed' ? (
+                                  <span className="status-done-pill">Hoàn thành</span>
+                                ) : att.status === 'working' ? (
+                                  <span className="status-working-pill">Đang trong ca</span>
+                                ) : (
+                                  <span className="status-off-pill">Nghỉ phép</span>
+                                )}
+                              </td>
+                              <td><small className="text-muted">{att.notes || '—'}</small></td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="btn-tbl-action edit"
+                                  onClick={() => handleAdminOpenAttendanceModal(att)}
+                                  title="Sếp chỉnh sửa bản ghi chấm công này"
+                                >
+                                  Sửa
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -2069,6 +2907,10 @@ export default function AdminPanel({
                     <div className="detail-item">
                       <span className="lbl">Giá niêm yết:</span>
                       <span className="val highlight">{viewingBooking.priceDisplay}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Nhân viên thực hiện:</span>
+                      <span className="val highlight">{viewingBooking.assignedStaffName || viewingBooking.cashier || 'Chưa phân công'}</span>
                     </div>
                   </div>
                 </div>
@@ -2537,6 +3379,12 @@ export default function AdminPanel({
                     <span>Thu ngân:</span>
                     <span>{receiptBooking.cashier || session?.fullName || 'Lễ tân FORHER'}</span>
                   </div>
+                  {receiptBooking.assignedStaffName && (
+                    <div className="receipt-meta-row">
+                      <span>Kỹ thuật viên:</span>
+                      <strong>{receiptBooking.assignedStaffName}</strong>
+                    </div>
+                  )}
                 </div>
 
                 <div className="receipt-item-box">
@@ -2651,6 +3499,29 @@ export default function AdminPanel({
                     {SERVICES_CATALOG.map((s) => (
                       <option key={s.id} value={s.id}>
                         [{s.categoryName}] {s.name} - {s.singlePriceDisplay}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Nhân Viên Phục Vụ / Kỹ Thuật Viên:</label>
+                  <select
+                    value={formData.assignedStaff || ''}
+                    onChange={(e) => {
+                      const u = e.target.value;
+                      const staff = staffAccounts.find(s => s.username === u);
+                      setFormData(prev => ({
+                        ...prev,
+                        assignedStaff: u,
+                        assignedStaffName: staff ? staff.fullName : (u === 'admin' ? 'Quản lý (admin)' : '')
+                      }));
+                    }}
+                  >
+                    <option value="">-- Chưa chỉ định nhân viên phục vụ --</option>
+                    {staffAccounts.map(acc => (
+                      <option key={acc.username} value={acc.username}>
+                        {acc.fullName} (@{acc.username}) {acc.role === 'boss' ? '(Sếp/Quản lý)' : '(Nhân viên)'}
                       </option>
                     ))}
                   </select>
@@ -2956,6 +3827,194 @@ export default function AdminPanel({
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL: CHẤM CÔNG VÀO CA (STAFF CHECK-IN MODAL)
+            ============================================================================== */}
+        {isCheckInModalOpen && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card">
+              <div className="admin-submodal-header">
+                <h3>Chấm Công Điểm Danh Vào Ca</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsCheckInModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleStaffCheckIn(); }} className="admin-submodal-form">
+                <div className="form-group">
+                  <label>Nhân Viên:</label>
+                  <input type="text" value={`${session?.fullName || ''} (@${session?.username || ''})`} disabled />
+                </div>
+
+                <div className="form-group">
+                  <label>Chọn Ca Làm Việc:</label>
+                  <select value={selectedShift} onChange={(e) => setSelectedShift(e.target.value)}>
+                    {SHIFT_OPTIONS.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Thời Gian Vào Ca:</label>
+                  <input 
+                    type="text" 
+                    value={`${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} (Hệ thống tự động ghi nhận giờ thực tế)`} 
+                    disabled 
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Ghi Chú Ca Làm (Tùy chọn):</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Đi làm đúng giờ, hỗ trợ phòng chăm sóc lầu 1..."
+                    value={checkInNotes}
+                    onChange={(e) => setCheckInNotes(e.target.value)}
+                  />
+                </div>
+
+                <div className="submodal-actions">
+                  <button type="submit" className="btn-primary-gold">
+                    Xác Nhận Vào Ca
+                  </button>
+                  <button type="button" className="btn-outline-gold" onClick={() => setIsCheckInModalOpen(false)}>
+                    Hủy Bỏ
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL: SẾP ĐIỀU CHỈNH / CHẤM CÔNG BỔ SUNG (BOSS ATTENDANCE MODAL)
+            ============================================================================== */}
+        {isAdminAttendanceModalOpen && isBoss && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card">
+              <div className="admin-submodal-header">
+                <h3>{adminAttendanceForm.id ? 'Điều Chỉnh Bản Ghi Chấm Công' : 'Thêm Chấm Công Bổ Sung (Quyền Sếp)'}</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsAdminAttendanceModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAdminSaveAttendance} className="admin-submodal-form">
+                <div className="form-group">
+                  <label>Nhân Viên Được Chấm Công <span className="req">*</span></label>
+                  <select
+                    value={adminAttendanceForm.username}
+                    onChange={(e) => {
+                      const u = e.target.value;
+                      const staff = staffAccounts.find(s => s.username === u);
+                      setAdminAttendanceForm(prev => ({
+                        ...prev,
+                        username: u,
+                        staffName: staff ? staff.fullName : u
+                      }));
+                    }}
+                    required
+                  >
+                    {staffAccounts.map(acc => (
+                      <option key={acc.username} value={acc.username}>
+                        {acc.fullName} (@{acc.username}) {acc.role === 'boss' ? '(Sếp/Quản lý)' : '(Nhân viên)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-row-two">
+                  <div className="form-group">
+                    <label>Ngày Làm Việc:</label>
+                    <input
+                      type="date"
+                      value={adminAttendanceForm.date}
+                      onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, date: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Ca Làm Việc:</label>
+                    <select
+                      value={adminAttendanceForm.shiftName}
+                      onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, shiftName: e.target.value })}
+                    >
+                      {SHIFT_OPTIONS.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row-three">
+                  <div className="form-group">
+                    <label>Giờ Vào Ca:</label>
+                    <input
+                      type="time"
+                      value={adminAttendanceForm.checkInTime}
+                      onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, checkInTime: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Giờ Tan Ca:</label>
+                    <input
+                      type="time"
+                      value={adminAttendanceForm.checkOutTime || ''}
+                      onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, checkOutTime: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Số Giờ Tính Công:</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={adminAttendanceForm.workingHours || 0}
+                      onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, workingHours: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Trạng Thái Chấm Công:</label>
+                  <select
+                    value={adminAttendanceForm.status}
+                    onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, status: e.target.value })}
+                  >
+                    <option value="completed">Đã hoàn thành ca làm việc</option>
+                    <option value="working">Đang trong ca làm việc</option>
+                    <option value="leave">Nghỉ phép / Có phép</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Ghi Chú Lý Do Điều Chỉnh:</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Nhân viên quên bấm tan ca, Sếp duyệt tăng ca..."
+                    value={adminAttendanceForm.notes}
+                    onChange={(e) => setAdminAttendanceForm({ ...adminAttendanceForm, notes: e.target.value })}
+                  />
+                </div>
+
+                <div className="submodal-actions">
+                  <button type="submit" className="btn-primary-gold">
+                    Lưu Bản Ghi Chấm Công
+                  </button>
+                  <button type="button" className="btn-outline-gold" onClick={() => setIsAdminAttendanceModalOpen(false)}>
+                    Hủy Bỏ
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
