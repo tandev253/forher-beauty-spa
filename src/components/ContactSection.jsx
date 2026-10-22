@@ -70,7 +70,7 @@ export default function ContactSection() {
                 rel="noopener noreferrer" 
                 className="social-btn-link"
               >
-                Facebook: Three House Nails
+                Facebook: FORHER Beauty & Spa
               </a>
               <a 
                 href={COMPANY_INFO.social.tiktok} 
@@ -78,7 +78,7 @@ export default function ContactSection() {
                 rel="noopener noreferrer" 
                 className="social-btn-link"
               >
-                TikTok: @three.house.nails
+                TikTok: @forherbeautyclinic
               </a>
             </div>
           </div>

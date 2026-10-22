@@ -15,10 +15,10 @@ export const COMPANY_INFO = {
   email: 'contact@forherbeauty.vn',
   workingHours: '09:00 - 20:00 (Hàng ngày, kể cả Thứ Bảy & Chủ Nhật)',
   social: {
-    facebook: 'https://www.facebook.com/threehousenails',
-    facebookTag: '@threehousenails',
-    tiktok: 'https://www.tiktok.com/@three.house.nails',
-    tiktokTag: '@three.house.nails',
+    facebook: 'https://www.facebook.com/forherbeautyspa',
+    facebookTag: '@forherbeautyspa',
+    tiktok: 'https://www.tiktok.com/@forherbeautyclinic',
+    tiktokTag: '@forherbeautyclinic',
     instagram: 'https://instagram.com/forher_beauty515',
     instagramTag: '@FORHER_BEAUTY515',
     zalo: 'https://zalo.me/0703994683'

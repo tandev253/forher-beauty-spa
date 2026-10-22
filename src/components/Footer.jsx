@@ -54,9 +54,9 @@ export default function Footer() {
           <div className="footer-bottom-links">
             <span>{COMPANY_INFO.addressShort}</span>
             <span>•</span>
-            <a href={COMPANY_INFO.social.facebook} target="_blank" rel="noopener noreferrer">FB: Three House Nails</a>
+            <a href={COMPANY_INFO.social.facebook} target="_blank" rel="noopener noreferrer">FB: FORHER Beauty & Spa</a>
             <span>•</span>
-            <a href={COMPANY_INFO.social.tiktok} target="_blank" rel="noopener noreferrer">TikTok: @three.house.nails</a>
+            <a href={COMPANY_INFO.social.tiktok} target="_blank" rel="noopener noreferrer">TikTok: @forherbeautyclinic</a>
             <span>•</span>
             <a href={COMPANY_INFO.social.zalo} target="_blank" rel="noopener noreferrer">Zalo: {COMPANY_INFO.phone}</a>
           </div>
