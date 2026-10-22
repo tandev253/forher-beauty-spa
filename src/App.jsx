@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import AboutSection from './components/AboutSection';
@@ -8,9 +8,24 @@ import FaqSection from './components/FaqSection';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import FloatingActions from './components/FloatingActions';
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const [selectedService, setSelectedService] = useState(null);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  useEffect(() => {
+    const checkAdminInUrl = () => {
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (hash.toLowerCase().includes('admin') || search.toLowerCase().includes('admin')) {
+        setIsAdminOpen(true);
+      }
+    };
+    checkAdminInUrl();
+    window.addEventListener('hashchange', checkAdminInUrl);
+    return () => window.removeEventListener('hashchange', checkAdminInUrl);
+  }, []);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -22,6 +37,13 @@ export default function App() {
   const handleSelectServiceToBook = (service) => {
     setSelectedService(service);
     scrollToSection('booking');
+  };
+
+  const handleCloseAdmin = () => {
+    setIsAdminOpen(false);
+    if (window.location.hash.toLowerCase().includes('admin')) {
+      history.replaceState(null, document.title, window.location.pathname);
+    }
   };
 
   return (
@@ -64,10 +86,16 @@ export default function App() {
       </main>
 
       {/* 7. Footer: Brand information, commitments, and links */}
-      <Footer />
+      <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
 
       {/* Floating Action Dock: Quick Zalo, Phone & Book triggers */}
       <FloatingActions onBookClick={() => scrollToSection('booking')} />
+
+      {/* Admin Panel: Bookings management & Audit Logs */}
+      <AdminPanel 
+        isOpen={isAdminOpen} 
+        onClose={handleCloseAdmin} 
+      />
     </div>
   );
 }

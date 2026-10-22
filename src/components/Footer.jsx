@@ -1,7 +1,7 @@
 import React from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
 
-export default function Footer() {
+export default function Footer({ onOpenAdmin }) {
   const currentYear = new Date().getFullYear();
 
   const handleScrollTo = (id) => {
@@ -86,6 +86,15 @@ export default function Footer() {
             <a href={COMPANY_INFO.social.tiktok} target="_blank" rel="noopener noreferrer">TikTok: @forherbeautyclinic</a>
             <span>•</span>
             <a href={COMPANY_INFO.social.zalo} target="_blank" rel="noopener noreferrer">Zalo: {COMPANY_INFO.phone}</a>
+            <span>•</span>
+            <button 
+              type="button" 
+              onClick={onOpenAdmin} 
+              className="footer-admin-btn"
+              title="Đăng nhập quản trị đơn đặt lịch"
+            >
+              🔒 Quản Trị Đơn
+            </button>
           </div>
         </div>
       </div>

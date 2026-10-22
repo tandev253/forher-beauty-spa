@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { COMPANY_INFO, SERVICES_CATALOG } from '../data/servicesData';
+import { BookingStorage } from '../data/bookingStorage';
 
 export default function BookingSection({ selectedService, onClearSelectedService }) {
   const [serviceId, setServiceId] = useState('');
@@ -33,6 +34,7 @@ export default function BookingSection({ selectedService, onClearSelectedService
     }
 
     const serviceName = activeServiceObj ? activeServiceObj.name : 'Tư vấn tổng quát tại Spa';
+    const categoryName = activeServiceObj ? activeServiceObj.categoryName : 'Dịch Vụ Spa';
     const modeLabel = activeServiceObj?.isWarranty2Y 
       ? 'Trọn gói BH 2 năm' 
       : (serviceMode === 'course' ? 'Gói liệu trình 5 buổi' : 'Buổi đơn lẻ');
@@ -40,6 +42,26 @@ export default function BookingSection({ selectedService, onClearSelectedService
       ? (serviceMode === 'course' ? activeServiceObj.coursePriceDisplay : activeServiceObj.singlePriceDisplay)
       : 'Báo giá tại cơ sở';
 
+    // 1. Persist booking to Admin Storage
+    try {
+      BookingStorage.createBooking({
+        fullName: fullName || 'Khách hàng',
+        phoneNumber,
+        serviceId: serviceId || 'general',
+        serviceName,
+        categoryName,
+        modeLabel,
+        priceDisplay,
+        bookingDate,
+        bookingTime,
+        skinNotes,
+        status: 'pending'
+      }, 'customer');
+    } catch (err) {
+      console.error('Lỗi lưu đơn vào hệ thống:', err);
+    }
+
+    // 2. Format Zalo message & trigger chat
     const message = `Chào FORHER Beauty & Spa! Em muốn đặt lịch hẹn chăm sóc da / làm đẹp:
 - Khách hàng: ${fullName || 'Khách hàng'}
 - Số điện thoại: ${phoneNumber}
