@@ -1,36 +1,54 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BookingStorage } from '../data/bookingStorage';
 import { SERVICES_CATALOG } from '../data/servicesData';
+import { SUPABASE_URL } from '../config/supabaseClient';
 
 export default function AdminPanel({ isOpen, onClose }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentRole, setCurrentRole] = useState('staff'); // 'boss' | 'staff'
+  const [session, setSession] = useState(null);
 
   // Login Form State
-  const [selectedLoginRole, setSelectedLoginRole] = useState('boss'); // default select boss or staff
+  const [usernameInput, setUsernameInput] = useState('admin');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Main state
-  const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'logs' | 'backup'
+  // Navigation Tabs: 'bookings' | 'logs' | 'staff' | 'backup'
+  const [activeTab, setActiveTab] = useState('bookings');
   const [bookings, setBookings] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [staffAccounts, setStaffAccounts] = useState([]);
 
-  // Search & Filter
+  // Search & Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today' | 'upcoming'
+  const [dateFilter, setDateFilter] = useState('all');
 
-  // Modal State for Add / Edit
+  // Modals
   const [editingBooking, setEditingBooking] = useState(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+
+  // Staff Account Modal
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [staffFormData, setStaffFormData] = useState({
+    username: '',
+    password: '',
+    fullName: '',
+    role: 'staff'
+  });
+  const [staffFormError, setStaffFormError] = useState('');
+
+  // Password Change Modal
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [pwdMessage, setPwdMessage] = useState('');
 
-  // Form Fields
+  // SQL Copy state
+  const [sqlCopied, setSqlCopied] = useState(false);
+
+  // Form Fields for Booking
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -46,11 +64,24 @@ export default function AdminPanel({ isOpen, onClose }) {
     status: 'pending'
   });
 
-  // Load data
-  const refreshData = () => {
+  const isBoss = session?.role === 'boss' || session?.username === 'admin';
+
+  // Load Data
+  const refreshData = async () => {
     setBookings(BookingStorage.getAllBookings());
     setLogs(BookingStorage.getAllLogs());
-    setCurrentRole(BookingStorage.getCurrentRole() || 'staff');
+    setStaffAccounts(BookingStorage.getAllAccounts());
+    setSession(BookingStorage.getCurrentSession());
+
+    // Background sync with Supabase
+    try {
+      await BookingStorage.syncBookingsFromSupabase();
+      await BookingStorage.syncAccountsFromSupabase();
+      setBookings(BookingStorage.getAllBookings());
+      setStaffAccounts(BookingStorage.getAllAccounts());
+    } catch (e) {
+      // offline
+    }
   };
 
   useEffect(() => {
@@ -63,26 +94,34 @@ export default function AdminPanel({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const result = BookingStorage.login(selectedLoginRole, passwordInput);
-    if (result.success) {
-      setIsAuthenticated(true);
-      setCurrentRole(result.role);
-      setLoginError('');
-      setPasswordInput('');
-      refreshData();
-    } else {
-      setLoginError(result.message);
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    try {
+      const result = await BookingStorage.login(usernameInput, passwordInput);
+      if (result.success) {
+        setIsAuthenticated(true);
+        setSession(result.session);
+        setPasswordInput('');
+        setLoginError('');
+        refreshData();
+      } else {
+        setLoginError(result.message);
+      }
+    } catch (err) {
+      setLoginError('Lỗi đăng nhập: ' + err.message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const handleLogout = () => {
     BookingStorage.logout();
     setIsAuthenticated(false);
+    setSession(null);
   };
-
-  const isBoss = currentRole === 'boss';
 
   // Status counters
   const stats = useMemo(() => {
@@ -99,14 +138,10 @@ export default function AdminPanel({ isOpen, onClose }) {
 
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
-      // Status match
       if (statusFilter !== 'all' && b.status !== statusFilter) return false;
-
-      // Date match
       if (dateFilter === 'today' && b.bookingDate !== todayStr) return false;
       if (dateFilter === 'upcoming' && b.bookingDate < todayStr) return false;
 
-      // Search match
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase();
         const matchName = (b.fullName || '').toLowerCase().includes(term);
@@ -120,8 +155,8 @@ export default function AdminPanel({ isOpen, onClose }) {
   }, [bookings, statusFilter, dateFilter, searchTerm, todayStr]);
 
   // Quick Status Change from row
-  const handleQuickStatusChange = (bookingId, newStatus) => {
-    BookingStorage.updateBooking(bookingId, { status: newStatus });
+  const handleQuickStatusChange = async (bookingId, newStatus) => {
+    await BookingStorage.updateBooking(bookingId, { status: newStatus });
     refreshData();
   };
 
@@ -165,7 +200,6 @@ export default function AdminPanel({ isOpen, onClose }) {
     setIsFormModalOpen(true);
   };
 
-  // Handle service change in form
   const handleServiceSelect = (svcId) => {
     const svc = SERVICES_CATALOG.find(s => s.id === svcId);
     if (svc) {
@@ -180,8 +214,8 @@ export default function AdminPanel({ isOpen, onClose }) {
     }
   };
 
-  // Save Form (Create or Update)
-  const handleSaveForm = (e) => {
+  // Save Booking
+  const handleSaveForm = async (e) => {
     e.preventDefault();
     if (!formData.fullName.trim() || !formData.phoneNumber.trim()) {
       alert('Vui lòng nhập họ tên và số điện thoại khách hàng.');
@@ -189,9 +223,9 @@ export default function AdminPanel({ isOpen, onClose }) {
     }
 
     if (editingBooking) {
-      BookingStorage.updateBooking(editingBooking.id, formData);
+      await BookingStorage.updateBooking(editingBooking.id, formData);
     } else {
-      BookingStorage.createBooking(formData, 'admin');
+      await BookingStorage.createBooking(formData, 'admin');
     }
 
     setIsFormModalOpen(false);
@@ -199,26 +233,52 @@ export default function AdminPanel({ isOpen, onClose }) {
   };
 
   // Trigger Delete (Check role permission)
-  const handleAttemptDelete = (id) => {
+  const handleAttemptDelete = async (id) => {
     if (!isBoss) {
-      alert('⛔ BỊ CHẶN QUYỀN HẠN:\nChỉ Sếp / Quản lý tối cao mới được phép xóa đơn đặt lịch!\nNhân viên chỉ có quyền xem, tiếp nhận và sửa trạng thái đơn.');
-      // Also log security violation in audit log
-      BookingStorage.deleteBooking(id);
+      alert('⛔ BỊ CHẶN QUYỀN HẠN:\nChỉ Sếp (tài khoản admin) mới có quyền xóa đơn đặt lịch!\nNhân viên chỉ có quyền xem, tiếp nhận và chỉnh sửa thông tin.');
+      await BookingStorage.deleteBooking(id); // will register security alert in audit log
       refreshData();
       return;
     }
     setDeletingId(id);
   };
 
-  // Confirm Delete (Only accessible to Boss)
-  const handleConfirmDelete = () => {
+  // Confirm Delete (Only Boss)
+  const handleConfirmDelete = async () => {
     if (deletingId) {
-      const res = BookingStorage.deleteBooking(deletingId);
+      const res = await BookingStorage.deleteBooking(deletingId);
       if (!res.success) {
         alert(res.message);
       }
       setDeletingId(null);
       refreshData();
+    }
+  };
+
+  // Create Staff Account by Boss
+  const handleCreateStaffAccount = async (e) => {
+    e.preventDefault();
+    setStaffFormError('');
+    const result = await BookingStorage.createStaffAccount(staffFormData);
+    if (result.success) {
+      alert(`Đã tạo thành công tài khoản nhân viên: ${staffFormData.username}!`);
+      setIsStaffModalOpen(false);
+      setStaffFormData({ username: '', password: '', fullName: '', role: 'staff' });
+      refreshData();
+    } else {
+      setStaffFormError(result.message);
+    }
+  };
+
+  // Delete Staff Account
+  const handleDeleteStaff = async (username) => {
+    if (window.confirm(`Bạn có chắc muốn xóa tài khoản nhân viên "${username}"?`)) {
+      const res = await BookingStorage.deleteStaffAccount(username);
+      if (res.success) {
+        refreshData();
+      } else {
+        alert(res.message);
+      }
     }
   };
 
@@ -240,9 +300,9 @@ export default function AdminPanel({ isOpen, onClose }) {
   };
 
   // Change Password
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
-    const result = BookingStorage.changePassword(currentRole, oldPassword, newPassword);
+    const result = await BookingStorage.changeOwnPassword(oldPassword, newPassword);
     if (result.success) {
       setPwdMessage('Đổi mật khẩu thành công!');
       setTimeout(() => {
@@ -256,6 +316,13 @@ export default function AdminPanel({ isOpen, onClose }) {
     }
   };
 
+  // Copy SQL
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(BookingStorage.getInitSql());
+    setSqlCopied(true);
+    setTimeout(() => setSqlCopied(false), 3000);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -266,15 +333,16 @@ export default function AdminPanel({ isOpen, onClose }) {
           <div className="admin-branding">
             {isAuthenticated ? (
               isBoss ? (
-                <span className="admin-role-pill boss">👑 SẾP (QUẢN LÝ TỐI CAO)</span>
+                <span className="admin-role-pill boss">👑 SẾP (ADMIN)</span>
               ) : (
-                <span className="admin-role-pill staff">💼 NHÂN VIÊN LỄ TÂN</span>
+                <span className="admin-role-pill staff">💼 {session?.fullName || 'NHÂN VIÊN'}</span>
               )
             ) : (
               <span className="admin-badge-role">ADMIN PANEL</span>
             )}
-            <h2 className="admin-title">FORHER Beauty & Spa — Quản Trị Đơn Khách Hàng</h2>
+            <h2 className="admin-title">FORHER Beauty & Spa — Quản Trị Đơn Đặt Lịch</h2>
           </div>
+
           <div className="admin-top-actions">
             {isAuthenticated && (
               <>
@@ -282,7 +350,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                   type="button" 
                   className="btn-admin-nav" 
                   onClick={() => setIsPasswordModalOpen(true)}
-                  title={`Đổi mật khẩu ${isBoss ? 'Sếp' : 'Nhân viên'}`}
+                  title="Đổi mật khẩu cá nhân"
                 >
                   Đổi Mật Khẩu
                 </button>
@@ -307,71 +375,55 @@ export default function AdminPanel({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* LOGIN SCREEN WITH ROLE SELECTION */}
+        {/* LOGIN SCREEN WITH USERNAME & PASSWORD */}
         {!isAuthenticated ? (
           <div className="admin-login-wrapper">
             <div className="admin-login-card">
               <span className="admin-login-logo">Forher Beauty</span>
-              <h3>Đăng Nhập Phân Quyền Quản Trị</h3>
+              <h3>Đăng Nhập Quản Trị</h3>
               <p className="admin-login-desc">
-                Vui lòng chọn vai trò làm việc để hệ thống áp dụng đúng thẩm quyền (Chỉ Sếp mới có quyền xóa đơn).
+                Đăng nhập tài khoản Sếp <strong>(admin)</strong> hoặc tài khoản Nhân viên do Sếp tạo.
               </p>
-
-              {/* Role Picker Tabs */}
-              <div className="login-role-tabs">
-                <button
-                  type="button"
-                  className={`login-role-btn ${selectedLoginRole === 'boss' ? 'active boss' : ''}`}
-                  onClick={() => { setSelectedLoginRole('boss'); setLoginError(''); }}
-                >
-                  <span className="role-icon">👑</span>
-                  <div className="role-text-wrap">
-                    <strong>Sếp / Quản Lý</strong>
-                    <small>Toàn quyền (Được Xóa đơn)</small>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`login-role-btn ${selectedLoginRole === 'staff' ? 'active staff' : ''}`}
-                  onClick={() => { setSelectedLoginRole('staff'); setLoginError(''); }}
-                >
-                  <span className="role-icon">💼</span>
-                  <div className="role-text-wrap">
-                    <strong>Nhân Viên Lễ Tân</strong>
-                    <small>Thêm, sửa, nhận đơn (Không được xóa)</small>
-                  </div>
-                </button>
-              </div>
 
               <form onSubmit={handleLogin} className="admin-login-form">
                 <div className="admin-form-group">
-                  <label htmlFor="admin-pwd">
-                    Mật Khẩu của {selectedLoginRole === 'boss' ? 'Sếp' : 'Nhân Viên'}:
-                  </label>
+                  <label htmlFor="admin-username">Tên Đăng Nhập:</label>
                   <input
-                    id="admin-pwd"
-                    type="password"
-                    placeholder={`Nhập mật khẩu ${selectedLoginRole === 'boss' ? 'Sếp' : 'Nhân viên'}...`}
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
+                    id="admin-username"
+                    type="text"
+                    placeholder="Nhập tên đăng nhập (ví dụ: admin)..."
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
                     autoFocus
                     required
                   />
-                  <div className="role-pwd-hint-box">
-                    {selectedLoginRole === 'boss' ? (
-                      <p>🔑 Mật khẩu mặc định của <strong>Sếp</strong>: <code>forherboss</code></p>
-                    ) : (
-                      <p>🔑 Mật khẩu mặc định của <strong>Nhân viên</strong>: <code>forhernv</code></p>
-                    )}
-                  </div>
+                </div>
+
+                <div className="admin-form-group">
+                  <label htmlFor="admin-pwd">Mật Khẩu:</label>
+                  <input
+                    id="admin-pwd"
+                    type="password"
+                    placeholder="Nhập mật khẩu..."
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="role-pwd-hint-box">
+                  <p>👑 <strong>Tài khoản Sếp:</strong> <code>admin</code> (Mật khẩu mặc định: <code>forheradmin</code>)</p>
+                  <p style={{ marginTop: '4px' }}>💼 <strong>Tài khoản Nhân viên:</strong> do Sếp tạo (Mẫu: <code>nhanvien1</code> / <code>forhernv</code>)</p>
+                  <small style={{ color: '#059669', display: 'block', marginTop: '6px' }}>
+                    ☁️ Kết nối cơ sở dữ liệu Supabase: <strong>{SUPABASE_URL.split('//')[1]}</strong>
+                  </small>
                 </div>
 
                 {loginError && <div className="admin-error-box">{loginError}</div>}
 
                 <div className="admin-login-actions">
-                  <button type="submit" className="btn-primary-gold w-100">
-                    Đăng Nhập với quyền {selectedLoginRole === 'boss' ? 'Sếp' : 'Nhân Viên'}
+                  <button type="submit" className="btn-primary-gold w-100" disabled={isLoggingIn}>
+                    {isLoggingIn ? 'Đang Kiểm Tra...' : 'Đăng Nhập Quản Trị'}
                   </button>
                   <button type="button" className="btn-outline-gold w-100" onClick={onClose}>
                     Quay Lại Website
@@ -389,16 +441,16 @@ export default function AdminPanel({ isOpen, onClose }) {
                 <div className="role-notice-inner">
                   <span className="notice-icon">👑</span>
                   <div>
-                    <strong>Tài khoản Sếp (Toàn quyền quản trị tối cao):</strong>
-                    <span> Bạn có quyền Thêm, Chỉnh sửa, Duyệt trạng thái, <strong>XÓA ĐƠN</strong> và làm trống lịch sử audit log.</span>
+                    <strong>Tài khoản Sếp (admin):</strong>
+                    <span> Toàn quyền quản trị tối cao — Có quyền <strong>XÓA ĐƠN</strong>, <strong>TẠO TÀI KHOẢN NHÂN VIÊN</strong> và quản lý toàn bộ hệ thống Supabase Cloud.</span>
                   </div>
                 </div>
               ) : (
                 <div className="role-notice-inner">
                   <span className="notice-icon">💼</span>
                   <div>
-                    <strong>Tài khoản Nhân viên / Lễ tân:</strong>
-                    <span> Bạn có quyền tiếp nhận đơn, Thêm mới, Chỉnh sửa thông tin & Cập nhật trạng thái. <strong>Thao tác Xóa đơn bị vô hiệu hóa</strong> (Chỉ Sếp mới có quyền xóa).</span>
+                    <strong>Tài khoản Nhân viên ({session?.fullName}):</strong>
+                    <span> Tiếp nhận khách, thêm đơn, sửa thông tin & đổi trạng thái. <strong>Thao tác Xóa đơn bị vô hiệu hóa</strong> (Chỉ Sếp admin mới có quyền xóa).</span>
                   </div>
                 </div>
               )}
@@ -438,6 +490,17 @@ export default function AdminPanel({ isOpen, onClose }) {
                 >
                   Quản Lý Đơn Đặt ({bookings.length})
                 </button>
+
+                {isBoss && (
+                  <button
+                    type="button"
+                    className={`admin-tab-btn ${activeTab === 'staff' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('staff')}
+                  >
+                    👑 Quản Lý Nhân Viên ({staffAccounts.length})
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
@@ -445,23 +508,34 @@ export default function AdminPanel({ isOpen, onClose }) {
                 >
                   Lịch Sử Thao Tác (Audit Log) ({logs.length})
                 </button>
+
                 <button
                   type="button"
                   className={`admin-tab-btn ${activeTab === 'backup' ? 'active' : ''}`}
                   onClick={() => setActiveTab('backup')}
                 >
-                  Sao Lưu & Dữ Liệu
+                  Supabase Cloud & Dữ Liệu
                 </button>
               </div>
 
               <div className="admin-header-actions">
-                <button 
-                  type="button" 
-                  className="btn-admin-action gold"
-                  onClick={handleOpenCreateModal}
-                >
-                  + Thêm Đơn Thủ Công
-                </button>
+                {activeTab === 'staff' && isBoss ? (
+                  <button 
+                    type="button" 
+                    className="btn-admin-action gold"
+                    onClick={() => { setStaffFormError(''); setIsStaffModalOpen(true); }}
+                  >
+                    + Tạo Tài Khoản Nhân Viên
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="btn-admin-action gold"
+                    onClick={handleOpenCreateModal}
+                  >
+                    + Thêm Đơn Thủ Công
+                  </button>
+                )}
                 <button 
                   type="button" 
                   className="btn-admin-action outline"
@@ -473,9 +547,9 @@ export default function AdminPanel({ isOpen, onClose }) {
                   type="button" 
                   className="btn-admin-action refresh"
                   onClick={refreshData}
-                  title="Tải lại dữ liệu mới nhất"
+                  title="Đồng bộ dữ liệu Supabase Cloud"
                 >
-                  Làm Mới
+                  Đồng Bộ Dữ Liệu
                 </button>
               </div>
             </div>
@@ -647,7 +721,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                                     Sửa
                                   </button>
                                   
-                                  {/* DELETE BUTTON: ONLY BOSS HAS PERMISSION */}
+                                  {/* ONLY BOSS CAN DELETE */}
                                   {isBoss ? (
                                     <button
                                       type="button"
@@ -662,7 +736,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                                       type="button"
                                       className="btn-tbl-action delete-disabled"
                                       onClick={() => handleAttemptDelete(b.id)}
-                                      title="🔒 Bị khóa: Chỉ Sếp mới có quyền xóa đơn!"
+                                      title="🔒 Bị khóa: Chỉ Sếp admin mới có quyền xóa đơn!"
                                     >
                                       🔒 Xóa
                                     </button>
@@ -679,13 +753,106 @@ export default function AdminPanel({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* TAB CONTENT 2: AUDIT LOGS */}
+            {/* TAB CONTENT 2: STAFF MANAGEMENT (BOSS ONLY) */}
+            {activeTab === 'staff' && isBoss && (
+              <div className="admin-tab-content">
+                <div className="staff-tab-header">
+                  <div>
+                    <h3>Danh Sách Tài Khoản Nhân Viên & Phân Quyền</h3>
+                    <p>Sếp có toàn quyền tự tạo tài khoản riêng, đổi mật khẩu và quản lý nhân viên của cơ sở.</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-primary-gold"
+                    onClick={() => { setStaffFormError(''); setIsStaffModalOpen(true); }}
+                  >
+                    + Tạo Tài Khoản Nhân Viên
+                  </button>
+                </div>
+
+                <div className="admin-table-container">
+                  <table className="admin-data-table">
+                    <thead>
+                      <tr>
+                        <th>TÊN ĐĂNG NHẬP</th>
+                        <th>HỌ VÀ TÊN</th>
+                        <th>VAI TRÒ</th>
+                        <th>MẬT KHẨU</th>
+                        <th>NGÀY TẠO</th>
+                        <th>THAO TÁC</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {staffAccounts.map((acc) => {
+                        const isMainAdmin = acc.username === 'admin';
+                        return (
+                          <tr key={acc.username}>
+                            <td>
+                              <strong className="staff-username-txt">@{acc.username}</strong>
+                            </td>
+                            <td>
+                              <span>{acc.fullName}</span>
+                            </td>
+                            <td>
+                              {acc.role === 'boss' ? (
+                                <span className="admin-role-pill boss">👑 SẾP (QUẢN LÝ)</span>
+                              ) : (
+                                <span className="admin-role-pill staff">💼 NHÂN VIÊN</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className="staff-pwd-preview">•••••••</span>
+                            </td>
+                            <td>
+                              <small>{new Date(acc.createdAt).toLocaleDateString('vi-VN')}</small>
+                            </td>
+                            <td>
+                              {isMainAdmin ? (
+                                <span className="text-muted" style={{ fontSize: '0.8rem' }}>Tài khoản chủ cơ sở</span>
+                              ) : (
+                                <div className="action-buttons-wrap">
+                                  <button
+                                    type="button"
+                                    className="btn-tbl-action edit"
+                                    onClick={async () => {
+                                      const newP = prompt(`Nhập mật khẩu mới cho nhân viên @${acc.username}:`);
+                                      if (newP && newP.length >= 6) {
+                                        await BookingStorage.updateAccount(acc.username, { password: newP.trim() });
+                                        alert('Đổi mật khẩu nhân viên thành công!');
+                                        refreshData();
+                                      } else if (newP) {
+                                        alert('Mật khẩu phải từ 6 ký tự trở lên!');
+                                      }
+                                    }}
+                                  >
+                                    Đổi Mật Khẩu
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-tbl-action delete"
+                                    onClick={() => handleDeleteStaff(acc.username)}
+                                  >
+                                    Xóa
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT 3: AUDIT LOGS */}
             {activeTab === 'logs' && (
               <div className="admin-tab-content">
                 <div className="audit-logs-header">
                   <div>
-                    <h3>Nhật Ký Thao Tác (Audit Log) Phân Theo Người Thực Hiện</h3>
-                    <p>Hệ thống tự động ghi nhận lại chi tiết ai (Sếp, Nhân viên, Khách) đã tạo, sửa hoặc xóa đơn.</p>
+                    <h3>Nhật Ký Thao Tác (Audit Log)</h3>
+                    <p>Hệ thống tự động ghi nhận lại chi tiết ai (Sếp admin, từng Nhân viên cụ thể, Khách web) đã tạo, sửa hoặc xóa đơn.</p>
                   </div>
                   {isBoss && (
                     <button 
@@ -739,10 +906,41 @@ export default function AdminPanel({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* TAB CONTENT 3: BACKUP & DATA */}
+            {/* TAB CONTENT 4: SUPABASE CLOUD & DATA */}
             {activeTab === 'backup' && (
               <div className="admin-tab-content">
                 <div className="backup-sections-grid">
+                  {/* Supabase Cloud Connection Box */}
+                  <div className="backup-card supabase-highlight-card">
+                    <h4>☁️ Kết Nối Supabase Cloud Database</h4>
+                    <p>
+                      Dự án Supabase: <strong>{SUPABASE_URL}</strong><br />
+                      Để đồng bộ dữ liệu vĩnh viễn trên đám mây, hãy chạy script SQL tạo bảng trong Supabase SQL Editor.
+                    </p>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <button 
+                        type="button" 
+                        className="btn-primary-gold"
+                        onClick={handleCopySql}
+                      >
+                        {sqlCopied ? '✓ Đã Sao Chép Mã SQL!' : '📋 Sao Chép Mã Tạo Bảng SQL'}
+                      </button>
+                      <a 
+                        href="https://supabase.com/dashboard/project/lrjumrqjpepxmlwaiwvq/sql" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn-outline-gold"
+                      >
+                        Mở Supabase SQL Editor ↗
+                      </a>
+                    </div>
+                    {sqlCopied && (
+                      <small style={{ color: '#059669', display: 'block', marginTop: '8px' }}>
+                        👉 Đã chép mã SQL vào clipboard. Hãy dán vào Supabase và bấm <strong>Run</strong>!
+                      </small>
+                    )}
+                  </div>
+
                   <div className="backup-card">
                     <h4>Xuất Danh Sách Ra Excel / CSV</h4>
                     <p>Tải toàn bộ danh sách đơn đặt lịch về máy vi tính dạng file CSV mở bằng Microsoft Excel hoặc Google Sheets.</p>
@@ -750,46 +948,6 @@ export default function AdminPanel({ isOpen, onClose }) {
                       Tải File CSV Xuống
                     </button>
                   </div>
-
-                  <div className="backup-card">
-                    <h4>Sao Lưu Hệ Thống (JSON Backup)</h4>
-                    <p>Tải file sao lưu toàn bộ đơn đặt lịch và lịch sử thao tác để lưu trữ dự phòng an toàn.</p>
-                    <button 
-                      type="button" 
-                      className="btn-outline-gold"
-                      onClick={() => {
-                        const jsonStr = BookingStorage.exportFullBackupJson();
-                        const blob = new Blob([jsonStr], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `backup_forher_spa_${todayStr}.json`;
-                        a.click();
-                      }}
-                    >
-                      Tải File Sao Lưu JSON
-                    </button>
-                  </div>
-
-                  {isBoss && (
-                    <div className="backup-card">
-                      <h4>👑 Quyền Sếp: Khôi Phục Dữ Liệu Mẫu</h4>
-                      <p>Thiết lập lại dữ liệu danh sách đơn đặt lịch mẫu ban đầu nếu cần kiểm tra quy trình.</p>
-                      <button 
-                        type="button" 
-                        className="btn-outline-gold"
-                        onClick={() => {
-                          if (window.confirm('Hành động này sẽ nạp lại danh sách đơn mẫu. Bạn có muốn tiếp tục?')) {
-                            BookingStorage.resetDemoData();
-                            refreshData();
-                            alert('Đã khôi phục dữ liệu mẫu thành công!');
-                          }
-                        }}
-                      >
-                        Nạp Dữ Liệu Mẫu
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -947,14 +1105,75 @@ export default function AdminPanel({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* MODAL: DELETE CONFIRMATION (ONLY BOSS CAN TRIGGER) */}
+        {/* MODAL: SẾP TẠO TÀI KHOẢN NHÂN VIÊN */}
+        {isStaffModalOpen && isBoss && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card">
+              <div className="admin-submodal-header">
+                <h3>👑 Sếp Tạo Tài Khoản Nhân Viên Mới</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsStaffModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateStaffAccount} className="admin-submodal-form">
+                <div className="form-group">
+                  <label>Tên Đăng Nhập (Username) <span className="req">*</span></label>
+                  <input
+                    type="text"
+                    placeholder="viết liền không dấu, ví dụ: lananh, thuthao..."
+                    value={staffFormData.username}
+                    onChange={(e) => setStaffFormData({ ...staffFormData, username: e.target.value })}
+                    required
+                  />
+                  <small className="text-muted">Nhân viên sẽ dùng tên này để đăng nhập vào panel.</small>
+                </div>
+
+                <div className="form-group">
+                  <label>Họ Và Tên Nhân Viên <span className="req">*</span></label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Lê Thị Lan Anh..."
+                    value={staffFormData.fullName}
+                    onChange={(e) => setStaffFormData({ ...staffFormData, fullName: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Mật Khẩu Khởi Tạo <span className="req">*</span></label>
+                  <input
+                    type="password"
+                    placeholder="Ít nhất 6 ký tự..."
+                    value={staffFormData.password}
+                    onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })}
+                    required
+                  />
+                </div>
+
+                {staffFormError && <div className="admin-error-box">{staffFormError}</div>}
+
+                <div className="submodal-actions">
+                  <button type="submit" className="btn-primary-gold">
+                    Tạo Tài Khoản
+                  </button>
+                  <button type="button" className="btn-outline-gold" onClick={() => setIsStaffModalOpen(false)}>
+                    Hủy
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: DELETE CONFIRMATION (ONLY BOSS) */}
         {deletingId && isBoss && (
           <div className="admin-submodal-backdrop">
             <div className="admin-submodal-card delete-confirm">
               <span className="delete-alert-icon">⚠️</span>
               <h3>Xác Nhận Xóa Đơn Đặt Lịch (Quyền Sếp)</h3>
               <p>
-                Bạn đang sử dụng quyền <strong>👑 Sếp / Quản Lý</strong> để xóa đơn <strong>#{deletingId}</strong>.
+                Bạn đang sử dụng quyền <strong>👑 Sếp (admin)</strong> để xóa đơn <strong>#{deletingId}</strong>.
                 Hành vi này sẽ được lưu lại vĩnh viễn trong nhật ký thao tác (Audit Log).
               </p>
               <div className="submodal-actions">
@@ -974,7 +1193,7 @@ export default function AdminPanel({ isOpen, onClose }) {
           <div className="admin-submodal-backdrop">
             <div className="admin-submodal-card">
               <div className="admin-submodal-header">
-                <h3>Đổi Mật Khẩu Đăng Nhập ({isBoss ? '👑 Sếp' : '💼 Nhân Viên'})</h3>
+                <h3>Đổi Mật Khẩu (@{session?.username})</h3>
                 <button type="button" className="btn-close-submodal" onClick={() => setIsPasswordModalOpen(false)}>
                   ✕
                 </button>
