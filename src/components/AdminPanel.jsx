@@ -665,6 +665,54 @@ export default function AdminPanel({
               <div className="mobile-drawer-links">
                 {isAuthenticated && (
                   <>
+                    <div className="mobile-drawer-section-title">DANH MỤC QUẢN TRỊ</div>
+                    <button 
+                      type="button" 
+                      className={`drawer-link-item ${activeTab === 'bookings' ? 'active-tab-drawer' : ''}`}
+                      onClick={() => { setActiveTab('bookings'); setIsMobileMenuOpen(false); }}
+                    >
+                      Quản Lý Đơn Đặt ({bookings.length})
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`drawer-link-item ${activeTab === 'revenue' ? 'active-tab-drawer' : ''}`}
+                      onClick={() => { setActiveTab('revenue'); setIsMobileMenuOpen(false); }}
+                    >
+                      Báo Cáo Doanh Thu
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`drawer-link-item ${activeTab === 'bank' ? 'active-tab-drawer' : ''}`}
+                      onClick={() => { setActiveTab('bank'); setIsMobileMenuOpen(false); }}
+                    >
+                      Cài Đặt Ngân Hàng & QR {isBoss ? '' : '(Xem)'}
+                    </button>
+                    {isBoss && (
+                      <button 
+                        type="button" 
+                        className={`drawer-link-item ${activeTab === 'staff' ? 'active-tab-drawer' : ''}`}
+                        onClick={() => { setActiveTab('staff'); setIsMobileMenuOpen(false); }}
+                      >
+                        Quản Lý Nhân Viên ({staffAccounts.length})
+                      </button>
+                    )}
+                    <button 
+                      type="button" 
+                      className={`drawer-link-item ${activeTab === 'logs' ? 'active-tab-drawer' : ''}`}
+                      onClick={() => { setActiveTab('logs'); setIsMobileMenuOpen(false); }}
+                    >
+                      Lịch Sử Thao Tác ({logs.length})
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`drawer-link-item ${activeTab === 'backup' ? 'active-tab-drawer' : ''}`}
+                      onClick={() => { setActiveTab('backup'); setIsMobileMenuOpen(false); }}
+                    >
+                      Xuất File Dữ Liệu
+                    </button>
+
+                    <div className="drawer-divider"></div>
+                    <div className="mobile-drawer-section-title">TIỆN ÍCH HỆ THỐNG</div>
                     <button 
                       type="button" 
                       className="drawer-link-item"
@@ -1022,7 +1070,7 @@ export default function AdminPanel({
                 </button>
               </div>
 
-              <div className="admin-header-actions">
+              <div className="admin-header-actions desktop-header-actions">
                 {activeTab === 'staff' && isBoss ? (
                   <button 
                     type="button" 
@@ -1061,12 +1109,27 @@ export default function AdminPanel({
             {/* TAB CONTENT 1: BOOKINGS LIST */}
             {activeTab === 'bookings' && (
               <div className="admin-tab-content">
+                {/* Mobile Prominent Add Booking Button */}
+                <div className="mobile-add-btn-wrap">
+                  <button 
+                    type="button" 
+                    className="btn-mobile-add-booking"
+                    onClick={handleOpenCreateModal}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Thêm Đơn Đặt Lịch Mới</span>
+                  </button>
+                </div>
+
                 {/* Search & Filter Bar */}
                 <div className="admin-filter-bar">
                   <div className="filter-search-box">
                     <input
                       type="text"
-                      placeholder="Tìm theo tên khách, số điện thoại, mã đơn hoặc dịch vụ..."
+                      placeholder="Tìm theo tên khách, số điện thoại, mã đơn..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -1085,7 +1148,7 @@ export default function AdminPanel({
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="filter-select"
+                      className="filter-select desktop-only-filter"
                     >
                       <option value="all">Tất Cả Trạng Thái</option>
                       <option value="pending">Chờ xác nhận ({stats.pending})</option>
@@ -1116,8 +1179,8 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                {/* Bookings Table */}
-                <div className="admin-table-container">
+                {/* Bookings Table (Chỉ hiển thị trên máy tính desktop) */}
+                <div className="admin-table-container desktop-table-view">
                   {filteredBookings.length === 0 ? (
                     <div className="admin-empty-state">
                       <p>Không tìm thấy đơn đặt lịch nào phù hợp với bộ lọc hiện tại.</p>
@@ -1324,7 +1387,6 @@ export default function AdminPanel({
                           <div className="mobile-card-header">
                             <div className="mobile-card-id-block">
                               <span className="order-num-pill">#{b.id}</span>
-                              <span className="order-time-text">{b.bookingTime} • {b.bookingDate}</span>
                               {isToday && <span className="today-badge-mini">HÔM NAY</span>}
                             </div>
                             <select
@@ -1337,6 +1399,14 @@ export default function AdminPanel({
                               <option value="completed">Đã hoàn thành</option>
                               <option value="cancelled">Đã hủy</option>
                             </select>
+                          </div>
+
+                          <div className="mobile-card-appointment-time">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>Lịch hẹn: <strong>{b.bookingTime}</strong> • {b.bookingDate}</span>
                           </div>
 
                           <div className="mobile-card-customer">
