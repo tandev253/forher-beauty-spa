@@ -1,0 +1,36 @@
+{
+  "name": "FORHER Quản Trị — Beauty & Spa",
+  "short_name": "FORHER Admin",
+  "description": "Hệ thống quản trị đặt lịch, POS tính tiền VietQR và báo cáo doanh thu FORHER Beauty & Spa",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0E0C0B",
+  "theme_color": "#1B1715",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"]
+}

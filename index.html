@@ -7,8 +7,15 @@
   <!-- Favicon / Website Icon -->
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+
+  <!-- Progressive Web App (PWA) & Mobile App Support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1B1715">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FORHER Admin">
 
   <title>FORHER Beauty & Spa | Spa Uy Tín Quận 10 - Nâng Tầm Vẻ Đẹp Tự Nhiên & Tỏa Sáng</title>
   <meta name="description" content="FORHER Beauty & Spa - Spa uy tín tại Quận 10 (515 Bà Hạt, P. Diên Hồng, TP.HCM). Chuyên chăm sóc da chuyên sâu, lấy nhân mụn chuẩn y khoa, triệt lông Diode Laser bảo hành 2 năm, Chemical Peel, Gội đầu dưỡng sinh & Three House Nails. Hotline đặt lịch: 0703 994 683.">
@@ -134,5 +141,12 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

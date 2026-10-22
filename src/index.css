@@ -4473,4 +4473,936 @@ button {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* ==============================================================================
+   PWA & MOBILE APP INSTALL BUTTONS & BANNERS (https://forherbeauty.vn/admin)
+   ============================================================================== */
+.btn-admin-install {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFF;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-admin-install:hover {
+  background: linear-gradient(135deg, #34D399 0%, #059669 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+}
+
+.admin-mobile-install-banner {
+  background: #1B1715;
+  border-bottom: 2px solid var(--primary-gold);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #FFF;
+  animation: adminFadeIn 0.3s ease;
+}
+
+.banner-app-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #2A2421;
+  border: 1px solid rgba(184, 134, 76, 0.4);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-app-icon-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-app-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-app-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--primary-gold-light);
+  line-height: 1.25;
+}
+
+.banner-app-text p {
+  font-size: 0.76rem;
+  color: #D2C8BF;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.banner-app-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-install-banner {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+  color: #FFF;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-dismiss-banner {
+  background: transparent;
+  border: none;
+  color: #9CA3AF;
+  font-size: 1rem;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.btn-dismiss-banner:hover {
+  color: #FFF;
+}
+
+.btn-login-install-app {
+  margin-top: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px dashed var(--primary-gold);
+  background: rgba(184, 134, 76, 0.08);
+  color: var(--primary-gold-dark);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-login-install-app:hover {
+  background: rgba(184, 134, 76, 0.16);
+  border-color: var(--primary-gold);
+}
+
+/* PWA INSTALL MODAL */
+.pwa-install-modal {
+  max-width: 480px;
+  width: 95%;
+}
+
+.pwa-app-badge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #FDFBF8;
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+.pwa-modal-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pwa-app-badge h4 {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 2px;
+}
+
+.pwa-app-badge p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pwa-instruction-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 12px;
+}
+
+.pwa-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pwa-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-gold);
+}
+
+.pwa-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-gold);
+  color: #FFF;
+  font-size: 0.76rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pwa-step-item p {
+  font-size: 0.84rem;
+  color: var(--text-body);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.pwa-tip-box {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: #1E40AF;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+/* ==============================================================================
+   MOBILE RESPONSIVENESS (<= 768px and <= 480px)
+   ============================================================================== */
+/* ==============================================================================
+   RESPONSIVE LAYOUT SWITCHES & MOBILE-FIRST ADMIN UI (https://forherbeauty.vn/admin)
+   ============================================================================== */
+
+/* BRANDING & TOP BAR ELEMENTS */
+.admin-brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+  color: #FFF;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(184, 134, 76, 0.3);
+}
+
+.admin-brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-brand-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-name-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #FFF;
+  letter-spacing: 0.3px;
+}
+
+.admin-title {
+  font-size: 0.78rem;
+  color: #9CA3AF;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* DESKTOP VS MOBILE SWITCHES */
+@media (min-width: 769px) {
+  .mobile-top-actions,
+  .mobile-exec-summary,
+  .mobile-booking-cards-list,
+  .mobile-drawer-overlay {
+    display: none !important;
+  }
+  .desktop-top-actions {
+    display: flex !important;
+  }
+  .admin-revenue-strip {
+    display: grid !important;
+  }
+  .admin-stats-strip {
+    display: grid !important;
+  }
+  .desktop-table-view {
+    display: block !important;
+  }
+}
+
+/* MOBILE ACTIONS (HEADER) */
+.mobile-top-actions {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-mobile-install-pill {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFF;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btn-mobile-menu-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-mobile-menu-toggle .bar-line {
+  width: 16px;
+  height: 2px;
+  background: #FFF;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+/* MOBILE DRAWER OVERLAY */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-end;
+  animation: adminFadeIn 0.2s ease;
+}
+
+.mobile-drawer-card {
+  width: 82%;
+  max-width: 320px;
+  height: 100%;
+  background: #1B1715;
+  color: #FFF;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  animation: slideDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDrawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.mobile-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+}
+
+.drawer-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #FFF;
+  margin: 0;
+}
+
+.drawer-subtitle {
+  font-size: 0.78rem;
+  color: var(--primary-gold-light);
+  margin: 3px 0 0;
+}
+
+.btn-close-drawer {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #FFF;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawer-link-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #E2E8F0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.drawer-link-item:hover,
+.drawer-link-item:active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFF;
+}
+
+.drawer-link-item.highlight {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34D399;
+}
+
+.drawer-link-item.home {
+  background: rgba(184, 134, 76, 0.15);
+  border-color: rgba(184, 134, 76, 0.3);
+  color: var(--primary-gold-light);
+}
+
+.drawer-link-item.logout {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #F87171;
+  margin-top: 6px;
+}
+
+.drawer-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 10px 0;
+}
+
+/* MOBILE EXECUTIVE SUMMARY (COMPACT & LUXURIOUS) */
+.mobile-exec-summary {
+  display: none;
+  padding: 10px 14px 6px;
+}
+
+.mobile-exec-card {
+  background: linear-gradient(135deg, #1E1916 0%, #2A221E 100%);
+  border: 1px solid rgba(184, 134, 76, 0.4);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #FFF;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.mobile-exec-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.mobile-exec-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--primary-gold-light);
+}
+
+.mobile-period-pills {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 3px;
+  border-radius: 8px;
+  gap: 3px;
+}
+
+.period-pill {
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.period-pill.active {
+  background: var(--primary-gold);
+  color: #FFF;
+  font-weight: 700;
+}
+
+.mobile-exec-big-num {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #FFF;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.mobile-exec-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #D2C8BF;
+  flex-wrap: wrap;
+}
+
+.mobile-exec-details .dot {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* QUICK STATUS CHIPS (SCROLLABLE ROW) */
+.mobile-status-chips-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 6px;
+  margin-top: 10px;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-status-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border: 1px solid #E2E8F0;
+  background: #FFF;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mobile-chip.active {
+  background: #1E293B;
+  color: #FFF;
+  border-color: #1E293B;
+}
+
+.mobile-chip.pending.active {
+  background: #D97706;
+  border-color: #D97706;
+}
+
+.mobile-chip.confirmed.active {
+  background: #2563EB;
+  border-color: #2563EB;
+}
+
+.mobile-chip.completed.active {
+  background: #059669;
+  border-color: #059669;
+}
+
+.mobile-chip.cancelled.active {
+  background: #DC2626;
+  border-color: #DC2626;
+}
+
+/* MOBILE BOOKING CARDS LIST */
+.mobile-booking-cards-list {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 14px 20px;
+}
+
+.mobile-booking-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 8px;
+}
+
+.mobile-card-id-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-num-pill {
+  font-weight: 800;
+  font-size: 0.8rem;
+  background: #F1F5F9;
+  color: #334155;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.order-time-text {
+  font-size: 0.76rem;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.today-badge-mini {
+  background: #FEF3C7;
+  color: #B45309;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.status-select-badge.mini {
+  font-size: 0.74rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.mobile-card-customer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customer-name-lg {
+  display: block;
+  font-size: 0.95rem;
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.customer-phone-link {
+  font-size: 0.8rem;
+  color: #475569;
+  text-decoration: none;
+}
+
+.customer-contact-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-quick-contact {
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-quick-contact.phone {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.btn-quick-contact.zalo {
+  background: #0068FF;
+  color: #FFF;
+}
+
+.mobile-card-service {
+  background: #F8FAFC;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.service-name-bold {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1E293B;
+  line-height: 1.3;
+}
+
+.service-mode-tag {
+  font-size: 0.72rem;
+  color: #64748B;
+}
+
+.service-price-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.service-price-val {
+  display: block;
+  font-weight: 800;
+  color: #059669;
+  font-size: 0.92rem;
+}
+
+.payment-pill.mini {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+.mobile-card-note {
+  font-size: 0.76rem;
+  background: #FEF9C3;
+  color: #854D0E;
+  padding: 6px 10px;
+  border-radius: 6px;
+  line-height: 1.35;
+}
+
+.mobile-card-footer {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr 1fr;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.btn-card-op {
+  padding: 8px 4px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-card-op.view {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.btn-card-op.pay {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFF;
+}
+
+.btn-card-op.bill {
+  background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+  color: #FFF;
+}
+
+.btn-card-op.edit {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.btn-card-op.delete {
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+}
+
+.btn-card-op.delete-disabled {
+  background: #F1F5F9;
+  color: #94A3B8;
+  cursor: not-allowed;
+}
+
+/* SPECIFIC RULES FOR SCREENS <= 768px */
+@media (max-width: 768px) {
+  /* Prevent iOS Safari zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  .admin-top-bar {
+    padding: 10px 14px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .admin-branding {
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .desktop-top-actions {
+    display: none !important;
+  }
+
+  .mobile-top-actions {
+    display: flex !important;
+  }
+
+  .admin-revenue-strip,
+  .admin-stats-strip,
+  .desktop-table-view {
+    display: none !important;
+  }
+
+  .mobile-exec-summary {
+    display: block !important;
+  }
+
+  .mobile-booking-cards-list {
+    display: flex !important;
+  }
+
+  /* Toolbar: Tabs & Actions */
+  .admin-nav-toolbar {
+    padding: 8px 14px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .admin-tabs-list {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .admin-tabs-list::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .admin-tab-btn {
+    flex-shrink: 0 !important;
+    padding: 6px 12px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+  }
+
+  .admin-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .admin-header-actions .btn-admin-action {
+    width: 100% !important;
+    padding: 8px 10px !important;
+    font-size: 0.78rem !important;
+    text-align: center !important;
+  }
+
+  /* Filter bar on mobile */
+  .admin-filter-bar {
+    padding: 6px 14px 10px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .filter-search-box {
+    width: 100% !important;
+  }
+
+  .filter-selects-group {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .filter-select {
+    width: 100% !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Modals on mobile */
+  .admin-submodal-card {
+    width: 95% !important;
+    max-width: 95% !important;
+    max-height: 90vh !important;
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  .admin-login-card {
+    padding: 24px 16px !important;
+    max-width: 360px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-selects-group {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-header-actions {
+    grid-template-columns: 1fr !important;
+  }
+  .mobile-card-footer {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+}
+
 

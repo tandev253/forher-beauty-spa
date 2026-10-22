@@ -29,6 +29,66 @@ export default function AdminPanel({
     }
   };
 
+  // PWA & Mobile App Install State (https://forherbeauty.vn/admin)
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+  const [showInstallGuideModal, setShowInstallGuideModal] = useState(false);
+  const [isIosDevice, setIsIosDevice] = useState(false);
+  const [showMobileInstallBanner, setShowMobileInstallBanner] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileRevenuePeriod, setMobileRevenuePeriod] = useState('today'); // 'today' | 'month'
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ua = window.navigator.userAgent.toLowerCase();
+      const isIos = /iphone|ipad|ipod/.test(ua);
+      setIsIosDevice(isIos);
+
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (isStandaloneMode) {
+        setIsAppInstalled(true);
+        setShowMobileInstallBanner(false);
+      }
+
+      const handleBeforeInstall = (e) => {
+        e.preventDefault();
+        setDeferredInstallPrompt(e);
+      };
+
+      const handleInstalled = () => {
+        setIsAppInstalled(true);
+        setDeferredInstallPrompt(null);
+        setShowMobileInstallBanner(false);
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.addEventListener('appinstalled', handleInstalled);
+
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+        window.removeEventListener('appinstalled', handleInstalled);
+      };
+    }
+  }, []);
+
+  const handleInstallAppClick = async () => {
+    if (deferredInstallPrompt) {
+      try {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setIsAppInstalled(true);
+          setShowMobileInstallBanner(false);
+        }
+        setDeferredInstallPrompt(null);
+      } catch (err) {
+        setShowInstallGuideModal(true);
+      }
+    } else {
+      setShowInstallGuideModal(true);
+    }
+  };
+
   // Login Form State
   const [usernameInput, setUsernameInput] = useState('admin');
   const [passwordInput, setPasswordInput] = useState('');
@@ -94,9 +154,6 @@ export default function AdminPanel({
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [pwdMessage, setPwdMessage] = useState('');
-
-  // SQL Copy state
-  const [sqlCopied, setSqlCopied] = useState(false);
 
   // Form Fields for Create / Edit Booking
   const [formData, setFormData] = useState({
@@ -486,13 +543,6 @@ export default function AdminPanel({
     }
   };
 
-  // Copy SQL
-  const handleCopySql = () => {
-    navigator.clipboard.writeText(BookingStorage.getInitSql());
-    setSqlCopied(true);
-    setTimeout(() => setSqlCopied(false), 3000);
-  };
-
   if (!isStandalone && !isOpen) return null;
 
   return (
@@ -501,19 +551,41 @@ export default function AdminPanel({
         {/* TOP BAR */}
         <div className="admin-top-bar">
           <div className="admin-branding">
-            {isAuthenticated ? (
-              isBoss ? (
-                <span className="admin-role-pill boss">SẾP (ADMIN)</span>
-              ) : (
-                <span className="admin-role-pill staff">{session?.fullName || 'NHÂN VIÊN'}</span>
-              )
-            ) : (
-              <span className="admin-badge-role">ADMIN PANEL</span>
-            )}
-            <h2 className="admin-title">FORHER Beauty & Spa — Quản Trị Đặt Lịch & Doanh Thu</h2>
+            <div className="admin-brand-icon">FH</div>
+            <div className="admin-brand-info">
+              <div className="admin-brand-line">
+                <span className="brand-name-text">FORHER Spa</span>
+                {isAuthenticated ? (
+                  isBoss ? (
+                    <span className="admin-role-pill boss">SẾP</span>
+                  ) : (
+                    <span className="admin-role-pill staff">{session?.fullName || 'NV'}</span>
+                  )
+                ) : (
+                  <span className="admin-badge-role">ADMIN</span>
+                )}
+              </div>
+              <h2 className="admin-title">Quản Trị Đặt Lịch & POS</h2>
+            </div>
           </div>
 
-          <div className="admin-top-actions">
+          {/* DESKTOP TOP ACTIONS (Visible on desktop screen) */}
+          <div className="admin-top-actions desktop-top-actions">
+            {!isAppInstalled && (
+              <button 
+                type="button" 
+                className="btn-admin-install" 
+                onClick={handleInstallAppClick}
+                title="Tải & Cài Đặt App Quản Trị FORHER vào màn hình chính"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Tải Ứng Dụng</span>
+              </button>
+            )}
             {isAuthenticated && (
               <>
                 <button 
@@ -543,7 +615,141 @@ export default function AdminPanel({
               {isStandalone ? "← Về Trang Chủ Website" : "✕ Đóng"}
             </button>
           </div>
+
+          {/* MOBILE TOP ACTIONS (Compact Install Pill + Hamburger Menu) */}
+          <div className="mobile-top-actions">
+            {!isAppInstalled && (
+              <button 
+                type="button" 
+                className="btn-mobile-install-pill"
+                onClick={handleInstallAppClick}
+                title="Cài App vào màn hình chính"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Tải App</span>
+              </button>
+            )}
+            <button 
+              type="button" 
+              className={`btn-mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              title="Menu Quản Trị"
+            >
+              <span className="bar-line"></span>
+              <span className="bar-line"></span>
+              <span className="bar-line"></span>
+            </button>
+          </div>
         </div>
+
+        {/* MOBILE SLIDE-OUT MENU DRAWER */}
+        {isMobileMenuOpen && (
+          <div className="mobile-drawer-overlay" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="mobile-drawer-card" onClick={(e) => e.stopPropagation()}>
+              <div className="mobile-drawer-header">
+                <div>
+                  <h4 className="drawer-title">{session?.fullName || 'Tài khoản Quản trị'}</h4>
+                  <p className="drawer-subtitle">{isBoss ? 'Quản lý tối cao (Sếp admin)' : 'Nhân viên lễ tân'}</p>
+                </div>
+                <button type="button" className="btn-close-drawer" onClick={() => setIsMobileMenuOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <div className="mobile-drawer-links">
+                {isAuthenticated && (
+                  <>
+                    <button 
+                      type="button" 
+                      className="drawer-link-item"
+                      onClick={() => { setIsMobileMenuOpen(false); setIsPasswordModalOpen(true); }}
+                    >
+                      Đổi Mật Khẩu Cá Nhân
+                    </button>
+                    <button 
+                      type="button" 
+                      className="drawer-link-item"
+                      onClick={() => { setIsMobileMenuOpen(false); handleExportCsv(); }}
+                    >
+                      Xuất File Excel (CSV)
+                    </button>
+                    <button 
+                      type="button" 
+                      className="drawer-link-item"
+                      onClick={() => { setIsMobileMenuOpen(false); refreshData(); }}
+                    >
+                      Đồng Bộ Dữ Liệu Cloud
+                    </button>
+                  </>
+                )}
+
+                {!isAppInstalled && (
+                  <button 
+                    type="button" 
+                    className="drawer-link-item highlight"
+                    onClick={() => { setIsMobileMenuOpen(false); handleInstallAppClick(); }}
+                  >
+                    Cài Đặt App Vào Màn Hình Chính
+                  </button>
+                )}
+
+                <div className="drawer-divider"></div>
+
+                <button 
+                  type="button" 
+                  className="drawer-link-item home"
+                  onClick={() => { setIsMobileMenuOpen(false); handleExit(); }}
+                >
+                  ← Về Trang Chủ Website FORHER
+                </button>
+
+                {isAuthenticated && (
+                  <button 
+                    type="button" 
+                    className="drawer-link-item logout"
+                    onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                  >
+                    Đăng Xuất
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MOBILE APP INSTALL BANNER */}
+        {!isAppInstalled && showMobileInstallBanner && (
+          <div className="admin-mobile-install-banner">
+            <div className="banner-app-icon-wrap">
+              <img src="/apple-touch-icon.png" alt="FORHER App" />
+            </div>
+            <div className="banner-app-text">
+              <strong>Cài Đặt App FORHER Quản Trị</strong>
+              <p>Mở nhanh từ màn hình chính điện thoại, không cần gõ web</p>
+            </div>
+            <div className="banner-app-btns">
+              <button 
+                type="button" 
+                className="btn-install-banner" 
+                onClick={handleInstallAppClick}
+              >
+                Tải App
+              </button>
+              <button 
+                type="button" 
+                className="btn-dismiss-banner" 
+                onClick={() => setShowMobileInstallBanner(false)}
+                title="Đóng thông báo"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* LOGIN SCREEN WITH USERNAME & PASSWORD */}
         {!isAuthenticated ? (
@@ -584,9 +790,6 @@ export default function AdminPanel({
                 <div className="role-pwd-hint-box">
                   <p><strong>Tài khoản Quản lý (Sếp):</strong> <code>admin</code> (Mật khẩu mặc định: <code>forheradmin</code>)</p>
                   <p style={{ marginTop: '4px' }}><strong>Tài khoản Nhân viên:</strong> do Quản lý tạo (Mẫu: <code>nhanvien1</code> / <code>forhernv</code>)</p>
-                  <small style={{ color: '#059669', display: 'block', marginTop: '6px' }}>
-                    Kết nối cơ sở dữ liệu Supabase: <strong>{SUPABASE_URL.split('//')[1]}</strong>
-                  </small>
                 </div>
 
                 {loginError && <div className="admin-error-box">{loginError}</div>}
@@ -598,6 +801,20 @@ export default function AdminPanel({
                   <button type="button" className="btn-outline-gold w-100" onClick={handleExit}>
                     {isStandalone ? '← Về Trang Chủ Website' : 'Quay Lại Website'}
                   </button>
+                  {!isAppInstalled && (
+                    <button 
+                      type="button" 
+                      className="btn-login-install-app w-100" 
+                      onClick={handleInstallAppClick}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', flexShrink: 0 }}>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      Tải & Cài Đặt Ứng Dụng Quản Trị
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -605,23 +822,82 @@ export default function AdminPanel({
         ) : (
           /* AUTHENTICATED ADMIN DASHBOARD */
           <div className="admin-dashboard-body">
-            {/* ROLE PERMISSION NOTICE BAR */}
-            <div className={`role-notice-banner ${isBoss ? 'banner-boss' : 'banner-staff'}`}>
-              {isBoss ? (
-                <div className="role-notice-inner">
-                  <div>
-                    <strong>Tài khoản Sếp (admin):</strong>
-                    <span> Toàn quyền quản trị tối cao — Có quyền <strong>XÓA ĐƠN</strong>, <strong>CÀI ĐẶT SỐ TÀI KHOẢN NGÂN HÀNG</strong>, <strong>TẠO TÀI KHOẢN NHÂN VIÊN</strong> và quản lý toàn bộ hệ thống Supabase Cloud.</span>
+            {/* MOBILE COMPACT EXECUTIVE SUMMARY (Chỉ hiển thị trên mobile, gọn gàng, sang trọng) */}
+            <div className="mobile-exec-summary">
+              <div className="mobile-exec-card">
+                <div className="mobile-exec-top">
+                  <div className="mobile-exec-label">
+                    <span>DOANH THU {mobileRevenuePeriod === 'today' ? 'HÔM NAY' : `THÁNG ${revenueStats.currentMonthPrefix.split('-')[1]}`}</span>
+                  </div>
+                  <div className="mobile-period-pills">
+                    <button 
+                      type="button" 
+                      className={`period-pill ${mobileRevenuePeriod === 'today' ? 'active' : ''}`}
+                      onClick={() => setMobileRevenuePeriod('today')}
+                    >
+                      Hôm Nay
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`period-pill ${mobileRevenuePeriod === 'month' ? 'active' : ''}`}
+                      onClick={() => setMobileRevenuePeriod('month')}
+                    >
+                      Tháng {revenueStats.currentMonthPrefix.split('-')[1]}
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <div className="role-notice-inner">
-                  <div>
-                    <strong>Tài khoản Nhân viên ({session?.fullName}):</strong>
-                    <span> Tiếp nhận khách, xem chi tiết đơn, tính tiền, tạo mã VietQR, thanh toán tiền mặt & in hóa đơn. Thao tác xóa đơn và sửa tài khoản ngân hàng bị khóa.</span>
-                  </div>
+
+                <div className="mobile-exec-big-num">
+                  {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayRevenue : revenueStats.monthRevenue)}
                 </div>
-              )}
+
+                <div className="mobile-exec-details">
+                  <span>{mobileRevenuePeriod === 'today' ? revenueStats.todayPaidCount : revenueStats.monthPaidCount} đơn đã thu</span>
+                  <span className="dot">•</span>
+                  <span>CK: {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayTransfer : revenueStats.monthTransfer)}</span>
+                  <span className="dot">•</span>
+                  <span>TM: {formatVnd(mobileRevenuePeriod === 'today' ? revenueStats.todayCash : revenueStats.monthCash)}</span>
+                </div>
+              </div>
+
+              {/* MOBILE QUICK STATUS FILTER CHIPS */}
+              <div className="mobile-status-chips-scroll">
+                <button 
+                  type="button" 
+                  className={`mobile-chip ${statusFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('all')}
+                >
+                  Tất Cả ({stats.total})
+                </button>
+                <button 
+                  type="button" 
+                  className={`mobile-chip pending ${statusFilter === 'pending' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('pending')}
+                >
+                  Chờ Duyệt ({stats.pending})
+                </button>
+                <button 
+                  type="button" 
+                  className={`mobile-chip confirmed ${statusFilter === 'confirmed' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('confirmed')}
+                >
+                  Đã Xác Nhận ({stats.confirmed})
+                </button>
+                <button 
+                  type="button" 
+                  className={`mobile-chip completed ${statusFilter === 'completed' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('completed')}
+                >
+                  Đã Xong ({stats.completed})
+                </button>
+                <button 
+                  type="button" 
+                  className={`mobile-chip cancelled ${statusFilter === 'cancelled' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('cancelled')}
+                >
+                  Đã Hủy ({stats.cancelled})
+                </button>
+              </div>
             </div>
 
             {/* REVENUE STATS STRIP (DOANH THU NGÀY VÀ THÁNG) */}
@@ -735,7 +1011,7 @@ export default function AdminPanel({
                   className={`admin-tab-btn ${activeTab === 'backup' ? 'active' : ''}`}
                   onClick={() => setActiveTab('backup')}
                 >
-                  Supabase Cloud
+                  Xuất File Dữ Liệu
                 </button>
               </div>
 
@@ -1016,6 +1292,142 @@ export default function AdminPanel({
                         })}
                       </tbody>
                     </table>
+                  )}
+                </div>
+
+                {/* MOBILE LUXURY ORDER CARDS LIST (Chỉ hiển thị trên điện thoại, cực kỳ gọn gàng & dễ thao tác) */}
+                <div className="mobile-booking-cards-list">
+                  {filteredBookings.length === 0 ? (
+                    <div className="admin-empty-state">
+                      <p>Không có đơn đặt lịch nào phù hợp.</p>
+                      <button 
+                        type="button" 
+                        className="btn-outline-gold"
+                        onClick={() => { setSearchTerm(''); setStatusFilter('all'); setPaymentFilter('all'); setDateFilter('all'); }}
+                      >
+                        Xóa Bộ Lọc
+                      </button>
+                    </div>
+                  ) : (
+                    filteredBookings.map((b) => {
+                      const isToday = b.bookingDate === todayStr;
+                      const amt = b.paidAmount || parsePriceToNumber(b.priceDisplay);
+                      return (
+                        <div key={b.id} className="mobile-booking-card">
+                          <div className="mobile-card-header">
+                            <div className="mobile-card-id-block">
+                              <span className="order-num-pill">#{b.id}</span>
+                              <span className="order-time-text">{b.bookingTime} • {b.bookingDate}</span>
+                              {isToday && <span className="today-badge-mini">HÔM NAY</span>}
+                            </div>
+                            <select
+                              value={b.status}
+                              onChange={(e) => handleQuickStatusChange(b.id, e.target.value)}
+                              className={`status-select-badge mini ${b.status}`}
+                            >
+                              <option value="pending">Chờ xác nhận</option>
+                              <option value="confirmed">Đã xác nhận</option>
+                              <option value="completed">Đã hoàn thành</option>
+                              <option value="cancelled">Đã hủy</option>
+                            </select>
+                          </div>
+
+                          <div className="mobile-card-customer">
+                            <div className="customer-left">
+                              <strong className="customer-name-lg">{b.fullName}</strong>
+                              <a href={`tel:${b.phoneNumber}`} className="customer-phone-link">{b.phoneNumber}</a>
+                            </div>
+                            <div className="customer-contact-actions">
+                              <a href={`tel:${b.phoneNumber}`} className="btn-quick-contact phone" title="Gọi điện">
+                                Gọi
+                              </a>
+                              <a href={`https://zalo.me/${b.phoneNumber}`} target="_blank" rel="noopener noreferrer" className="btn-quick-contact zalo" title="Chat Zalo">
+                                Zalo
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="mobile-card-service">
+                            <div className="service-info-col">
+                              <span className="service-name-bold">{b.serviceName}</span>
+                              <span className="service-mode-tag">{b.modeLabel}</span>
+                            </div>
+                            <div className="service-price-col">
+                              <span className="service-price-val">{b.priceDisplay}</span>
+                              {b.isPaid || b.status === 'completed' ? (
+                                <span className="payment-pill paid mini">
+                                  ĐÃ THU ({b.paymentMethod === 'cash' ? 'Tiền mặt' : 'QR'})
+                                </span>
+                              ) : (
+                                <span className="payment-pill unpaid mini">CHƯA THU</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {b.skinNotes && (
+                            <div className="mobile-card-note">
+                              <strong>Ghi chú:</strong> {b.skinNotes}
+                            </div>
+                          )}
+
+                          <div className="mobile-card-footer">
+                            <button
+                              type="button"
+                              className="btn-card-op view"
+                              onClick={() => handleOpenDetail(b)}
+                            >
+                              Chi Tiết
+                            </button>
+
+                            {!b.isPaid && b.status !== 'completed' ? (
+                              <button
+                                type="button"
+                                className="btn-card-op pay"
+                                onClick={() => handleOpenCheckout(b)}
+                              >
+                                Thu Tiền / QR
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn-card-op bill"
+                                onClick={() => handleOpenReceipt(b)}
+                              >
+                                In Bill
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              className="btn-card-op edit"
+                              onClick={() => handleOpenEditModal(b)}
+                            >
+                              Sửa
+                            </button>
+
+                            {isBoss ? (
+                              <button
+                                type="button"
+                                className="btn-card-op delete"
+                                onClick={() => handleAttemptDelete(b.id)}
+                                title="Xóa đơn (chỉ Sếp)"
+                              >
+                                Xóa
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn-card-op delete-disabled"
+                                onClick={() => handleAttemptDelete(b.id)}
+                                title="Khóa xóa"
+                              >
+                                Khóa
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -1416,40 +1828,10 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* TAB CONTENT 6: SUPABASE CLOUD & DATA */}
+            {/* TAB CONTENT 6: EXPORT & DATA */}
             {activeTab === 'backup' && (
               <div className="admin-tab-content">
                 <div className="backup-sections-grid">
-                  <div className="backup-card supabase-highlight-card">
-                    <h4>Kết Nối Supabase Cloud Database</h4>
-                    <p>
-                      Dự án Supabase: <strong>{SUPABASE_URL}</strong><br />
-                      Để đồng bộ dữ liệu vĩnh viễn trên đám mây, hãy chạy script SQL tạo bảng trong Supabase SQL Editor.
-                    </p>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                      <button 
-                        type="button" 
-                        className="btn-primary-gold"
-                        onClick={handleCopySql}
-                      >
-                        {sqlCopied ? 'Đã Sao Chép Mã SQL' : 'Sao Chép Mã Tạo Bảng SQL'}
-                      </button>
-                      <a 
-                        href="https://supabase.com/dashboard/project/lrjumrqjpepxmlwaiwvq/sql" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="btn-outline-gold"
-                      >
-                        Mở Supabase SQL Editor ↗
-                      </a>
-                    </div>
-                    {sqlCopied && (
-                      <small style={{ color: '#059669', display: 'block', marginTop: '8px' }}>
-                        Đã chép mã SQL vào clipboard. Hãy dán vào Supabase và bấm <strong>Run</strong>!
-                      </small>
-                    )}
-                  </div>
-
                   <div className="backup-card">
                     <h4>Xuất Danh Sách Ra Excel / CSV</h4>
                     <p>Tải toàn bộ danh sách đơn đặt lịch và doanh thu về máy vi tính dạng file CSV mở bằng Excel.</p>
@@ -2243,6 +2625,82 @@ export default function AdminPanel({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL: HƯỚNG DẪN CÀI ĐẶT ỨNG DỤNG (PWA INSTALL GUIDE MODAL)
+            ============================================================================== */}
+        {showInstallGuideModal && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card pwa-install-modal">
+              <div className="admin-submodal-header">
+                <h3>Cài Đặt App Quản Trị FORHER</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setShowInstallGuideModal(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <div className="pwa-install-body">
+                <div className="pwa-app-badge">
+                  <img src="/apple-touch-icon.png" alt="FORHER Logo" className="pwa-modal-logo" />
+                  <div>
+                    <h4>FORHER Beauty & Spa — Quản Trị</h4>
+                    <p>Ứng dụng quản trị đơn đặt lịch, POS tính tiền VietQR & doanh thu</p>
+                  </div>
+                </div>
+
+                {isIosDevice ? (
+                  <div className="pwa-steps-list">
+                    <p className="pwa-instruction-title">Hướng dẫn cài đặt trên iPhone / iPad (Safari):</p>
+                    <div className="pwa-step-item">
+                      <span className="pwa-step-num">1</span>
+                      <p>Chạm vào biểu tượng <strong>Chia Sẻ</strong> (Share icon ở thanh công cụ dưới cùng của trình duyệt Safari).</p>
+                    </div>
+                    <div className="pwa-step-item">
+                      <span className="pwa-step-num">2</span>
+                      <p>Cuộn xuống danh sách tùy chọn và chạm vào <strong>"Thêm vào Màn hình chính"</strong> (Add to Home Screen).</p>
+                    </div>
+                    <div className="pwa-step-item">
+                      <span className="pwa-step-num">3</span>
+                      <p>Chạm nút <strong>"Thêm"</strong> (Add) ở góc trên bên phải màn hình.</p>
+                    </div>
+                    <div className="pwa-tip-box">
+                      Biểu tượng App FORHER Quản Trị sẽ xuất hiện trên màn hình điện thoại, mở toàn màn hình độc lập không bị dính thanh địa chỉ web!
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pwa-steps-list">
+                    <p className="pwa-instruction-title">Hướng dẫn cài đặt trên Android / Chrome / Máy tính:</p>
+                    <div className="pwa-step-item">
+                      <span className="pwa-step-num">1</span>
+                      <p>Chạm vào biểu tượng <strong>Menu 3 chấm (⋮)</strong> ở góc trên bên phải trình duyệt Chrome.</p>
+                    </div>
+                    <div className="pwa-step-item">
+                      <span className="pwa-step-num">2</span>
+                      <p>Chọn dòng <strong>"Cài đặt ứng dụng"</strong> hoặc <strong>"Thêm vào Màn hình chính"</strong> (Install App / Add to Home screen).</p>
+                    </div>
+                    <div className="pwa-step-item">
+                      <span className="pwa-step-num">3</span>
+                      <p>Xác nhận <strong>"Cài đặt"</strong> (Install). Biểu tượng ứng dụng sẽ được ghim ra màn hình chính.</p>
+                    </div>
+                    <div className="pwa-tip-box">
+                      Ứng dụng quản trị sẽ hoạt động độc lập, nhanh mượt và mở ngay lập tức mỗi khi bạn cần quản lý đơn hàng!
+                    </div>
+                  </div>
+                )}
+
+                <div className="submodal-actions" style={{ marginTop: '20px' }}>
+                  <button 
+                    type="button" 
+                    className="btn-primary-gold w-100"
+                    onClick={() => setShowInstallGuideModal(false)}
+                  >
+                    Đã Hiểu & Đóng
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
