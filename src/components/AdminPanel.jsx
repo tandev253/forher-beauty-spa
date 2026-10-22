@@ -1295,48 +1295,6 @@ export default function AdminPanel({
                   </div>
                 </div>
               )}
-
-              {/* MOBILE QUICK STATUS FILTER CHIPS (CENTERED WITH ARROWS) */}
-              <div className="centered-chips-strip-wrapper">
-                <button 
-                  type="button" 
-                  className="chips-arrow-btn left"
-                  disabled={currentChipIndex <= 0}
-                  onClick={handlePrevChip}
-                  title="Chuyển sang bộ lọc trước"
-                  aria-label="Bộ lọc trước"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                </button>
-
-                <div className="mobile-status-chips-scroll centered-chips-track" ref={chipsTrackRef}>
-                  {STATUS_CHIPS.map(chip => (
-                    <button 
-                      key={chip.id}
-                      type="button" 
-                      className={`mobile-chip ${chip.className} ${statusFilter === chip.id ? 'active' : ''}`}
-                      onClick={() => setStatusFilter(chip.id)}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-
-                <button 
-                  type="button" 
-                  className="chips-arrow-btn right"
-                  disabled={currentChipIndex >= STATUS_CHIPS.length - 1}
-                  onClick={handleNextChip}
-                  title="Chuyển sang bộ lọc tiếp theo"
-                  aria-label="Bộ lọc tiếp theo"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
-              </div>
             </div>
 
             {/* REVENUE STATS STRIP (DOANH THU TOÀN SPA CHO SẾP - DOANH THU CÁ NHÂN CHO NHÂN VIÊN) */}
@@ -1584,7 +1542,7 @@ export default function AdminPanel({
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="filter-select desktop-only-filter"
+                      className="filter-select"
                     >
                       <option value="all">Tất Cả Trạng Thái</option>
                       <option value="pending">Chờ xác nhận ({stats.pending})</option>

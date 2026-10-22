@@ -5430,35 +5430,12 @@ button {
     border-radius: 20px !important;
   }
 
-  /* Navigation Tabs Row on Mobile */
-  .admin-nav-toolbar {
-    padding: 4px 0 8px !important;
-    border-bottom: 1px solid var(--border-light) !important;
-    margin-bottom: 2px !important;
-    display: block !important;
-    width: 100% !important;
-  }
-
-  .admin-tabs-list {
-    display: flex !important;
-    width: 100% !important;
-    overflow-x: auto !important;
-    gap: 6px !important;
-    padding-bottom: 4px !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  .admin-tabs-list::-webkit-scrollbar {
+  /* Navigation Tabs & Status Chips on Mobile - Hidden because navigation is handled in Image 2 Drawer */
+  .admin-nav-toolbar,
+  .centered-chips-strip-wrapper,
+  .centered-tabs-strip-wrapper,
+  .mobile-status-chips-scroll {
     display: none !important;
-  }
-
-  .admin-tab-btn {
-    flex-shrink: 0 !important;
-    padding: 7px 14px !important;
-    font-size: 0.8rem !important;
-    border-radius: 8px !important;
-    white-space: nowrap !important;
   }
 
   /* Desktop header actions are hidden on mobile to avoid horizontal clipping */
