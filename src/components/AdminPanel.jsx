@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BookingStorage } from '../data/bookingStorage';
-import { SERVICES_CATALOG, COMPANY_INFO } from '../data/servicesData';
+import { SERVICES_CATALOG } from '../data/servicesData';
 
 export default function AdminPanel({ isOpen, onClose }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentRole, setCurrentRole] = useState('staff'); // 'boss' | 'staff'
+
+  // Login Form State
+  const [selectedLoginRole, setSelectedLoginRole] = useState('boss'); // default select boss or staff
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
@@ -18,7 +22,7 @@ export default function AdminPanel({ isOpen, onClose }) {
   const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today' | 'upcoming'
 
   // Modal State for Add / Edit
-  const [editingBooking, setEditingBooking] = useState(null); // null or booking obj
+  const [editingBooking, setEditingBooking] = useState(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -46,6 +50,7 @@ export default function AdminPanel({ isOpen, onClose }) {
   const refreshData = () => {
     setBookings(BookingStorage.getAllBookings());
     setLogs(BookingStorage.getAllLogs());
+    setCurrentRole(BookingStorage.getCurrentRole() || 'staff');
   };
 
   useEffect(() => {
@@ -60,9 +65,10 @@ export default function AdminPanel({ isOpen, onClose }) {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const result = BookingStorage.login(passwordInput);
+    const result = BookingStorage.login(selectedLoginRole, passwordInput);
     if (result.success) {
       setIsAuthenticated(true);
+      setCurrentRole(result.role);
       setLoginError('');
       setPasswordInput('');
       refreshData();
@@ -75,6 +81,8 @@ export default function AdminPanel({ isOpen, onClose }) {
     BookingStorage.logout();
     setIsAuthenticated(false);
   };
+
+  const isBoss = currentRole === 'boss';
 
   // Status counters
   const stats = useMemo(() => {
@@ -190,10 +198,25 @@ export default function AdminPanel({ isOpen, onClose }) {
     refreshData();
   };
 
-  // Confirm Delete
+  // Trigger Delete (Check role permission)
+  const handleAttemptDelete = (id) => {
+    if (!isBoss) {
+      alert('⛔ BỊ CHẶN QUYỀN HẠN:\nChỉ Sếp / Quản lý tối cao mới được phép xóa đơn đặt lịch!\nNhân viên chỉ có quyền xem, tiếp nhận và sửa trạng thái đơn.');
+      // Also log security violation in audit log
+      BookingStorage.deleteBooking(id);
+      refreshData();
+      return;
+    }
+    setDeletingId(id);
+  };
+
+  // Confirm Delete (Only accessible to Boss)
   const handleConfirmDelete = () => {
     if (deletingId) {
-      BookingStorage.deleteBooking(deletingId);
+      const res = BookingStorage.deleteBooking(deletingId);
+      if (!res.success) {
+        alert(res.message);
+      }
       setDeletingId(null);
       refreshData();
     }
@@ -219,7 +242,7 @@ export default function AdminPanel({ isOpen, onClose }) {
   // Change Password
   const handleChangePassword = (e) => {
     e.preventDefault();
-    const result = BookingStorage.changePassword(oldPassword, newPassword);
+    const result = BookingStorage.changePassword(currentRole, oldPassword, newPassword);
     if (result.success) {
       setPwdMessage('Đổi mật khẩu thành công!');
       setTimeout(() => {
@@ -241,7 +264,15 @@ export default function AdminPanel({ isOpen, onClose }) {
         {/* TOP BAR */}
         <div className="admin-top-bar">
           <div className="admin-branding">
-            <span className="admin-badge-role">ADMIN PANEL</span>
+            {isAuthenticated ? (
+              isBoss ? (
+                <span className="admin-role-pill boss">👑 SẾP (QUẢN LÝ TỐI CAO)</span>
+              ) : (
+                <span className="admin-role-pill staff">💼 NHÂN VIÊN LỄ TÂN</span>
+              )
+            ) : (
+              <span className="admin-badge-role">ADMIN PANEL</span>
+            )}
             <h2 className="admin-title">FORHER Beauty & Spa — Quản Trị Đơn Khách Hàng</h2>
           </div>
           <div className="admin-top-actions">
@@ -251,7 +282,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                   type="button" 
                   className="btn-admin-nav" 
                   onClick={() => setIsPasswordModalOpen(true)}
-                  title="Đổi Mật Khẩu"
+                  title={`Đổi mật khẩu ${isBoss ? 'Sếp' : 'Nhân viên'}`}
                 >
                   Đổi Mật Khẩu
                 </button>
@@ -276,38 +307,71 @@ export default function AdminPanel({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* LOGIN SCREEN IF NOT AUTHENTICATED */}
+        {/* LOGIN SCREEN WITH ROLE SELECTION */}
         {!isAuthenticated ? (
           <div className="admin-login-wrapper">
             <div className="admin-login-card">
               <span className="admin-login-logo">Forher Beauty</span>
-              <h3>Đăng Nhập Quản Trị Viên</h3>
+              <h3>Đăng Nhập Phân Quyền Quản Trị</h3>
               <p className="admin-login-desc">
-                Nhập mật khẩu quản trị để xem và quản lý đơn đặt lịch hẹn của khách hàng.
+                Vui lòng chọn vai trò làm việc để hệ thống áp dụng đúng thẩm quyền (Chỉ Sếp mới có quyền xóa đơn).
               </p>
+
+              {/* Role Picker Tabs */}
+              <div className="login-role-tabs">
+                <button
+                  type="button"
+                  className={`login-role-btn ${selectedLoginRole === 'boss' ? 'active boss' : ''}`}
+                  onClick={() => { setSelectedLoginRole('boss'); setLoginError(''); }}
+                >
+                  <span className="role-icon">👑</span>
+                  <div className="role-text-wrap">
+                    <strong>Sếp / Quản Lý</strong>
+                    <small>Toàn quyền (Được Xóa đơn)</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`login-role-btn ${selectedLoginRole === 'staff' ? 'active staff' : ''}`}
+                  onClick={() => { setSelectedLoginRole('staff'); setLoginError(''); }}
+                >
+                  <span className="role-icon">💼</span>
+                  <div className="role-text-wrap">
+                    <strong>Nhân Viên Lễ Tân</strong>
+                    <small>Thêm, sửa, nhận đơn (Không được xóa)</small>
+                  </div>
+                </button>
+              </div>
 
               <form onSubmit={handleLogin} className="admin-login-form">
                 <div className="admin-form-group">
-                  <label htmlFor="admin-pwd">Mật Khẩu Quản Trị:</label>
+                  <label htmlFor="admin-pwd">
+                    Mật Khẩu của {selectedLoginRole === 'boss' ? 'Sếp' : 'Nhân Viên'}:
+                  </label>
                   <input
                     id="admin-pwd"
                     type="password"
-                    placeholder="Nhập mật khẩu..."
+                    placeholder={`Nhập mật khẩu ${selectedLoginRole === 'boss' ? 'Sếp' : 'Nhân viên'}...`}
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     autoFocus
                     required
                   />
-                  <small className="admin-pwd-hint">
-                    Mật khẩu mặc định: <strong>forherbeauty</strong>
-                  </small>
+                  <div className="role-pwd-hint-box">
+                    {selectedLoginRole === 'boss' ? (
+                      <p>🔑 Mật khẩu mặc định của <strong>Sếp</strong>: <code>forherboss</code></p>
+                    ) : (
+                      <p>🔑 Mật khẩu mặc định của <strong>Nhân viên</strong>: <code>forhernv</code></p>
+                    )}
+                  </div>
                 </div>
 
                 {loginError && <div className="admin-error-box">{loginError}</div>}
 
                 <div className="admin-login-actions">
                   <button type="submit" className="btn-primary-gold w-100">
-                    Đăng Nhập Quản Trị
+                    Đăng Nhập với quyền {selectedLoginRole === 'boss' ? 'Sếp' : 'Nhân Viên'}
                   </button>
                   <button type="button" className="btn-outline-gold w-100" onClick={onClose}>
                     Quay Lại Website
@@ -319,6 +383,27 @@ export default function AdminPanel({ isOpen, onClose }) {
         ) : (
           /* AUTHENTICATED ADMIN DASHBOARD */
           <div className="admin-dashboard-body">
+            {/* ROLE PERMISSION NOTICE BAR */}
+            <div className={`role-notice-banner ${isBoss ? 'banner-boss' : 'banner-staff'}`}>
+              {isBoss ? (
+                <div className="role-notice-inner">
+                  <span className="notice-icon">👑</span>
+                  <div>
+                    <strong>Tài khoản Sếp (Toàn quyền quản trị tối cao):</strong>
+                    <span> Bạn có quyền Thêm, Chỉnh sửa, Duyệt trạng thái, <strong>XÓA ĐƠN</strong> và làm trống lịch sử audit log.</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="role-notice-inner">
+                  <span className="notice-icon">💼</span>
+                  <div>
+                    <strong>Tài khoản Nhân viên / Lễ tân:</strong>
+                    <span> Bạn có quyền tiếp nhận đơn, Thêm mới, Chỉnh sửa thông tin & Cập nhật trạng thái. <strong>Thao tác Xóa đơn bị vô hiệu hóa</strong> (Chỉ Sếp mới có quyền xóa).</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* STATS BAR */}
             <div className="admin-stats-strip">
               <div className="stat-pill total">
@@ -443,7 +528,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                   </div>
                 </div>
 
-                {/* Bookings Table / Grid */}
+                {/* Bookings Table */}
                 <div className="admin-table-container">
                   {filteredBookings.length === 0 ? (
                     <div className="admin-empty-state">
@@ -464,6 +549,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                           <th>KHÁCH HÀNG</th>
                           <th>DỊCH VỤ ĐẶT</th>
                           <th>NGÀY & GIỜ HẸN</th>
+                          <th>NGƯỜI TẠO</th>
                           <th>GHI CHÚ</th>
                           <th>TRẠNG THÁI</th>
                           <th>THAO TÁC</th>
@@ -516,6 +602,12 @@ export default function AdminPanel({ isOpen, onClose }) {
                                 </div>
                               </td>
 
+                              <td className="col-creator">
+                                <span className="creator-badge">
+                                  {b.createdBy || 'Khách web'}
+                                </span>
+                              </td>
+
                               <td className="col-notes">
                                 {b.skinNotes ? (
                                   <p className="skin-note-text" title={b.skinNotes}>
@@ -554,14 +646,27 @@ export default function AdminPanel({ isOpen, onClose }) {
                                   >
                                     Sửa
                                   </button>
-                                  <button
-                                    type="button"
-                                    className="btn-tbl-action delete"
-                                    onClick={() => setDeletingId(b.id)}
-                                    title="Xóa đơn"
-                                  >
-                                    Xóa
-                                  </button>
+                                  
+                                  {/* DELETE BUTTON: ONLY BOSS HAS PERMISSION */}
+                                  {isBoss ? (
+                                    <button
+                                      type="button"
+                                      className="btn-tbl-action delete"
+                                      onClick={() => handleAttemptDelete(b.id)}
+                                      title="👑 Sếp có quyền xóa đơn này"
+                                    >
+                                      Xóa
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="btn-tbl-action delete-disabled"
+                                      onClick={() => handleAttemptDelete(b.id)}
+                                      title="🔒 Bị khóa: Chỉ Sếp mới có quyền xóa đơn!"
+                                    >
+                                      🔒 Xóa
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -579,21 +684,23 @@ export default function AdminPanel({ isOpen, onClose }) {
               <div className="admin-tab-content">
                 <div className="audit-logs-header">
                   <div>
-                    <h3>Nhật Ký Thao Tác (Audit Log)</h3>
-                    <p>Ghi nhận lại chi tiết mọi hành vi thêm đơn, chỉnh sửa, đổi lịch và xóa đơn trong hệ thống.</p>
+                    <h3>Nhật Ký Thao Tác (Audit Log) Phân Theo Người Thực Hiện</h3>
+                    <p>Hệ thống tự động ghi nhận lại chi tiết ai (Sếp, Nhân viên, Khách) đã tạo, sửa hoặc xóa đơn.</p>
                   </div>
-                  <button 
-                    type="button" 
-                    className="btn-outline-gold"
-                    onClick={() => {
-                      if (window.confirm('Bạn có chắc chắn muốn làm trống lịch sử audit log?')) {
-                        BookingStorage.clearAuditLogs();
-                        refreshData();
-                      }
-                    }}
-                  >
-                    Làm Trống Lịch Sử
-                  </button>
+                  {isBoss && (
+                    <button 
+                      type="button" 
+                      className="btn-outline-gold"
+                      onClick={() => {
+                        if (window.confirm('Bạn có chắc chắn muốn làm trống lịch sử audit log?')) {
+                          BookingStorage.clearAuditLogs();
+                          refreshData();
+                        }
+                      }}
+                    >
+                      👑 Sếp Làm Trống Lịch Sử
+                    </button>
+                  )}
                 </div>
 
                 <div className="audit-timeline">
@@ -613,7 +720,12 @@ export default function AdminPanel({ isOpen, onClose }) {
                             <span className="log-time">{logDate}</span>
                           </div>
                           <div className="log-details-col">
-                            <h4 className="log-title">{log.actionTitle}</h4>
+                            <div className="log-header-line">
+                              <h4 className="log-title">{log.actionTitle}</h4>
+                              <span className={`actor-tag role-${log.actorRole || 'system'}`}>
+                                {log.actor || 'Hệ thống'}
+                              </span>
+                            </div>
                             <p className="log-desc">{log.details}</p>
                             {log.orderId && (
                               <span className="log-order-ref">Mã đơn: #{log.orderId}</span>
@@ -659,23 +771,25 @@ export default function AdminPanel({ isOpen, onClose }) {
                     </button>
                   </div>
 
-                  <div className="backup-card">
-                    <h4>Khôi Phục Dữ Liệu Mẫu</h4>
-                    <p>Thiết lập lại dữ liệu danh sách đơn đặt lịch mẫu ban đầu nếu cần kiểm tra quy trình.</p>
-                    <button 
-                      type="button" 
-                      className="btn-outline-gold"
-                      onClick={() => {
-                        if (window.confirm('Hành động này sẽ nạp lại danh sách đơn mẫu. Bạn có muốn tiếp tục?')) {
-                          BookingStorage.resetDemoData();
-                          refreshData();
-                          alert('Đã khôi phục dữ liệu mẫu thành công!');
-                        }
-                      }}
-                    >
-                      Nạp Dữ Liệu Mẫu
-                    </button>
-                  </div>
+                  {isBoss && (
+                    <div className="backup-card">
+                      <h4>👑 Quyền Sếp: Khôi Phục Dữ Liệu Mẫu</h4>
+                      <p>Thiết lập lại dữ liệu danh sách đơn đặt lịch mẫu ban đầu nếu cần kiểm tra quy trình.</p>
+                      <button 
+                        type="button" 
+                        className="btn-outline-gold"
+                        onClick={() => {
+                          if (window.confirm('Hành động này sẽ nạp lại danh sách đơn mẫu. Bạn có muốn tiếp tục?')) {
+                            BookingStorage.resetDemoData();
+                            refreshData();
+                            alert('Đã khôi phục dữ liệu mẫu thành công!');
+                          }
+                        }}
+                      >
+                        Nạp Dữ Liệu Mẫu
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -833,18 +947,19 @@ export default function AdminPanel({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* MODAL: DELETE CONFIRMATION */}
-        {deletingId && (
+        {/* MODAL: DELETE CONFIRMATION (ONLY BOSS CAN TRIGGER) */}
+        {deletingId && isBoss && (
           <div className="admin-submodal-backdrop">
             <div className="admin-submodal-card delete-confirm">
-              <h3>Xác Nhận Xóa Đơn Đặt Lịch</h3>
+              <span className="delete-alert-icon">⚠️</span>
+              <h3>Xác Nhận Xóa Đơn Đặt Lịch (Quyền Sếp)</h3>
               <p>
-                Bạn có chắc chắn muốn xóa đơn <strong>#{deletingId}</strong> khỏi hệ thống? 
-                Hành động này sẽ được lưu vào lịch sử audit log và không thể khôi phục trực tiếp.
+                Bạn đang sử dụng quyền <strong>👑 Sếp / Quản Lý</strong> để xóa đơn <strong>#{deletingId}</strong>.
+                Hành vi này sẽ được lưu lại vĩnh viễn trong nhật ký thao tác (Audit Log).
               </p>
               <div className="submodal-actions">
                 <button type="button" className="btn-danger-confirm" onClick={handleConfirmDelete}>
-                  Đồng Ý Xóa
+                  Đồng Ý Xóa Vĩnh Viễn
                 </button>
                 <button type="button" className="btn-outline-gold" onClick={() => setDeletingId(null)}>
                   Hủy Bỏ
@@ -859,7 +974,7 @@ export default function AdminPanel({ isOpen, onClose }) {
           <div className="admin-submodal-backdrop">
             <div className="admin-submodal-card">
               <div className="admin-submodal-header">
-                <h3>Thay Đổi Mật Khẩu Quản Trị</h3>
+                <h3>Đổi Mật Khẩu Đăng Nhập ({isBoss ? '👑 Sếp' : '💼 Nhân Viên'})</h3>
                 <button type="button" className="btn-close-submodal" onClick={() => setIsPasswordModalOpen(false)}>
                   ✕
                 </button>

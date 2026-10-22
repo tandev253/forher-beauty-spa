@@ -1,18 +1,22 @@
 /**
  * FORHER BEAUTY & SPA - BOOKING & AUDIT LOG STORAGE SERVICE
- * Manages bookings and full audit history with localStorage persistence.
+ * Multi-role RBAC: Sếp (Boss - toàn quyền gồm XÓA) & Nhân Viên (Staff - chỉ thêm/sửa, KHÔNG ĐƯỢC XÓA)
  */
 
 const STORAGE_KEYS = {
   BOOKINGS: 'forher_bookings_v1',
   LOGS: 'forher_audit_logs_v1',
-  AUTH: 'forher_admin_auth_v1',
-  PASSWORD: 'forher_admin_pwd_v1'
+  AUTH_ROLE: 'forher_admin_role_v1', // 'boss' | 'staff'
+  BOSS_PWD: 'forher_boss_pwd_v1',
+  STAFF_PWD: 'forher_staff_pwd_v1'
 };
 
-const DEFAULT_ADMIN_PASSWORD = 'forherbeauty';
+const DEFAULT_PASSWORDS = {
+  boss: 'forherboss',
+  staff: 'forhernv'
+};
 
-// Sample realistic initial bookings for demonstration
+// Sample realistic initial bookings
 const SAMPLE_BOOKINGS = [
   {
     id: 'FH-839201',
@@ -27,7 +31,8 @@ const SAMPLE_BOOKINGS = [
     bookingTime: '15:30',
     skinNotes: 'Lần đầu ghé spa, da nhạy cảm cần chuyên viên tư vấn kỹ',
     adminNotes: 'Đã gọi điện xác nhận, xếp giường phòng số 2 lầu 2',
-    status: 'confirmed', // 'pending' | 'confirmed' | 'completed' | 'cancelled'
+    status: 'confirmed',
+    createdBy: 'Khách hàng',
     createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
     updatedAt: new Date(Date.now() - 1800000).toISOString()
   },
@@ -45,6 +50,7 @@ const SAMPLE_BOOKINGS = [
     skinNotes: 'Mụn viêm nhiều vùng cằm và má, ưu tiên tiệt trùng tia điện tím',
     adminNotes: 'Khách hẹn sau giờ làm',
     status: 'pending',
+    createdBy: 'Khách hàng',
     createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
     updatedAt: new Date(Date.now() - 3600000 * 5).toISOString()
   },
@@ -62,6 +68,7 @@ const SAMPLE_BOOKINGS = [
     skinNotes: 'Chăm sóc thư giãn buổi trưa',
     adminNotes: 'Khách rất hài lòng, đã thanh toán đủ',
     status: 'completed',
+    createdBy: 'Nhân viên lễ tân',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     updatedAt: new Date(Date.now() - 86400000).toISOString()
   }
@@ -72,13 +79,17 @@ const INITIAL_LOGS = [
     id: 'LOG-1',
     action: 'INIT',
     actionTitle: 'Khởi tạo hệ thống',
-    details: 'Hệ thống Quản Trị Đơn Đặt Lịch FORHER Beauty & Spa đi vào vận hành',
+    actor: 'Hệ thống',
+    actorRole: 'system',
+    details: 'Hệ thống phân cấp quyền Quản Trị FORHER Beauty (Sếp & Nhân Viên) đi vào vận hành',
     timestamp: new Date(Date.now() - 86400000 * 3).toISOString()
   },
   {
     id: 'LOG-2',
     action: 'CREATE',
     actionTitle: 'Tạo đơn mới',
+    actor: 'Khách hàng',
+    actorRole: 'customer',
     details: 'Đơn #FH-839201 của khách Nguyễn Thị Thu Hà (0908123456) - Triệt Lông Nách',
     timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
     orderId: 'FH-839201'
@@ -87,6 +98,8 @@ const INITIAL_LOGS = [
     id: 'LOG-3',
     action: 'STATUS_CHANGE',
     actionTitle: 'Duyệt đơn',
+    actor: 'Nhân viên lễ tân',
+    actorRole: 'staff',
     details: 'Đã xác nhận lịch hẹn đơn #FH-839201 lúc 15:30 ngày hôm nay',
     timestamp: new Date(Date.now() - 1800000).toISOString(),
     orderId: 'FH-839201'
@@ -94,47 +107,90 @@ const INITIAL_LOGS = [
 ];
 
 export const BookingStorage = {
-  // --- AUTHENTICATION ---
-  isAuthenticated() {
+  // --- AUTHENTICATION & ROLE-BASED ACCESS CONTROL (RBAC) ---
+  getCurrentRole() {
     try {
-      return localStorage.getItem(STORAGE_KEYS.AUTH) === 'true';
+      const role = localStorage.getItem(STORAGE_KEYS.AUTH_ROLE);
+      return (role === 'boss' || role === 'staff') ? role : null;
     } catch {
-      return false;
+      return null;
     }
   },
 
-  login(password) {
-    const currentPwd = this.getPassword();
-    if (password === currentPwd) {
-      localStorage.setItem(STORAGE_KEYS.AUTH, 'true');
-      this.addLog('AUTH', 'Đăng nhập thành công', 'Quản trị viên đã đăng nhập vào hệ thống panel');
-      return { success: true };
+  isAuthenticated() {
+    return this.getCurrentRole() !== null;
+  },
+
+  isBoss() {
+    return this.getCurrentRole() === 'boss';
+  },
+
+  isStaff() {
+    return this.getCurrentRole() === 'staff';
+  },
+
+  getRoleLabel(role = null) {
+    const target = role || this.getCurrentRole();
+    if (target === 'boss') return 'Sếp / Quản lý tối cao';
+    if (target === 'staff') return 'Nhân viên lễ tân';
+    return 'Khách';
+  },
+
+  getPassword(role = 'boss') {
+    try {
+      const key = role === 'boss' ? STORAGE_KEYS.BOSS_PWD : STORAGE_KEYS.STAFF_PWD;
+      return localStorage.getItem(key) || DEFAULT_PASSWORDS[role];
+    } catch {
+      return DEFAULT_PASSWORDS[role];
     }
-    return { success: false, message: 'Mật khẩu quản trị không chính xác' };
+  },
+
+  login(selectedRole, password) {
+    const validRole = (selectedRole === 'boss' || selectedRole === 'staff') ? selectedRole : 'staff';
+    const correctPassword = this.getPassword(validRole);
+
+    // Support backward compatibility with previously stored single password
+    const legacyPwd = localStorage.getItem('forher_admin_pwd_v1');
+    const isValid = (password === correctPassword) || (validRole === 'boss' && legacyPwd && password === legacyPwd);
+
+    if (isValid) {
+      localStorage.setItem(STORAGE_KEYS.AUTH_ROLE, validRole);
+      const roleTitle = validRole === 'boss' ? '👑 Sếp / Quản Lý Tối Cao' : '💼 Nhân Viên Lễ Tân';
+      this.addLog(
+        'AUTH', 
+        'Đăng nhập thành công', 
+        `${roleTitle} đã đăng nhập vào hệ thống quản trị`,
+        null,
+        roleTitle,
+        validRole
+      );
+      return { success: true, role: validRole };
+    }
+
+    return { 
+      success: false, 
+      message: `Mật khẩu đăng nhập của ${validRole === 'boss' ? 'Sếp' : 'Nhân viên'} không chính xác!` 
+    };
   },
 
   logout() {
-    localStorage.removeItem(STORAGE_KEYS.AUTH);
-    this.addLog('AUTH', 'Đăng xuất', 'Quản trị viên đã đăng xuất');
+    const currentRole = this.getCurrentRole();
+    const roleTitle = currentRole === 'boss' ? 'Sếp' : 'Nhân viên';
+    localStorage.removeItem(STORAGE_KEYS.AUTH_ROLE);
+    this.addLog('AUTH', 'Đăng xuất', `${roleTitle} đã đăng xuất khỏi hệ thống`, null, roleTitle, currentRole);
   },
 
-  getPassword() {
-    try {
-      return localStorage.getItem(STORAGE_KEYS.PASSWORD) || DEFAULT_ADMIN_PASSWORD;
-    } catch {
-      return DEFAULT_ADMIN_PASSWORD;
-    }
-  },
-
-  changePassword(oldPwd, newPwd) {
-    if (oldPwd !== this.getPassword()) {
+  changePassword(role, oldPwd, newPwd) {
+    if (oldPwd !== this.getPassword(role)) {
       return { success: false, message: 'Mật khẩu cũ không chính xác' };
     }
     if (!newPwd || newPwd.trim().length < 6) {
       return { success: false, message: 'Mật khẩu mới phải có ít nhất 6 ký tự' };
     }
-    localStorage.setItem(STORAGE_KEYS.PASSWORD, newPwd.trim());
-    this.addLog('AUTH', 'Đổi mật khẩu', 'Quản trị viên đã thay đổi mật khẩu đăng nhập');
+    const key = role === 'boss' ? STORAGE_KEYS.BOSS_PWD : STORAGE_KEYS.STAFF_PWD;
+    localStorage.setItem(key, newPwd.trim());
+    const actor = role === 'boss' ? '👑 Sếp' : '💼 Nhân viên';
+    this.addLog('AUTH', 'Đổi mật khẩu', `${actor} đã thay đổi mật khẩu đăng nhập thành công`, null, actor, role);
     return { success: true };
   },
 
@@ -166,6 +222,20 @@ export const BookingStorage = {
     const id = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
     const nowIso = new Date().toISOString();
 
+    const currentRole = this.getCurrentRole();
+    let actor = 'Khách hàng (Web)';
+    let actorRole = 'customer';
+
+    if (source === 'admin') {
+      if (currentRole === 'boss') {
+        actor = '👑 Sếp';
+        actorRole = 'boss';
+      } else {
+        actor = '💼 Nhân viên';
+        actorRole = 'staff';
+      }
+    }
+
     const newBooking = {
       id,
       fullName: bookingData.fullName || 'Khách hàng',
@@ -178,9 +248,9 @@ export const BookingStorage = {
       bookingDate: bookingData.bookingDate || new Date().toISOString().split('T')[0],
       bookingTime: bookingData.bookingTime || '14:00',
       skinNotes: bookingData.skinNotes || '',
-      adminNotes: bookingData.adminNotes || (source === 'customer' ? 'Khách đặt trực tuyến' : 'Tạo thủ công tại quầy'),
+      adminNotes: bookingData.adminNotes || (source === 'customer' ? 'Khách đặt qua Website' : 'Tạo đơn tại quầy'),
       status: bookingData.status || 'pending',
-      source: source, // 'customer' | 'admin'
+      createdBy: actor,
       createdAt: nowIso,
       updatedAt: nowIso
     };
@@ -191,9 +261,11 @@ export const BookingStorage = {
     const logDetails = `Khách: ${newBooking.fullName} (${newBooking.phoneNumber}) | Dịch vụ: ${newBooking.serviceName} (${newBooking.modeLabel}) | Lịch hẹn: ${newBooking.bookingDate} lúc ${newBooking.bookingTime}`;
     this.addLog(
       'CREATE', 
-      source === 'customer' ? 'Khách đặt qua Website' : 'Admin tạo đơn mới', 
+      source === 'customer' ? 'Khách đặt qua Website' : `${actor} tạo đơn mới`, 
       logDetails, 
-      newBooking.id
+      newBooking.id,
+      actor,
+      actorRole
     );
 
     return newBooking;
@@ -213,6 +285,9 @@ export const BookingStorage = {
 
     bookings[index] = updatedBooking;
     this.saveBookings(bookings);
+
+    const currentRole = this.getCurrentRole();
+    const actor = currentRole === 'boss' ? '👑 Sếp' : '💼 Nhân viên';
 
     // Build human readable changes for audit log
     const changes = [];
@@ -235,33 +310,53 @@ export const BookingStorage = {
       changes.push(`Đổi dịch vụ: ${oldBooking.serviceName} → ${updateFields.serviceName}`);
     }
     if (updateFields.adminNotes !== undefined && updateFields.adminNotes !== oldBooking.adminNotes) {
-      changes.push(`Cập nhật ghi chú nội bộ`);
+      changes.push(`Cập nhật ghi chú`);
     }
 
     const details = changes.length > 0 
       ? `Đơn #${id} (${updatedBooking.fullName}): ${changes.join(', ')}`
       : `Đơn #${id} (${updatedBooking.fullName}): Cập nhật thông tin chi tiết`;
 
-    this.addLog('UPDATE', 'Cập nhật đơn', details, id);
+    this.addLog('UPDATE', `${actor} cập nhật đơn`, details, id, actor, currentRole || 'staff');
 
     return updatedBooking;
   },
 
+  // STRICT RULE: ONLY BOSS IS PERMITTED TO DELETE
   deleteBooking(id) {
+    const currentRole = this.getCurrentRole();
+
+    // 1. Check permission: Staff is strictly forbidden from deleting
+    if (currentRole !== 'boss') {
+      const errorMsg = 'CHỈ SẾP MỚI CÓ QUYỀN XÓA ĐƠN ĐẶT LỊCH! Nhân viên không được phép thực hiện thao tác này.';
+      this.addLog(
+        'SECURITY_ALERT',
+        'CẢNH BÁO: Nhân viên cố gắng xóa đơn',
+        `Nhân viên đã bấm xóa đơn #${id} nhưng hệ thống đã chặn lại theo phân quyền`,
+        id,
+        '💼 Nhân viên',
+        'staff'
+      );
+      return { success: false, message: errorMsg };
+    }
+
+    // 2. Perform deletion for Boss
     const bookings = this.getAllBookings();
     const target = bookings.find(b => b.id === id);
-    if (!target) return false;
+    if (!target) return { success: false, message: 'Không tìm thấy đơn hàng cần xóa.' };
 
     const filtered = bookings.filter(b => b.id !== id);
     this.saveBookings(filtered);
 
     this.addLog(
       'DELETE',
-      'Xóa đơn đặt lịch',
-      `Đã xóa vĩnh viễn đơn #${id} của khách ${target.fullName} (${target.phoneNumber}) - Dịch vụ: ${target.serviceName}`,
-      id
+      '👑 Sếp đã xóa đơn đặt lịch',
+      `Sếp đã xóa vĩnh viễn đơn #${id} của khách ${target.fullName} (${target.phoneNumber}) - Dịch vụ: ${target.serviceName}`,
+      id,
+      '👑 Sếp',
+      'boss'
     );
-    return true;
+    return { success: true };
   },
 
   // --- AUDIT LOGS ---
@@ -286,12 +381,14 @@ export const BookingStorage = {
     }
   },
 
-  addLog(action, actionTitle, details, orderId = null) {
+  addLog(action, actionTitle, details, orderId = null, actor = 'Hệ thống', actorRole = 'system') {
     const logs = this.getAllLogs();
     const newLog = {
       id: `LOG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      action, // 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE' | 'AUTH'
+      action, // 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE' | 'AUTH' | 'SECURITY_ALERT'
       actionTitle,
+      actor,
+      actorRole, // 'boss' | 'staff' | 'customer' | 'system'
       details,
       orderId,
       timestamp: new Date().toISOString()
@@ -300,14 +397,21 @@ export const BookingStorage = {
   },
 
   clearAuditLogs() {
+    if (!this.isBoss()) {
+      alert('Chỉ Sếp mới có quyền làm trống nhật ký thao tác!');
+      return false;
+    }
     localStorage.removeItem(STORAGE_KEYS.LOGS);
     this.saveLogs([{
       id: `LOG-${Date.now()}`,
       action: 'SYSTEM',
-      actionTitle: 'Xóa lịch sử',
-      details: 'Đã làm trống toàn bộ nhật ký thao tác',
+      actionTitle: '👑 Sếp làm trống lịch sử',
+      actor: '👑 Sếp',
+      actorRole: 'boss',
+      details: 'Sếp đã làm trống toàn bộ nhật ký thao tác audit log',
       timestamp: new Date().toISOString()
     }]);
+    return true;
   },
 
   // --- BACKUP & EXPORT ---
@@ -325,6 +429,7 @@ export const BookingStorage = {
       'Ngày Hẹn',
       'Giờ Hẹn',
       'Trạng Thái',
+      'Người Tạo',
       'Ghi Chú Khách',
       'Ghi Chú Nội Bộ',
       'Thời Gian Đặt'
@@ -347,6 +452,7 @@ export const BookingStorage = {
       `"${b.bookingDate}"`,
       `"${b.bookingTime}"`,
       `"${statusMap[b.status] || b.status}"`,
+      `"${b.createdBy || 'Web'}"`,
       `"${(b.skinNotes || '').replace(/"/g, '""')}"`,
       `"${(b.adminNotes || '').replace(/"/g, '""')}"`,
       `"${new Date(b.createdAt).toLocaleString('vi-VN')}"`
@@ -358,8 +464,9 @@ export const BookingStorage = {
 
   exportFullBackupJson() {
     const data = {
-      version: '1.0',
+      version: '2.0',
       exportedAt: new Date().toISOString(),
+      exportedBy: this.isBoss() ? 'Sếp' : 'Nhân viên',
       brand: 'FORHER Beauty & Spa',
       bookings: this.getAllBookings(),
       logs: this.getAllLogs()
@@ -367,23 +474,11 @@ export const BookingStorage = {
     return JSON.stringify(data, null, 2);
   },
 
-  importBackupJson(jsonString) {
-    try {
-      const data = JSON.parse(jsonString);
-      if (data.bookings && Array.isArray(data.bookings)) {
-        this.saveBookings(data.bookings);
-      }
-      if (data.logs && Array.isArray(data.logs)) {
-        this.saveLogs(data.logs);
-      }
-      this.addLog('SYSTEM', 'Khôi phục sao lưu', `Đã nhập thành công ${data.bookings?.length || 0} đơn đặt lịch từ file sao lưu`);
-      return { success: true, count: data.bookings?.length || 0 };
-    } catch (e) {
-      return { success: false, message: e.message };
-    }
-  },
-
   resetDemoData() {
+    if (!this.isBoss()) {
+      alert('Chỉ Sếp mới có quyền nạp lại dữ liệu mẫu!');
+      return false;
+    }
     this.saveBookings(SAMPLE_BOOKINGS);
     this.saveLogs(INITIAL_LOGS);
     return true;

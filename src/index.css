@@ -3529,3 +3529,216 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   ROLE-BASED ACCESS CONTROL (RBAC) STYLING: BOSS VS STAFF
+   ========================================================================== */
+.admin-role-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin-role-pill.boss {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #FFF;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+}
+
+.admin-role-pill.staff {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  color: #FFF;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+/* Role Selector in Login Modal */
+.login-role-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.login-role-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #F9F7F4;
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login-role-btn:hover {
+  border-color: var(--primary-gold);
+  background: #FFF;
+}
+
+.login-role-btn.active.boss {
+  background: #FEF3C7;
+  border-color: #F59E0B;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.login-role-btn.active.staff {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.role-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.role-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-text-wrap strong {
+  font-size: 0.88rem;
+  color: var(--text-heading);
+}
+
+.role-text-wrap small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.role-pwd-hint-box {
+  background: var(--bg-soft);
+  border: 1px dashed var(--border-gold);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--text-dark);
+}
+
+.role-pwd-hint-box code {
+  background: #FFF;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: var(--primary-gold-dark);
+  border: 1px solid var(--border-gold);
+}
+
+/* Dashboard Role Notice Banner */
+.role-notice-banner {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.role-notice-banner.banner-boss {
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  color: #92400E;
+}
+
+.role-notice-banner.banner-staff {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1E40AF;
+}
+
+.role-notice-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notice-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Creator column in table */
+.col-creator {
+  white-space: nowrap;
+}
+
+.creator-badge {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #F3F4F6;
+  color: #4B5563;
+}
+
+/* Disabled Delete Button for Staff */
+.btn-tbl-action.delete-disabled {
+  background: #F3F4F6;
+  color: #9CA3AF;
+  border: 1px solid #E5E7EB;
+  cursor: not-allowed;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.btn-tbl-action.delete-disabled:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
+/* Audit log actor badge */
+.log-header-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  gap: 10px;
+}
+
+.actor-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.actor-tag.role-boss {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.actor-tag.role-staff {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.actor-tag.role-customer {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+
+.actor-tag.role-system {
+  background: #F3F4F6;
+  color: #4B5563;
+}
+
+.delete-alert-icon {
+  display: block;
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
