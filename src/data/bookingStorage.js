@@ -15,8 +15,54 @@ const STORAGE_KEYS = {
   LOGS: 'forher_audit_logs_v2',
   ACCOUNTS: 'forher_staff_accounts_v2',
   SESSION: 'forher_auth_session_v2',
-  CLOUD_STATUS: 'forher_cloud_status_v2'
+  CLOUD_STATUS: 'forher_cloud_status_v2',
+  BANK_CONFIG: 'forher_bank_config_v2'
 };
+
+// Default Spa Bank Configuration for VietQR
+export const DEFAULT_BANK_CONFIG = {
+  bankId: 'MB', // VietQR bank code
+  bankName: 'MB Bank (Ngân Hàng Quân Đội)',
+  accountNumber: '0703994683',
+  accountName: 'FORHER BEAUTY SPA',
+  template: 'compact2'
+};
+
+export const POPULAR_BANKS = [
+  { id: 'MB', name: 'MB Bank (Ngân hàng Quân Đội)' },
+  { id: 'VCB', name: 'Vietcombank (Ngoại thương Việt Nam)' },
+  { id: 'TCB', name: 'Techcombank (Kỹ thương Việt Nam)' },
+  { id: 'ACB', name: 'ACB (Á Châu)' },
+  { id: 'VPB', name: 'VPBank (Việt Nam Thịnh Vượng)' },
+  { id: 'BIDV', name: 'BIDV (Đầu tư và Phát triển VN)' },
+  { id: 'CTG', name: 'VietinBank (Công thương Việt Nam)' },
+  { id: 'TPB', name: 'TPBank (Tiên Phong)' },
+  { id: 'STB', name: 'Sacombank (Sài Gòn Thương Tín)' },
+  { id: 'HDB', name: 'HDBank (Phát triển TP.HCM)' },
+  { id: 'VIB', name: 'VIB (Quốc Tế)' },
+  { id: 'MSB', name: 'MSB (Hàng Hải)' },
+  { id: 'OCB', name: 'OCB (Phương Đông)' },
+  { id: 'SHB', name: 'SHB (Sài Gòn - Hà Nội)' }
+];
+
+export function parsePriceToNumber(price) {
+  if (typeof price === 'number') return price;
+  if (!price) return 0;
+  const num = parseInt(price.toString().replace(/[^\d]/g, ''), 10);
+  return isNaN(num) ? 0 : num;
+}
+
+export function formatVnd(amount) {
+  const n = parsePriceToNumber(amount);
+  return n.toLocaleString('vi-VN') + 'đ';
+}
+
+export function generateVietQrUrl(bankId, accountNumber, amount, orderId, accountName = '', template = 'compact2') {
+  const memo = encodeURIComponent(`FORHER ${orderId}`);
+  const accNameParam = accountName ? `&accountName=${encodeURIComponent(accountName)}` : '';
+  const amtParam = Number(amount) > 0 ? `amount=${amount}&` : '';
+  return `https://img.vietqr.io/image/${bankId}-${accountNumber}-${template}.png?${amtParam}addInfo=${memo}${accNameParam}`;
+}
 
 // Initial default Boss account and Sample Staff
 const DEFAULT_ACCOUNTS = [
@@ -50,6 +96,8 @@ const SAMPLE_BOOKINGS = [
     categoryName: 'Triệt Lông (BH 2 Năm)',
     modeLabel: 'Trọn Gói BH 2 Năm',
     priceDisplay: '500.000đ',
+    isPaid: false,
+    paidAmount: 0,
     bookingDate: new Date().toISOString().split('T')[0],
     bookingTime: '15:30',
     skinNotes: 'Lần đầu ghé spa, da nhạy cảm cần chuyên viên tư vấn kỹ',
@@ -68,6 +116,8 @@ const SAMPLE_BOOKINGS = [
     categoryName: 'Chăm Sóc & Trị Mụn',
     modeLabel: 'Gói 5 Buổi Tiết Kiệm',
     priceDisplay: '1.200.000đ',
+    isPaid: false,
+    paidAmount: 0,
     bookingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     bookingTime: '17:00',
     skinNotes: 'Mụn viêm nhiều vùng cằm và má, ưu tiên tiệt trùng tia điện tím',
@@ -86,10 +136,38 @@ const SAMPLE_BOOKINGS = [
     categoryName: 'Skincare & Phục Hồi',
     modeLabel: 'Buổi Đơn Lẻ',
     priceDisplay: '250.000đ',
-    bookingDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    isPaid: true,
+    paidAmount: 250000,
+    paymentMethod: 'cash',
+    paidAt: new Date().toISOString(),
+    cashier: 'Lê Thị Thu Thảo',
+    bookingDate: new Date().toISOString().split('T')[0],
     bookingTime: '11:00',
     skinNotes: 'Chăm sóc thư giãn buổi trưa',
-    adminNotes: 'Khách rất hài lòng, đã thanh toán đủ',
+    adminNotes: 'Khách rất hài lòng, đã thanh toán đủ tiền mặt',
+    status: 'completed',
+    createdBy: 'Nhân viên lễ tân',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'FH-839204',
+    fullName: 'Phạm Quỳnh Anh',
+    phoneNumber: '0912345678',
+    serviceId: 'tl-bikini',
+    serviceName: 'Triệt Lông Bikini Tạo Hình',
+    categoryName: 'Triệt Lông (BH 2 Năm)',
+    modeLabel: 'Trọn Gói BH 2 Năm',
+    priceDisplay: '1.200.000đ',
+    isPaid: true,
+    paidAmount: 1200000,
+    paymentMethod: 'transfer',
+    paidAt: new Date(Date.now() - 86400000).toISOString(),
+    cashier: 'Sếp / Quản Lý Tối Cao',
+    bookingDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    bookingTime: '14:30',
+    skinNotes: 'Bảo hành 2 năm, cấp sổ bảo hành',
+    adminNotes: 'Đã quét mã VietQR thành công',
     status: 'completed',
     createdBy: 'Nhân viên lễ tân',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -715,6 +793,194 @@ export const BookingStorage = {
     return true;
   },
 
+  // --- BANK & PAYMENT CONFIG (BOSS ONLY CAN EDIT) ---
+  getBankConfig() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.BANK_CONFIG);
+      if (!data) {
+        this.saveBankConfig(DEFAULT_BANK_CONFIG);
+        return DEFAULT_BANK_CONFIG;
+      }
+      return JSON.parse(data);
+    } catch {
+      return DEFAULT_BANK_CONFIG;
+    }
+  },
+
+  saveBankConfig(config) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.BANK_CONFIG, JSON.stringify(config));
+    } catch (e) {
+      console.error('Error saving bank config:', e);
+    }
+  },
+
+  async updateBankConfig(newConfig) {
+    if (!this.isBoss()) {
+      return { 
+        success: false, 
+        message: 'BỊ CHẶN: Chỉ Quản lý (tài khoản Sếp admin) mới có quyền chỉnh sửa số tài khoản ngân hàng của cơ sở!' 
+      };
+    }
+
+    const current = this.getBankConfig();
+    const updated = {
+      ...current,
+      ...newConfig,
+      accountNumber: (newConfig.accountNumber || '').trim(),
+      accountName: (newConfig.accountName || '').trim().toUpperCase()
+    };
+
+    if (!updated.accountNumber) {
+      return { success: false, message: 'Vui lòng nhập số tài khoản ngân hàng.' };
+    }
+    if (!updated.accountName) {
+      return { success: false, message: 'Vui lòng nhập tên chủ tài khoản.' };
+    }
+
+    this.saveBankConfig(updated);
+
+    const session = this.getCurrentSession();
+    this.addLog(
+      'SETTINGS',
+      'Cập nhật tài khoản ngân hàng nhận tiền',
+      `Sếp đã cập nhật STK: ${updated.accountNumber} (${updated.bankName}) - Chủ TK: ${updated.accountName}`,
+      null,
+      session ? session.fullName : 'Sếp',
+      'boss'
+    );
+
+    return { success: true, config: updated };
+  },
+
+  // --- CHECKOUT & PAYMENTS ---
+  async checkoutBooking(id, paymentData) {
+    const bookings = this.getAllBookings();
+    const index = bookings.findIndex(b => b.id === id);
+    if (index === -1) return { success: false, message: 'Không tìm thấy đơn hàng cần thanh toán.' };
+
+    const old = bookings[index];
+    const session = this.getCurrentSession();
+    const cashierName = session?.fullName || 'Thu ngân';
+    const nowIso = new Date().toISOString();
+
+    const originalAmount = parsePriceToNumber(old.priceDisplay);
+    const paidAmount = paymentData.paidAmount !== undefined 
+      ? Number(paymentData.paidAmount) 
+      : originalAmount;
+
+    const paymentMethod = paymentData.paymentMethod || 'transfer'; // 'transfer' | 'cash'
+    const discountAmount = Number(paymentData.discountAmount || 0);
+    const surchargeAmount = Number(paymentData.surchargeAmount || 0);
+    const paymentNote = (paymentData.paymentNote || '').trim();
+
+    const updated = {
+      ...old,
+      isPaid: true,
+      paidAmount,
+      paymentMethod,
+      discountAmount,
+      surchargeAmount,
+      paymentNote,
+      cashier: cashierName,
+      paidAt: nowIso,
+      status: 'completed',
+      updatedAt: nowIso
+    };
+
+    bookings[index] = updated;
+    this.saveBookings(bookings);
+
+    // Sync to Supabase
+    try {
+      await supabase.from('bookings').update({
+        status: 'completed',
+        updated_at: nowIso
+      }).eq('id', id);
+    } catch (e) {
+      console.warn('Supabase checkout sync warning:', e);
+    }
+
+    const methodLabel = paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản (VietQR)';
+    this.addLog(
+      'PAYMENT',
+      `Thanh toán đơn #${id}`,
+      `Thu ngân ${cashierName} đã xác nhận thanh toán đơn #${id} (${updated.fullName}) - Số tiền: ${formatVnd(paidAmount)} qua ${methodLabel}`,
+      id,
+      cashierName,
+      session ? session.role : 'staff'
+    );
+
+    return { success: true, booking: updated };
+  },
+
+  // --- REVENUE CALCULATION (TODAY & MONTHLY) ---
+  getRevenueStats() {
+    const bookings = this.getAllBookings();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentMonthPrefix = todayStr.substring(0, 7); // e.g. "2026-10"
+
+    const paidList = bookings.filter(b => b.isPaid || b.status === 'completed');
+
+    let todayRevenue = 0;
+    let todayPaidCount = 0;
+    let todayCash = 0;
+    let todayTransfer = 0;
+
+    let monthRevenue = 0;
+    let monthPaidCount = 0;
+    let monthCash = 0;
+    let monthTransfer = 0;
+
+    let totalRevenue = 0;
+    let totalCash = 0;
+    let totalTransfer = 0;
+
+    paidList.forEach(b => {
+      const amount = Number(b.paidAmount) || parsePriceToNumber(b.priceDisplay);
+      const isCash = b.paymentMethod === 'cash';
+      const isTransfer = b.paymentMethod === 'transfer' || !b.paymentMethod;
+
+      totalRevenue += amount;
+      if (isCash) totalCash += amount;
+      else totalTransfer += amount;
+
+      const bDate = b.paidAt ? b.paidAt.split('T')[0] : b.bookingDate;
+
+      if (bDate === todayStr) {
+        todayRevenue += amount;
+        todayPaidCount++;
+        if (isCash) todayCash += amount;
+        else todayTransfer += amount;
+      }
+
+      if (bDate && bDate.startsWith(currentMonthPrefix)) {
+        monthRevenue += amount;
+        monthPaidCount++;
+        if (isCash) monthCash += amount;
+        else monthTransfer += amount;
+      }
+    });
+
+    return {
+      todayStr,
+      currentMonthPrefix,
+      todayRevenue,
+      todayPaidCount,
+      todayCash,
+      todayTransfer,
+      monthRevenue,
+      monthPaidCount,
+      monthCash,
+      monthTransfer,
+      totalRevenue,
+      totalPaidCount: paidList.length,
+      totalCash,
+      totalTransfer,
+      paidList
+    };
+  },
+
   // --- CSV EXPORT ---
   exportToCsv() {
     const bookings = this.getAllBookings();
@@ -726,14 +992,19 @@ export const BookingStorage = {
       'Số Điện Thoại',
       'Dịch Vụ',
       'Gói Liệu Trình',
-      'Giá Tiền',
+      'Giá Niêm Yết',
+      'Thanh Toán',
+      'Số Tiền Thu',
+      'Hình Thức',
+      'Thu Ngân',
       'Ngày Hẹn',
       'Giờ Hẹn',
       'Trạng Thái',
       'Người Tạo',
       'Ghi Chú Khách',
       'Ghi Chú Nội Bộ',
-      'Thời Gian Đặt'
+      'Thời Gian Đặt',
+      'Thời Gian Thanh Toán'
     ];
 
     const statusMap = {
@@ -743,21 +1014,31 @@ export const BookingStorage = {
       cancelled: 'Đã hủy'
     };
 
-    const rows = bookings.map(b => [
-      `"${b.id}"`,
-      `"${b.fullName}"`,
-      `"${b.phoneNumber}"`,
-      `"${b.serviceName}"`,
-      `"${b.modeLabel}"`,
-      `"${b.priceDisplay}"`,
-      `"${b.bookingDate}"`,
-      `"${b.bookingTime}"`,
-      `"${statusMap[b.status] || b.status}"`,
-      `"${b.createdBy || 'Web'}"`,
-      `"${(b.skinNotes || '').replace(/"/g, '""')}"`,
-      `"${(b.adminNotes || '').replace(/"/g, '""')}"`,
-      `"${new Date(b.createdAt).toLocaleString('vi-VN')}"`
-    ]);
+    const rows = bookings.map(b => {
+      const isPaidText = b.isPaid ? 'Đã thanh toán' : (b.status === 'completed' ? 'Hoàn thành' : 'Chưa thanh toán');
+      const paidAmt = b.paidAmount ? formatVnd(b.paidAmount) : (b.isPaid ? b.priceDisplay : '0đ');
+      const method = b.paymentMethod === 'cash' ? 'Tiền mặt' : (b.paymentMethod === 'transfer' ? 'Chuyển khoản VietQR' : '—');
+      return [
+        `"${b.id}"`,
+        `"${b.fullName}"`,
+        `"${b.phoneNumber}"`,
+        `"${b.serviceName}"`,
+        `"${b.modeLabel}"`,
+        `"${b.priceDisplay}"`,
+        `"${isPaidText}"`,
+        `"${paidAmt}"`,
+        `"${method}"`,
+        `"${b.cashier || '—'}"`,
+        `"${b.bookingDate}"`,
+        `"${b.bookingTime}"`,
+        `"${statusMap[b.status] || b.status}"`,
+        `"${b.createdBy || 'Web'}"`,
+        `"${(b.skinNotes || '').replace(/"/g, '""')}"`,
+        `"${(b.adminNotes || '').replace(/"/g, '""')}"`,
+        `"${new Date(b.createdAt).toLocaleString('vi-VN')}"`,
+        `"${b.paidAt ? new Date(b.paidAt).toLocaleString('vi-VN') : '—'}"`
+      ];
+    });
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
     return csvContent;

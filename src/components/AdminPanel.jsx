@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BookingStorage } from '../data/bookingStorage';
-import { SERVICES_CATALOG } from '../data/servicesData';
+import { 
+  BookingStorage, 
+  DEFAULT_BANK_CONFIG, 
+  POPULAR_BANKS, 
+  parsePriceToNumber, 
+  formatVnd, 
+  generateVietQrUrl 
+} from '../data/bookingStorage';
+import { SERVICES_CATALOG, COMPANY_INFO } from '../data/servicesData';
 import { SUPABASE_URL } from '../config/supabaseClient';
 
 export default function AdminPanel({ isOpen, onClose }) {
@@ -13,21 +20,49 @@ export default function AdminPanel({ isOpen, onClose }) {
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Navigation Tabs: 'bookings' | 'logs' | 'staff' | 'backup'
+  // Navigation Tabs: 'bookings' | 'revenue' | 'bank' | 'logs' | 'staff' | 'backup'
   const [activeTab, setActiveTab] = useState('bookings');
   const [bookings, setBookings] = useState([]);
   const [logs, setLogs] = useState([]);
   const [staffAccounts, setStaffAccounts] = useState([]);
 
-  // Search & Filters
+  // Search & Filters for Bookings
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
 
-  // Modals
+  // Bank & VietQR Configuration
+  const [bankConfig, setBankConfig] = useState(DEFAULT_BANK_CONFIG);
+  const [bankConfigMsg, setBankConfigMsg] = useState('');
+  const [isSavingBank, setIsSavingBank] = useState(false);
+
+  // Revenue Period Filter ('today' | 'month' | 'all')
+  const [revenuePeriod, setRevenuePeriod] = useState('month');
+
+  // Modals State
   const [editingBooking, setEditingBooking] = useState(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+
+  // View Detail Modal
+  const [viewingBooking, setViewingBooking] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Checkout & Payment Modal
+  const [checkoutBooking, setCheckoutBooking] = useState(null);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('transfer'); // 'transfer' | 'cash'
+  const [customPaidAmount, setCustomPaidAmount] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [surchargeAmount, setSurchargeAmount] = useState(0);
+  const [cashGiven, setCashGiven] = useState(0);
+  const [paymentNote, setPaymentNote] = useState('');
+  const [copyQrSuccess, setCopyQrSuccess] = useState('');
+
+  // Printable POS Receipt Modal
+  const [receiptBooking, setReceiptBooking] = useState(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   // Staff Account Modal
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
@@ -48,7 +83,7 @@ export default function AdminPanel({ isOpen, onClose }) {
   // SQL Copy state
   const [sqlCopied, setSqlCopied] = useState(false);
 
-  // Form Fields for Booking
+  // Form Fields for Create / Edit Booking
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -72,6 +107,7 @@ export default function AdminPanel({ isOpen, onClose }) {
     setLogs(BookingStorage.getAllLogs());
     setStaffAccounts(BookingStorage.getAllAccounts());
     setSession(BookingStorage.getCurrentSession());
+    setBankConfig(BookingStorage.getBankConfig());
 
     // Background sync with Supabase
     try {
@@ -133,12 +169,37 @@ export default function AdminPanel({ isOpen, onClose }) {
     return { total, pending, confirmed, completed, cancelled };
   }, [bookings]);
 
-  // Filtered bookings
+  // Real-time Revenue Calculations
+  const revenueStats = useMemo(() => {
+    return BookingStorage.getRevenueStats();
+  }, [bookings]);
+
+  // Filtered revenue list for Revenue Tab
+  const filteredRevenueList = useMemo(() => {
+    const list = revenueStats.paidList || [];
+    if (revenuePeriod === 'today') {
+      return list.filter(b => {
+        const d = b.paidAt ? b.paidAt.split('T')[0] : b.bookingDate;
+        return d === revenueStats.todayStr;
+      });
+    }
+    if (revenuePeriod === 'month') {
+      return list.filter(b => {
+        const d = b.paidAt ? b.paidAt.split('T')[0] : b.bookingDate;
+        return d && d.startsWith(revenueStats.currentMonthPrefix);
+      });
+    }
+    return list;
+  }, [revenueStats, revenuePeriod]);
+
+  // Filtered bookings for Bookings List
   const todayStr = new Date().toISOString().split('T')[0];
 
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
       if (statusFilter !== 'all' && b.status !== statusFilter) return false;
+      if (paymentFilter === 'paid' && !b.isPaid && b.status !== 'completed') return false;
+      if (paymentFilter === 'unpaid' && (b.isPaid || b.status === 'completed')) return false;
       if (dateFilter === 'today' && b.bookingDate !== todayStr) return false;
       if (dateFilter === 'upcoming' && b.bookingDate < todayStr) return false;
 
@@ -152,12 +213,106 @@ export default function AdminPanel({ isOpen, onClose }) {
       }
       return true;
     });
-  }, [bookings, statusFilter, dateFilter, searchTerm, todayStr]);
+  }, [bookings, statusFilter, paymentFilter, dateFilter, searchTerm, todayStr]);
 
   // Quick Status Change from row
   const handleQuickStatusChange = async (bookingId, newStatus) => {
     await BookingStorage.updateBooking(bookingId, { status: newStatus });
     refreshData();
+  };
+
+  // Open Detail Modal
+  const handleOpenDetail = (booking) => {
+    setViewingBooking(booking);
+    setIsDetailModalOpen(true);
+  };
+
+  // Open Checkout Modal
+  const handleOpenCheckout = (booking) => {
+    setCheckoutBooking(booking);
+    const basePrice = parsePriceToNumber(booking.priceDisplay);
+    setCustomPaidAmount(basePrice);
+    setDiscountAmount(0);
+    setSurchargeAmount(0);
+    setCashGiven(basePrice);
+    setPaymentMethod('transfer');
+    setPaymentNote('');
+    setCopyQrSuccess('');
+    setIsCheckoutModalOpen(true);
+  };
+
+  // Final calculated checkout amount
+  const finalCheckoutAmount = useMemo(() => {
+    const base = Number(customPaidAmount) || 0;
+    const disc = Number(discountAmount) || 0;
+    const sur = Number(surchargeAmount) || 0;
+    return Math.max(0, base - disc + sur);
+  }, [customPaidAmount, discountAmount, surchargeAmount]);
+
+  const cashChange = useMemo(() => {
+    const given = Number(cashGiven) || 0;
+    return Math.max(0, given - finalCheckoutAmount);
+  }, [cashGiven, finalCheckoutAmount]);
+
+  // Confirm Payment
+  const handleConfirmPayment = async (printImmediately = false) => {
+    if (!checkoutBooking) return;
+    const cashierName = session?.fullName || (isBoss ? 'Sếp / Quản lý' : 'Nhân viên lễ tân');
+    const res = await BookingStorage.checkoutBooking(checkoutBooking.id, {
+      paidAmount: finalCheckoutAmount,
+      paymentMethod,
+      discountAmount: Number(discountAmount) || 0,
+      surchargeAmount: Number(surchargeAmount) || 0,
+      paymentNote,
+      cashier: cashierName
+    });
+
+    if (res.success) {
+      setIsCheckoutModalOpen(false);
+      refreshData();
+      if (printImmediately) {
+        setReceiptBooking(res.booking);
+        setIsReceiptModalOpen(true);
+      } else {
+        alert(`Đã xác nhận thanh toán đơn #${checkoutBooking.id} thành công (${formatVnd(finalCheckoutAmount)})!`);
+      }
+    } else {
+      alert(res.message || 'Lỗi xử lý thanh toán');
+    }
+  };
+
+  // Open Receipt Modal
+  const handleOpenReceipt = (booking) => {
+    setReceiptBooking(booking);
+    setIsReceiptModalOpen(true);
+  };
+
+  // Save Bank Config (Boss only)
+  const handleSaveBankConfig = async (e) => {
+    e.preventDefault();
+    if (!isBoss) {
+      alert('BỊ CHẶN: Chỉ Quản lý (tài khoản Sếp admin) mới có quyền chỉnh sửa tài khoản ngân hàng của cơ sở!');
+      return;
+    }
+    setIsSavingBank(true);
+    setBankConfigMsg('');
+    const res = await BookingStorage.updateBankConfig(bankConfig);
+    setIsSavingBank(false);
+    if (res.success) {
+      setBankConfig(res.config);
+      setBankConfigMsg('Cập nhật tài khoản ngân hàng nhận tiền thành công!');
+      setTimeout(() => setBankConfigMsg(''), 3000);
+      refreshData();
+    } else {
+      setBankConfigMsg(res.message);
+    }
+  };
+
+  // Copy helper
+  const handleCopyText = (text, label) => {
+    navigator.clipboard.writeText(text);
+    setCopyQrSuccess(`Đã chép ${label}!`);
+    setTimeout(() => setCopyQrSuccess(''), 2500);
   };
 
   // Open Form Modal for Create
@@ -236,7 +391,7 @@ export default function AdminPanel({ isOpen, onClose }) {
   const handleAttemptDelete = async (id) => {
     if (!isBoss) {
       alert('BỊ CHẶN QUYỀN HẠN:\nChỉ Sếp (tài khoản admin) mới có quyền xóa đơn đặt lịch!\nNhân viên chỉ có quyền xem, tiếp nhận và chỉnh sửa thông tin.');
-      await BookingStorage.deleteBooking(id); // will register security alert in audit log
+      await BookingStorage.deleteBooking(id);
       refreshData();
       return;
     }
@@ -340,7 +495,7 @@ export default function AdminPanel({ isOpen, onClose }) {
             ) : (
               <span className="admin-badge-role">ADMIN PANEL</span>
             )}
-            <h2 className="admin-title">FORHER Beauty & Spa — Quản Trị Đơn Đặt Lịch</h2>
+            <h2 className="admin-title">FORHER Beauty & Spa — Quản Trị Đặt Lịch & Doanh Thu</h2>
           </div>
 
           <div className="admin-top-actions">
@@ -441,20 +596,57 @@ export default function AdminPanel({ isOpen, onClose }) {
                 <div className="role-notice-inner">
                   <div>
                     <strong>Tài khoản Sếp (admin):</strong>
-                    <span> Toàn quyền quản trị tối cao — Có quyền <strong>XÓA ĐƠN</strong>, <strong>TẠO TÀI KHOẢN NHÂN VIÊN</strong> và quản lý toàn bộ hệ thống Supabase Cloud.</span>
+                    <span> Toàn quyền quản trị tối cao — Có quyền <strong>XÓA ĐƠN</strong>, <strong>CÀI ĐẶT SỐ TÀI KHOẢN NGÂN HÀNG</strong>, <strong>TẠO TÀI KHOẢN NHÂN VIÊN</strong> và quản lý toàn bộ hệ thống Supabase Cloud.</span>
                   </div>
                 </div>
               ) : (
                 <div className="role-notice-inner">
                   <div>
                     <strong>Tài khoản Nhân viên ({session?.fullName}):</strong>
-                    <span> Tiếp nhận khách, thêm đơn, sửa thông tin & đổi trạng thái. <strong>Thao tác Xóa đơn bị vô hiệu hóa</strong> (Chỉ Sếp admin mới có quyền xóa).</span>
+                    <span> Tiếp nhận khách, xem chi tiết đơn, tính tiền, tạo mã VietQR, thanh toán tiền mặt & in hóa đơn. Thao tác xóa đơn và sửa tài khoản ngân hàng bị khóa.</span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* STATS BAR */}
+            {/* REVENUE STATS STRIP (DOANH THU NGÀY VÀ THÁNG) */}
+            <div className="admin-revenue-strip">
+              <div className="revenue-stat-card today">
+                <span className="rev-card-title">Doanh Thu Hôm Nay</span>
+                <span className="rev-card-amount">{formatVnd(revenueStats.todayRevenue)}</span>
+                <div className="rev-card-meta">
+                  <span>{revenueStats.todayPaidCount} đơn đã thu tiền</span>
+                  <span>TM: {formatVnd(revenueStats.todayCash)} | CK: {formatVnd(revenueStats.todayTransfer)}</span>
+                </div>
+              </div>
+
+              <div className="revenue-stat-card month">
+                <span className="rev-card-title">Doanh Thu Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
+                <span className="rev-card-amount">{formatVnd(revenueStats.monthRevenue)}</span>
+                <div className="rev-card-meta">
+                  <span>{revenueStats.monthPaidCount} đơn đã thu tiền</span>
+                  <span>TM: {formatVnd(revenueStats.monthCash)} | CK: {formatVnd(revenueStats.monthTransfer)}</span>
+                </div>
+              </div>
+
+              <div className="revenue-stat-card cash">
+                <span className="rev-card-title">Tiền Mặt Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
+                <span className="rev-card-amount">{formatVnd(revenueStats.monthCash)}</span>
+                <div className="rev-card-meta">
+                  <span>Thu tại quầy lễ tân</span>
+                </div>
+              </div>
+
+              <div className="revenue-stat-card transfer">
+                <span className="rev-card-title">VietQR Tháng {revenueStats.currentMonthPrefix.split('-')[1]}</span>
+                <span className="rev-card-amount">{formatVnd(revenueStats.monthTransfer)}</span>
+                <div className="rev-card-meta">
+                  <span>TK: {bankConfig.accountNumber} ({bankConfig.bankId})</span>
+                </div>
+              </div>
+            </div>
+
+            {/* STATUS STATS STRIP */}
             <div className="admin-stats-strip">
               <div className="stat-pill total">
                 <span className="stat-num">{stats.total}</span>
@@ -489,6 +681,22 @@ export default function AdminPanel({ isOpen, onClose }) {
                   Quản Lý Đơn Đặt ({bookings.length})
                 </button>
 
+                <button
+                  type="button"
+                  className={`admin-tab-btn ${activeTab === 'revenue' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('revenue')}
+                >
+                  Báo Cáo Doanh Thu
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-tab-btn ${activeTab === 'bank' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('bank')}
+                >
+                  Cài Đặt Ngân Hàng & QR {isBoss ? '' : '(Xem)'}
+                </button>
+
                 {isBoss && (
                   <button
                     type="button"
@@ -504,7 +712,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                   className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
                   onClick={() => setActiveTab('logs')}
                 >
-                  Lịch Sử Thao Tác (Audit Log) ({logs.length})
+                  Lịch Sử Thao Tác ({logs.length})
                 </button>
 
                 <button
@@ -512,7 +720,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                   className={`admin-tab-btn ${activeTab === 'backup' ? 'active' : ''}`}
                   onClick={() => setActiveTab('backup')}
                 >
-                  Supabase Cloud & Dữ Liệu
+                  Supabase Cloud
                 </button>
               </div>
 
@@ -531,7 +739,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                     className="btn-admin-action gold"
                     onClick={handleOpenCreateModal}
                   >
-                    + Thêm Đơn Thủ Công
+                    + Thêm Đơn Mới
                   </button>
                 )}
                 <button 
@@ -539,7 +747,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                   className="btn-admin-action outline"
                   onClick={handleExportCsv}
                 >
-                  Xuất File Excel (CSV)
+                  Xuất File Excel
                 </button>
                 <button 
                   type="button" 
@@ -589,6 +797,16 @@ export default function AdminPanel({ isOpen, onClose }) {
                     </select>
 
                     <select
+                      value={paymentFilter}
+                      onChange={(e) => setPaymentFilter(e.target.value)}
+                      className="filter-select"
+                    >
+                      <option value="all">Tất Cả Thanh Toán</option>
+                      <option value="paid">Đã thanh toán ({revenueStats.paidList.length})</option>
+                      <option value="unpaid">Chưa thanh toán ({bookings.length - revenueStats.paidList.length})</option>
+                    </select>
+
+                    <select
                       value={dateFilter}
                       onChange={(e) => setDateFilter(e.target.value)}
                       className="filter-select"
@@ -608,7 +826,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                       <button 
                         type="button" 
                         className="btn-outline-gold"
-                        onClick={() => { setSearchTerm(''); setStatusFilter('all'); setDateFilter('all'); }}
+                        onClick={() => { setSearchTerm(''); setStatusFilter('all'); setPaymentFilter('all'); setDateFilter('all'); }}
                       >
                         Xóa Bộ Lọc
                       </button>
@@ -621,7 +839,7 @@ export default function AdminPanel({ isOpen, onClose }) {
                           <th>KHÁCH HÀNG</th>
                           <th>DỊCH VỤ ĐẶT</th>
                           <th>NGÀY & GIỜ HẸN</th>
-                          <th>NGƯỜI TẠO</th>
+                          <th>THANH TOÁN</th>
                           <th>GHI CHÚ</th>
                           <th>TRẠNG THÁI</th>
                           <th>THAO TÁC</th>
@@ -674,10 +892,18 @@ export default function AdminPanel({ isOpen, onClose }) {
                                 </div>
                               </td>
 
-                              <td className="col-creator">
-                                <span className="creator-badge">
-                                  {b.createdBy || 'Khách web'}
-                                </span>
+                              <td className="col-payment">
+                                {b.isPaid || b.status === 'completed' ? (
+                                  <span className="payment-pill paid" title={`Đã thanh toán: ${formatVnd(b.paidAmount || b.priceDisplay)}`}>
+                                    <strong>ĐÃ THU: {formatVnd(b.paidAmount || b.priceDisplay)}</strong>
+                                    <small>{b.paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản QR'}</small>
+                                  </span>
+                                ) : (
+                                  <span className="payment-pill unpaid" title="Chưa ghi nhận thanh toán">
+                                    <strong>CHƯA THU</strong>
+                                    <small>{b.priceDisplay}</small>
+                                  </span>
+                                )}
                               </td>
 
                               <td className="col-notes">
@@ -710,6 +936,35 @@ export default function AdminPanel({ isOpen, onClose }) {
 
                               <td className="col-actions">
                                 <div className="action-buttons-wrap">
+                                  <button
+                                    type="button"
+                                    className="btn-tbl-action view"
+                                    onClick={() => handleOpenDetail(b)}
+                                    title="Xem chi tiết đơn này"
+                                  >
+                                    Xem
+                                  </button>
+
+                                  {!b.isPaid && b.status !== 'completed' ? (
+                                    <button
+                                      type="button"
+                                      className="btn-tbl-action pay"
+                                      onClick={() => handleOpenCheckout(b)}
+                                      title="Tính tiền, in mã QR VietQR hoặc nhận tiền mặt"
+                                    >
+                                      Thu Tiền
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="btn-tbl-action bill"
+                                      onClick={() => handleOpenReceipt(b)}
+                                      title="In phiếu thu / hóa đơn cho khách"
+                                    >
+                                      In Bill
+                                    </button>
+                                  )}
+
                                   <button
                                     type="button"
                                     className="btn-tbl-action edit"
@@ -751,7 +1006,249 @@ export default function AdminPanel({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* TAB CONTENT 2: STAFF MANAGEMENT (BOSS ONLY) */}
+            {/* TAB CONTENT 2: REVENUE REPORTS (BÁO CÁO DOANH THU) */}
+            {activeTab === 'revenue' && (
+              <div className="admin-tab-content">
+                <div className="revenue-tab-header">
+                  <div>
+                    <h3>Báo Cáo Doanh Thu FORHER Beauty & Spa</h3>
+                    <p>Thống kê doanh thu theo ngày, tháng và chi tiết các đơn đã thanh toán tại cơ sở.</p>
+                  </div>
+                  <div className="revenue-period-selector">
+                    <button
+                      type="button"
+                      className={`rev-period-btn ${revenuePeriod === 'today' ? 'active' : ''}`}
+                      onClick={() => setRevenuePeriod('today')}
+                    >
+                      Hôm Nay ({revenueStats.todayStr})
+                    </button>
+                    <button
+                      type="button"
+                      className={`rev-period-btn ${revenuePeriod === 'month' ? 'active' : ''}`}
+                      onClick={() => setRevenuePeriod('month')}
+                    >
+                      Tháng {revenueStats.currentMonthPrefix.split('-')[1]}
+                    </button>
+                    <button
+                      type="button"
+                      className={`rev-period-btn ${revenuePeriod === 'all' ? 'active' : ''}`}
+                      onClick={() => setRevenuePeriod('all')}
+                    >
+                      Toàn Thời Gian
+                    </button>
+                  </div>
+                </div>
+
+                <div className="admin-revenue-strip">
+                  <div className="revenue-stat-card today">
+                    <span className="rev-card-title">
+                      {revenuePeriod === 'today' ? 'Tổng Doanh Thu Hôm Nay' : (revenuePeriod === 'month' ? 'Tổng Doanh Thu Tháng Này' : 'Tổng Doanh Thu Toàn Bộ')}
+                    </span>
+                    <span className="rev-card-amount">
+                      {revenuePeriod === 'today' ? formatVnd(revenueStats.todayRevenue) : (revenuePeriod === 'month' ? formatVnd(revenueStats.monthRevenue) : formatVnd(revenueStats.totalRevenue))}
+                    </span>
+                    <div className="rev-card-meta">
+                      <span>{filteredRevenueList.length} đơn đã thanh toán thành công</span>
+                    </div>
+                  </div>
+
+                  <div className="revenue-stat-card cash">
+                    <span className="rev-card-title">Doanh Thu Tiền Mặt</span>
+                    <span className="rev-card-amount">
+                      {formatVnd(filteredRevenueList.filter(b => b.paymentMethod === 'cash').reduce((s, b) => s + (b.paidAmount || parsePriceToNumber(b.priceDisplay)), 0))}
+                    </span>
+                    <div className="rev-card-meta">
+                      <span>Thu trực tiếp tại quầy</span>
+                    </div>
+                  </div>
+
+                  <div className="revenue-stat-card transfer">
+                    <span className="rev-card-title">Doanh Thu Chuyển Khoản (VietQR)</span>
+                    <span className="rev-card-amount">
+                      {formatVnd(filteredRevenueList.filter(b => b.paymentMethod === 'transfer' || !b.paymentMethod).reduce((s, b) => s + (b.paidAmount || parsePriceToNumber(b.priceDisplay)), 0))}
+                    </span>
+                    <div className="rev-card-meta">
+                      <span>Ngân hàng: {bankConfig.bankName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="admin-table-container">
+                  <table className="admin-data-table">
+                    <thead>
+                      <tr>
+                        <th>MÃ ĐƠN</th>
+                        <th>THỜI GIAN THANH TOÁN</th>
+                        <th>KHÁCH HÀNG</th>
+                        <th>DỊCH VỤ</th>
+                        <th>PHƯƠNG THỨC</th>
+                        <th>SỐ TIỀN THỰC THU</th>
+                        <th>THU NGÂN</th>
+                        <th>THAO TÁC</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredRevenueList.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} style={{ textAlign: 'center', padding: '30px' }}>
+                            Chưa có đơn nào hoàn thành thanh toán trong khoảng thời gian này.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredRevenueList.map((b) => {
+                          const paidDate = b.paidAt ? new Date(b.paidAt).toLocaleString('vi-VN') : (b.bookingDate + ' ' + b.bookingTime);
+                          const amt = b.paidAmount || parsePriceToNumber(b.priceDisplay);
+                          return (
+                            <tr key={b.id}>
+                              <td><strong className="order-id-badge">#{b.id}</strong></td>
+                              <td>{paidDate}</td>
+                              <td>
+                                <strong>{b.fullName}</strong>
+                                <small style={{ display: 'block', color: 'var(--text-muted)' }}>{b.phoneNumber}</small>
+                              </td>
+                              <td>
+                                <span>{b.serviceName}</span>
+                                <small style={{ display: 'block', color: 'var(--text-muted)' }}>{b.modeLabel}</small>
+                              </td>
+                              <td>
+                                <span className={`payment-pill ${b.paymentMethod === 'cash' ? 'cash' : 'paid'}`}>
+                                  {b.paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản VietQR'}
+                                </span>
+                              </td>
+                              <td>
+                                <strong style={{ color: '#059669', fontSize: '0.95rem' }}>{formatVnd(amt)}</strong>
+                              </td>
+                              <td>{b.cashier || 'Lễ tân'}</td>
+                              <td>
+                                <div className="action-buttons-wrap">
+                                  <button
+                                    type="button"
+                                    className="btn-tbl-action view"
+                                    onClick={() => handleOpenDetail(b)}
+                                  >
+                                    Xem
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-tbl-action bill"
+                                    onClick={() => handleOpenReceipt(b)}
+                                  >
+                                    In Bill
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT 3: BANK & QR CONFIGURATION (BOSS EDITABLE ONLY) */}
+            {activeTab === 'bank' && (
+              <div className="admin-tab-content">
+                <div className="bank-config-wrap">
+                  <div className="bank-form-card">
+                    <h3>Cấu Hình Tài Khoản Ngân Hàng & VietQR</h3>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                      Thông tin này dùng để tự động tạo mã QR chuyển khoản cho khách hàng khi thu tiền tại quầy.
+                    </p>
+
+                    {!isBoss && (
+                      <div className="role-notice-banner banner-staff" style={{ marginBottom: '16px' }}>
+                        <strong>Chỉ Quản lý (Sếp admin) mới có quyền chỉnh sửa số tài khoản ngân hàng!</strong>
+                        <p style={{ marginTop: '2px' }}>Nhân viên chỉ có quyền xem thông tin để thu ngân và in hóa đơn.</p>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSaveBankConfig}>
+                      <div className="form-group" style={{ marginBottom: '14px' }}>
+                        <label>Ngân Hàng Thụ Hưởng (VietQR):</label>
+                        <select
+                          value={bankConfig.bankId}
+                          onChange={(e) => {
+                            const b = POPULAR_BANKS.find(x => x.id === e.target.value);
+                            setBankConfig(prev => ({
+                              ...prev,
+                              bankId: e.target.value,
+                              bankName: b ? b.name : e.target.value
+                            }));
+                          }}
+                          disabled={!isBoss}
+                        >
+                          {POPULAR_BANKS.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              [{b.id}] {b.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: '14px' }}>
+                        <label>Số Tài Khoản Ngân Hàng <span className="req">*</span></label>
+                        <input
+                          type="text"
+                          value={bankConfig.accountNumber}
+                          onChange={(e) => setBankConfig({ ...bankConfig, accountNumber: e.target.value })}
+                          placeholder="Ví dụ: 0703994683..."
+                          disabled={!isBoss}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: '14px' }}>
+                        <label>Tên Chủ Tài Khoản (In hoa không dấu) <span className="req">*</span></label>
+                        <input
+                          type="text"
+                          value={bankConfig.accountName}
+                          onChange={(e) => setBankConfig({ ...bankConfig, accountName: e.target.value.toUpperCase() })}
+                          placeholder="Ví dụ: FORHER BEAUTY SPA..."
+                          disabled={!isBoss}
+                          required
+                        />
+                      </div>
+
+                      {bankConfigMsg && (
+                        <div style={{ padding: '8px 12px', borderRadius: '6px', background: '#ECFDF5', color: '#065F46', marginBottom: '14px', fontSize: '0.85rem' }}>
+                          {bankConfigMsg}
+                        </div>
+                      )}
+
+                      {isBoss && (
+                        <button type="submit" className="btn-primary-gold" disabled={isSavingBank}>
+                          {isSavingBank ? 'Đang Lưu...' : 'Lưu Thay Đổi Cài Đặt Ngân Hàng'}
+                        </button>
+                      )}
+                    </form>
+                  </div>
+
+                  <div className="bank-preview-card">
+                    <h4>Mã VietQR Mẫu</h4>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      Mã QR chuẩn Napas 24/7 tự động liên kết tài khoản ngân hàng của bạn.
+                    </p>
+
+                    <div className="bank-preview-qr">
+                      <img 
+                        src={generateVietQrUrl(bankConfig.bankId, bankConfig.accountNumber, 500000, 'TEST', bankConfig.accountName)} 
+                        alt="Mã VietQR Mẫu"
+                      />
+                    </div>
+
+                    <div style={{ fontSize: '0.8rem', textAlign: 'left', width: '100%', lineHeight: '1.5' }}>
+                      <p><strong>Ngân hàng:</strong> {bankConfig.bankName}</p>
+                      <p><strong>Số TK:</strong> {bankConfig.accountNumber}</p>
+                      <p><strong>Chủ TK:</strong> {bankConfig.accountName}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT 4: STAFF MANAGEMENT (BOSS ONLY) */}
             {activeTab === 'staff' && isBoss && (
               <div className="admin-tab-content">
                 <div className="staff-tab-header">
@@ -844,13 +1341,13 @@ export default function AdminPanel({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* TAB CONTENT 3: AUDIT LOGS */}
+            {/* TAB CONTENT 5: AUDIT LOGS */}
             {activeTab === 'logs' && (
               <div className="admin-tab-content">
                 <div className="audit-logs-header">
                   <div>
                     <h3>Nhật Ký Thao Tác (Audit Log)</h3>
-                    <p>Hệ thống tự động ghi nhận lại chi tiết ai (Sếp admin, từng Nhân viên cụ thể, Khách web) đã tạo, sửa hoặc xóa đơn.</p>
+                    <p>Hệ thống tự động ghi nhận lại chi tiết ai (Sếp admin, từng Nhân viên cụ thể, Khách web) đã tạo, thanh toán, sửa hoặc xóa đơn.</p>
                   </div>
                   {isBoss && (
                     <button 
@@ -904,11 +1401,10 @@ export default function AdminPanel({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* TAB CONTENT 4: SUPABASE CLOUD & DATA */}
+            {/* TAB CONTENT 6: SUPABASE CLOUD & DATA */}
             {activeTab === 'backup' && (
               <div className="admin-tab-content">
                 <div className="backup-sections-grid">
-                  {/* Supabase Cloud Connection Box */}
                   <div className="backup-card supabase-highlight-card">
                     <h4>Kết Nối Supabase Cloud Database</h4>
                     <p>
@@ -941,7 +1437,7 @@ export default function AdminPanel({ isOpen, onClose }) {
 
                   <div className="backup-card">
                     <h4>Xuất Danh Sách Ra Excel / CSV</h4>
-                    <p>Tải toàn bộ danh sách đơn đặt lịch về máy vi tính dạng file CSV mở bằng Microsoft Excel hoặc Google Sheets.</p>
+                    <p>Tải toàn bộ danh sách đơn đặt lịch và doanh thu về máy vi tính dạng file CSV mở bằng Excel.</p>
                     <button type="button" className="btn-primary-gold" onClick={handleExportCsv}>
                       Tải File CSV Xuống
                     </button>
@@ -949,6 +1445,508 @@ export default function AdminPanel({ isOpen, onClose }) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL 1: XEM CHI TIẾT ĐƠN (VIEW DETAIL MODAL)
+            ============================================================================== */}
+        {isDetailModalOpen && viewingBooking && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card admin-detail-card">
+              <div className="admin-submodal-header">
+                <h3>Chi Tiết Đơn Đặt Lịch #{viewingBooking.id}</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsDetailModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <div className="detail-body-scroll">
+                {/* Status bar */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span className={`status-select-badge ${viewingBooking.status}`}>
+                    Trạng thái: {viewingBooking.status === 'confirmed' ? 'Đã xác nhận' : (viewingBooking.status === 'completed' ? 'Đã hoàn thành' : (viewingBooking.status === 'cancelled' ? 'Đã hủy' : 'Chờ xác nhận'))}
+                  </span>
+                  <span className={`payment-pill ${viewingBooking.isPaid || viewingBooking.status === 'completed' ? 'paid' : 'unpaid'}`}>
+                    {viewingBooking.isPaid || viewingBooking.status === 'completed' 
+                      ? `Đã thanh toán: ${formatVnd(viewingBooking.paidAmount || viewingBooking.priceDisplay)} (${viewingBooking.paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản QR'})`
+                      : 'Chưa thanh toán'}
+                  </span>
+                </div>
+
+                {/* Section 1: Customer */}
+                <div className="detail-section-block">
+                  <div className="detail-section-header">Thông Tin Khách Hàng</div>
+                  <div className="detail-grid-two">
+                    <div className="detail-item">
+                      <span className="lbl">Họ và tên:</span>
+                      <span className="val">{viewingBooking.fullName}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Số điện thoại:</span>
+                      <span className="val">
+                        <a href={`tel:${viewingBooking.phoneNumber}`} style={{ color: 'var(--primary-gold-dark)', textDecoration: 'underline' }}>
+                          {viewingBooking.phoneNumber}
+                        </a>
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Ngày hẹn:</span>
+                      <span className="val">{viewingBooking.bookingDate}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Giờ hẹn:</span>
+                      <span className="val">{viewingBooking.bookingTime}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Người tạo đơn:</span>
+                      <span className="val">{viewingBooking.createdBy || 'Khách web'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Thời gian tạo:</span>
+                      <span className="val">{new Date(viewingBooking.createdAt).toLocaleString('vi-VN')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Service */}
+                <div className="detail-section-block">
+                  <div className="detail-section-header">Dịch Vụ & Liệu Trình</div>
+                  <div className="detail-grid-two">
+                    <div className="detail-item">
+                      <span className="lbl">Dịch vụ:</span>
+                      <span className="val highlight">{viewingBooking.serviceName}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Danh mục:</span>
+                      <span className="val">{viewingBooking.categoryName}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Gói liệu trình:</span>
+                      <span className="val">{viewingBooking.modeLabel}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Giá niêm yết:</span>
+                      <span className="val highlight">{viewingBooking.priceDisplay}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Notes */}
+                <div className="detail-section-block">
+                  <div className="detail-section-header">Ghi Chú Khách & Nội Bộ</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className="detail-item">
+                      <span className="lbl">Tình trạng da của khách:</span>
+                      <p style={{ margin: 0, fontSize: '0.85rem' }}>{viewingBooking.skinNotes || 'Không có ghi chú'}</p>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Ghi chú nội bộ spa:</span>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#1E40AF' }}>{viewingBooking.adminNotes || 'Không có ghi chú'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Payment info */}
+                <div className="detail-section-block">
+                  <div className="detail-section-header">Thông Tin Thanh Toán</div>
+                  <div className="detail-grid-two">
+                    <div className="detail-item">
+                      <span className="lbl">Số tiền thực thu:</span>
+                      <span className="val highlight">
+                        {viewingBooking.isPaid || viewingBooking.status === 'completed'
+                          ? formatVnd(viewingBooking.paidAmount || viewingBooking.priceDisplay)
+                          : '0đ (Chưa thu)'}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Hình thức:</span>
+                      <span className="val">
+                        {viewingBooking.paymentMethod === 'cash' ? 'Tiền mặt' : (viewingBooking.paymentMethod === 'transfer' ? 'Chuyển khoản VietQR' : '—')}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Thu ngân phụ trách:</span>
+                      <span className="val">{viewingBooking.cashier || '—'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="lbl">Thời gian thanh toán:</span>
+                      <span className="val">{viewingBooking.paidAt ? new Date(viewingBooking.paidAt).toLocaleString('vi-VN') : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="detail-actions-footer">
+                {!viewingBooking.isPaid && viewingBooking.status !== 'completed' ? (
+                  <button 
+                    type="button" 
+                    className="btn-primary-gold"
+                    onClick={() => {
+                      setIsDetailModalOpen(false);
+                      handleOpenCheckout(viewingBooking);
+                    }}
+                  >
+                    Tính Tiền & Thanh Toán (QR / Tiền Mặt)
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="btn-tbl-action bill"
+                    onClick={() => {
+                      setIsDetailModalOpen(false);
+                      handleOpenReceipt(viewingBooking);
+                    }}
+                  >
+                    In Phiếu Thu / Hóa Đơn
+                  </button>
+                )}
+
+                <button 
+                  type="button" 
+                  className="btn-tbl-action edit"
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    handleOpenEditModal(viewingBooking);
+                  }}
+                >
+                  Sửa Đơn
+                </button>
+
+                <button 
+                  type="button" 
+                  className="btn-outline-gold"
+                  onClick={() => setIsDetailModalOpen(false)}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL 2: TÍNH TIỀN & THANH TOÁN (VIETQR / TIỀN MẶT)
+            ============================================================================== */}
+        {isCheckoutModalOpen && checkoutBooking && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card admin-checkout-card">
+              <div className="admin-submodal-header">
+                <h3>Tính Tiền & Thanh Toán Đơn #{checkoutBooking.id}</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsCheckoutModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <div className="checkout-body-scroll">
+                {/* Summary box */}
+                <div className="checkout-summary-box">
+                  <div className="checkout-summary-info">
+                    <h4>{checkoutBooking.fullName} ({checkoutBooking.phoneNumber})</h4>
+                    <p>{checkoutBooking.serviceName} • {checkoutBooking.modeLabel}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <small style={{ color: 'var(--text-muted)' }}>Giá Niêm Yết</small>
+                    <strong style={{ display: 'block', fontSize: '1.1rem', color: 'var(--primary-gold-dark)' }}>
+                      {checkoutBooking.priceDisplay}
+                    </strong>
+                  </div>
+                </div>
+
+                {/* Calculation row */}
+                <div className="checkout-calc-grid">
+                  <div className="checkout-calc-item">
+                    <label>Đơn Giá (VNĐ):</label>
+                    <input
+                      type="number"
+                      value={customPaidAmount}
+                      onChange={(e) => setCustomPaidAmount(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="checkout-calc-item">
+                    <label>Giảm Giá / Voucher (VNĐ):</label>
+                    <input
+                      type="number"
+                      value={discountAmount}
+                      onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="checkout-calc-item">
+                    <label>Phụ Thu Dịch Vụ Thêm (VNĐ):</label>
+                    <input
+                      type="number"
+                      value={surchargeAmount}
+                      onChange={(e) => setSurchargeAmount(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                {/* Final Banner */}
+                <div className="checkout-final-banner">
+                  <span className="checkout-final-label">Tổng Tiền Khách Cần Thanh Toán:</span>
+                  <span className="checkout-final-amount">{formatVnd(finalCheckoutAmount)}</span>
+                </div>
+
+                {/* Payment Method Selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '8px' }}>
+                    Chọn Hình Thức Thanh Toán:
+                  </label>
+                  <div className="payment-method-tabs">
+                    <button
+                      type="button"
+                      className={`pm-tab-btn ${paymentMethod === 'transfer' ? 'active' : ''}`}
+                      onClick={() => setPaymentMethod('transfer')}
+                    >
+                      Chuyển Khoản (Mã VietQR)
+                    </button>
+                    <button
+                      type="button"
+                      className={`pm-tab-btn ${paymentMethod === 'cash' ? 'active' : ''}`}
+                      onClick={() => setPaymentMethod('cash')}
+                    >
+                      Tiền Mặt Tại Quầy
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tab: VietQR */}
+                {paymentMethod === 'transfer' && (
+                  <div className="vietqr-box">
+                    <div className="vietqr-img-wrap">
+                      <img
+                        src={generateVietQrUrl(
+                          bankConfig.bankId,
+                          bankConfig.accountNumber,
+                          finalCheckoutAmount,
+                          checkoutBooking.id,
+                          bankConfig.accountName
+                        )}
+                        alt="Mã VietQR Thanh Toán"
+                      />
+                    </div>
+                    <div className="vietqr-info-wrap">
+                      <div className="vietqr-info-row">
+                        <span className="lbl">Ngân hàng:</span>
+                        <span className="val">{bankConfig.bankName}</span>
+                      </div>
+                      <div className="vietqr-info-row">
+                        <span className="lbl">Số tài khoản:</span>
+                        <span className="val">
+                          {bankConfig.accountNumber}
+                          <button
+                            type="button"
+                            className="btn-mini-copy"
+                            onClick={() => handleCopyText(bankConfig.accountNumber, 'Số tài khoản')}
+                          >
+                            Sao chép
+                          </button>
+                        </span>
+                      </div>
+                      <div className="vietqr-info-row">
+                        <span className="lbl">Chủ tài khoản:</span>
+                        <span className="val">{bankConfig.accountName}</span>
+                      </div>
+                      <div className="vietqr-info-row">
+                        <span className="lbl">Số tiền:</span>
+                        <span className="val" style={{ color: '#059669' }}>
+                          {formatVnd(finalCheckoutAmount)}
+                          <button
+                            type="button"
+                            className="btn-mini-copy"
+                            onClick={() => handleCopyText(finalCheckoutAmount.toString(), 'Số tiền')}
+                          >
+                            Sao chép
+                          </button>
+                        </span>
+                      </div>
+                      <div className="vietqr-info-row">
+                        <span className="lbl">Nội dung chuyển khoản:</span>
+                        <span className="val" style={{ color: 'var(--primary-gold-dark)' }}>
+                          FORHER {checkoutBooking.id}
+                          <button
+                            type="button"
+                            className="btn-mini-copy"
+                            onClick={() => handleCopyText(`FORHER ${checkoutBooking.id}`, 'Nội dung')}
+                          >
+                            Sao chép
+                          </button>
+                        </span>
+                      </div>
+                      {copyQrSuccess && (
+                        <div style={{ color: '#059669', fontSize: '0.78rem', marginTop: '4px' }}>
+                          {copyQrSuccess}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab: Cash */}
+                {paymentMethod === 'cash' && (
+                  <div className="cash-box">
+                    <div className="form-group">
+                      <label>Tiền Khách Đưa (VNĐ):</label>
+                      <input
+                        type="number"
+                        value={cashGiven}
+                        onChange={(e) => setCashGiven(Number(e.target.value))}
+                        style={{ fontSize: '1.1rem', fontWeight: '700' }}
+                      />
+                    </div>
+                    <div className="cash-change-display">
+                      <span>Tiền Thừa Trả Lại Khách:</span>
+                      <strong>{formatVnd(cashChange)}</strong>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment note */}
+                <div className="form-group">
+                  <label>Ghi Chú Thu Ngân (Tùy chọn):</label>
+                  <input
+                    type="text"
+                    placeholder="Đã nhận tiền, khách hẹn lần sau, áp mã giảm giá..."
+                    value={paymentNote}
+                    onChange={(e) => setPaymentNote(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="detail-actions-footer">
+                <button
+                  type="button"
+                  className="btn-primary-gold"
+                  onClick={() => handleConfirmPayment(false)}
+                >
+                  Xác Nhận Đã Thu Tiền
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline-gold"
+                  onClick={() => handleConfirmPayment(true)}
+                >
+                  Thu Tiền & In Hóa Đơn Ngay
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline-gold"
+                  onClick={() => setIsCheckoutModalOpen(false)}
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL 3: IN PHIẾU THU / HÓA ĐƠN POS RECEIPT
+            ============================================================================== */}
+        {isReceiptModalOpen && receiptBooking && (
+          <div className="admin-submodal-backdrop">
+            <div className="admin-submodal-card receipt-submodal-card">
+              <div className="admin-submodal-header">
+                <h3>Phiếu Thu / Hóa Đơn Dịch Vụ</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsReceiptModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              {/* Printable POS Receipt */}
+              <div className="forher-pos-receipt">
+                <div className="receipt-header">
+                  <h3>{COMPANY_INFO.brandTitle.toUpperCase()}</h3>
+                  <p>{COMPANY_INFO.address}</p>
+                  <p>Hotline / Zalo: {COMPANY_INFO.phone}</p>
+                  <h4 style={{ margin: '8px 0 2px 0', fontSize: '0.9rem', letterSpacing: '0.5px' }}>
+                    HÓA ĐƠN THANH TOÁN DỊCH VỤ
+                  </h4>
+                </div>
+
+                <div className="receipt-meta-grid">
+                  <div className="receipt-meta-row">
+                    <span>Mã hóa đơn:</span>
+                    <strong>#{receiptBooking.id}</strong>
+                  </div>
+                  <div className="receipt-meta-row">
+                    <span>Thời gian in:</span>
+                    <span>{new Date().toLocaleString('vi-VN')}</span>
+                  </div>
+                  <div className="receipt-meta-row">
+                    <span>Khách hàng:</span>
+                    <strong>{receiptBooking.fullName}</strong>
+                  </div>
+                  <div className="receipt-meta-row">
+                    <span>Số điện thoại:</span>
+                    <span>{receiptBooking.phoneNumber}</span>
+                  </div>
+                  <div className="receipt-meta-row">
+                    <span>Thu ngân:</span>
+                    <span>{receiptBooking.cashier || session?.fullName || 'Lễ tân FORHER'}</span>
+                  </div>
+                </div>
+
+                <div className="receipt-item-box">
+                  <div className="receipt-item-row">
+                    <span>{receiptBooking.serviceName}</span>
+                    <span>{formatVnd(receiptBooking.paidAmount || receiptBooking.priceDisplay)}</span>
+                  </div>
+                  <div className="receipt-item-desc">
+                    Gói: {receiptBooking.modeLabel}
+                  </div>
+                </div>
+
+                <div className="receipt-totals-box">
+                  <div className="receipt-total-row">
+                    <span>Đơn giá niêm yết:</span>
+                    <span>{receiptBooking.priceDisplay}</span>
+                  </div>
+                  {Number(receiptBooking.discountAmount) > 0 && (
+                    <div className="receipt-total-row">
+                      <span>Giảm giá:</span>
+                      <span>-{formatVnd(receiptBooking.discountAmount)}</span>
+                    </div>
+                  )}
+                  {Number(receiptBooking.surchargeAmount) > 0 && (
+                    <div className="receipt-total-row">
+                      <span>Phụ thu:</span>
+                      <span>+{formatVnd(receiptBooking.surchargeAmount)}</span>
+                    </div>
+                  )}
+                  <div className="receipt-total-row final">
+                    <span>TỔNG THANH TOÁN:</span>
+                    <span>{formatVnd(receiptBooking.paidAmount || receiptBooking.priceDisplay)}</span>
+                  </div>
+                  <div className="receipt-total-row">
+                    <span>Hình thức:</span>
+                    <strong>{receiptBooking.paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản (VietQR)'}</strong>
+                  </div>
+                </div>
+
+                <div className="receipt-footer">
+                  <p>Cam kết bảo hành 2 năm bằng văn bản cho dịch vụ triệt lông.</p>
+                  <p>Cảm ơn Quý khách & Hẹn gặp lại tại FORHER Beauty & Spa!</p>
+                </div>
+              </div>
+
+              <div className="receipt-actions">
+                <button
+                  type="button"
+                  className="btn-primary-gold"
+                  onClick={() => window.print()}
+                >
+                  In Hóa Đơn (Print)
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline-gold"
+                  onClick={() => setIsReceiptModalOpen(false)}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
