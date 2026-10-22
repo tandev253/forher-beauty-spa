@@ -143,6 +143,7 @@ export default function AdminPanel({
   const [cashGiven, setCashGiven] = useState(0);
   const [paymentNote, setPaymentNote] = useState('');
   const [copyQrSuccess, setCopyQrSuccess] = useState('');
+  const [showAdjustments, setShowAdjustments] = useState(false);
 
   // Printable POS Receipt Modal
   const [receiptBooking, setReceiptBooking] = useState(null);
@@ -319,6 +320,7 @@ export default function AdminPanel({
     setPaymentMethod('transfer');
     setPaymentNote('');
     setCopyQrSuccess('');
+    setShowAdjustments(false);
     setIsCheckoutModalOpen(true);
   };
 
@@ -2166,91 +2168,110 @@ export default function AdminPanel({
             MODAL 2: TÍNH TIỀN & THANH TOÁN (VIETQR / TIỀN MẶT)
             ============================================================================== */}
         {isCheckoutModalOpen && checkoutBooking && (
-          <div className="admin-submodal-backdrop">
-            <div className="admin-submodal-card admin-checkout-card">
-              <div className="admin-submodal-header">
-                <h3>Tính Tiền & Thanh Toán Đơn #{checkoutBooking.id}</h3>
+          <div className="admin-submodal-backdrop" onClick={() => setIsCheckoutModalOpen(false)}>
+            <div className="admin-submodal-card admin-checkout-card" onClick={(e) => e.stopPropagation()}>
+              <div className="checkout-modal-header">
+                <div className="checkout-header-title-box">
+                  <span className="checkout-modal-title">Thanh Toán Đơn Hàng</span>
+                  <span className="checkout-order-pill">#{checkoutBooking.id}</span>
+                </div>
                 <button type="button" className="btn-close-submodal" onClick={() => setIsCheckoutModalOpen(false)}>
                   ✕
                 </button>
               </div>
 
               <div className="checkout-body-scroll">
-                {/* Summary box */}
-                <div className="checkout-summary-box">
-                  <div className="checkout-summary-info">
-                    <h4>{checkoutBooking.fullName} ({checkoutBooking.phoneNumber})</h4>
-                    <p>{checkoutBooking.serviceName} • {checkoutBooking.modeLabel}</p>
+                {/* Clean Customer & Service Banner */}
+                <div className="checkout-customer-banner">
+                  <div className="customer-info-left">
+                    <strong className="customer-name">{checkoutBooking.fullName}</strong>
+                    <span className="customer-service">{checkoutBooking.serviceName} • {checkoutBooking.modeLabel}</span>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <small style={{ color: 'var(--text-muted)' }}>Giá Niêm Yết</small>
-                    <strong style={{ display: 'block', fontSize: '1.1rem', color: 'var(--primary-gold-dark)' }}>
-                      {checkoutBooking.priceDisplay}
-                    </strong>
+                  <div className="customer-amount-right">
+                    <span className="amount-label">CẦN THANH TOÁN</span>
+                    <strong className="amount-number">{formatVnd(finalCheckoutAmount)}</strong>
                   </div>
                 </div>
 
-                {/* Calculation row */}
-                <div className="checkout-calc-grid">
-                  <div className="checkout-calc-item">
-                    <label>Đơn Giá (VNĐ):</label>
-                    <input
-                      type="number"
-                      value={customPaidAmount}
-                      onChange={(e) => setCustomPaidAmount(Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="checkout-calc-item">
-                    <label>Giảm Giá / Voucher (VNĐ):</label>
-                    <input
-                      type="number"
-                      value={discountAmount}
-                      onChange={(e) => setDiscountAmount(Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="checkout-calc-item">
-                    <label>Phụ Thu Dịch Vụ Thêm (VNĐ):</label>
-                    <input
-                      type="number"
-                      value={surchargeAmount}
-                      onChange={(e) => setSurchargeAmount(Number(e.target.value))}
-                    />
-                  </div>
-                </div>
+                {/* Optional Discounts & Adjustments Toggle */}
+                <div className="checkout-adjust-toggle-wrap">
+                  <button
+                    type="button"
+                    className="btn-toggle-adjustments"
+                    onClick={() => setShowAdjustments(!showAdjustments)}
+                  >
+                    {showAdjustments ? '▲ Thu gọn điều chỉnh giá' : '⚙ Điều chỉnh giá / Voucher / Phụ thu'}
+                  </button>
 
-                {/* Final Banner */}
-                <div className="checkout-final-banner">
-                  <span className="checkout-final-label">Tổng Tiền Khách Cần Thanh Toán:</span>
-                  <span className="checkout-final-amount">{formatVnd(finalCheckoutAmount)}</span>
+                  {showAdjustments && (
+                    <div className="checkout-calc-grid">
+                      <div className="checkout-calc-item">
+                        <label>Đơn Giá Gốc (VNĐ):</label>
+                        <input
+                          type="number"
+                          value={customPaidAmount}
+                          onChange={(e) => setCustomPaidAmount(Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="checkout-calc-item">
+                        <label>Giảm Giá / Voucher (VNĐ):</label>
+                        <input
+                          type="number"
+                          value={discountAmount}
+                          onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="checkout-calc-item">
+                        <label>Phụ Thu Thêm (VNĐ):</label>
+                        <input
+                          type="number"
+                          value={surchargeAmount}
+                          onChange={(e) => setSurchargeAmount(Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Payment Method Selector */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '8px' }}>
-                    Chọn Hình Thức Thanh Toán:
-                  </label>
+                <div className="checkout-method-section">
                   <div className="payment-method-tabs">
                     <button
                       type="button"
                       className={`pm-tab-btn ${paymentMethod === 'transfer' ? 'active' : ''}`}
                       onClick={() => setPaymentMethod('transfer')}
                     >
-                      Chuyển Khoản (Mã VietQR)
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </svg>
+                      <span>Chuyển Khoản Mã QR</span>
                     </button>
                     <button
                       type="button"
                       className={`pm-tab-btn ${paymentMethod === 'cash' ? 'active' : ''}`}
                       onClick={() => setPaymentMethod('cash')}
                     >
-                      Tiền Mặt Tại Quầy
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M6 12h.01M18 12h.01"></path>
+                      </svg>
+                      <span>Tiền Mặt Tại Quầy</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Tab: VietQR */}
+                {/* Tab: VietQR - MÃ QR SIÊU TO & RÕ RÀNG */}
                 {paymentMethod === 'transfer' && (
-                  <div className="vietqr-box">
-                    <div className="vietqr-img-wrap">
+                  <div className="vietqr-card">
+                    <div className="vietqr-instruction">
+                      Khách quét mã bên dưới để thanh toán tự động:
+                    </div>
+
+                    <div className="vietqr-img-frame">
                       <img
                         src={generateVietQrUrl(
                           bankConfig.bankId,
@@ -2262,14 +2283,11 @@ export default function AdminPanel({
                         alt="Mã VietQR Thanh Toán"
                       />
                     </div>
-                    <div className="vietqr-info-wrap">
-                      <div className="vietqr-info-row">
-                        <span className="lbl">Ngân hàng:</span>
-                        <span className="val">{bankConfig.bankName}</span>
-                      </div>
+
+                    <div className="vietqr-meta-box">
                       <div className="vietqr-info-row">
                         <span className="lbl">Số tài khoản:</span>
-                        <span className="val">
+                        <span className="val highlight">
                           {bankConfig.accountNumber}
                           <button
                             type="button"
@@ -2281,25 +2299,22 @@ export default function AdminPanel({
                         </span>
                       </div>
                       <div className="vietqr-info-row">
+                        <span className="lbl">Ngân hàng:</span>
+                        <span className="val">{bankConfig.bankName}</span>
+                      </div>
+                      <div className="vietqr-info-row">
                         <span className="lbl">Chủ tài khoản:</span>
-                        <span className="val">{bankConfig.accountName}</span>
+                        <span className="val uppercase">{bankConfig.accountName}</span>
                       </div>
                       <div className="vietqr-info-row">
                         <span className="lbl">Số tiền:</span>
-                        <span className="val" style={{ color: '#059669' }}>
+                        <span className="val amount">
                           {formatVnd(finalCheckoutAmount)}
-                          <button
-                            type="button"
-                            className="btn-mini-copy"
-                            onClick={() => handleCopyText(finalCheckoutAmount.toString(), 'Số tiền')}
-                          >
-                            Sao chép
-                          </button>
                         </span>
                       </div>
                       <div className="vietqr-info-row">
-                        <span className="lbl">Nội dung chuyển khoản:</span>
-                        <span className="val" style={{ color: 'var(--primary-gold-dark)' }}>
+                        <span className="lbl">Nội dung CK:</span>
+                        <span className="val memo">
                           FORHER {checkoutBooking.id}
                           <button
                             type="button"
@@ -2311,8 +2326,8 @@ export default function AdminPanel({
                         </span>
                       </div>
                       {copyQrSuccess && (
-                        <div style={{ color: '#059669', fontSize: '0.78rem', marginTop: '4px' }}>
-                          {copyQrSuccess}
+                        <div className="copy-toast-success">
+                          ✓ Đã sao chép {copyQrSuccess} vào bộ nhớ tạm!
                         </div>
                       )}
                     </div>
@@ -2328,7 +2343,7 @@ export default function AdminPanel({
                         type="number"
                         value={cashGiven}
                         onChange={(e) => setCashGiven(Number(e.target.value))}
-                        style={{ fontSize: '1.1rem', fontWeight: '700' }}
+                        className="cash-input"
                       />
                     </div>
                     <div className="cash-change-display">
@@ -2339,38 +2354,40 @@ export default function AdminPanel({
                 )}
 
                 {/* Payment note */}
-                <div className="form-group">
-                  <label>Ghi Chú Thu Ngân (Tùy chọn):</label>
+                <div className="checkout-note-group">
                   <input
                     type="text"
-                    placeholder="Đã nhận tiền, khách hẹn lần sau, áp mã giảm giá..."
+                    placeholder="Ghi chú thu ngân (tùy chọn)..."
                     value={paymentNote}
                     onChange={(e) => setPaymentNote(e.target.value)}
+                    className="checkout-note-input"
                   />
                 </div>
               </div>
 
-              <div className="detail-actions-footer">
+              {/* Gọn gàng 2 nút thao tác chính, không che nội dung */}
+              <div className="checkout-modal-footer">
                 <button
                   type="button"
-                  className="btn-primary-gold"
+                  className="btn-checkout-confirm"
                   onClick={() => handleConfirmPayment(false)}
                 >
-                  Xác Nhận Đã Thu Tiền
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Xác Nhận Đã Thu</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-outline-gold"
+                  className="btn-checkout-print"
                   onClick={() => handleConfirmPayment(true)}
                 >
-                  Thu Tiền & In Hóa Đơn Ngay
-                </button>
-                <button
-                  type="button"
-                  className="btn-outline-gold"
-                  onClick={() => setIsCheckoutModalOpen(false)}
-                >
-                  Hủy
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                  <span>Thu & In Bill</span>
                 </button>
               </div>
             </div>
