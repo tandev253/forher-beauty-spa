@@ -144,6 +144,7 @@ export default function AdminPanel({
   const [paymentNote, setPaymentNote] = useState('');
   const [copyQrSuccess, setCopyQrSuccess] = useState('');
   const [showAdjustments, setShowAdjustments] = useState(false);
+  const [isQrZoomOpen, setIsQrZoomOpen] = useState(false);
 
   // Printable POS Receipt Modal
   const [receiptBooking, setReceiptBooking] = useState(null);
@@ -321,6 +322,7 @@ export default function AdminPanel({
     setPaymentNote('');
     setCopyQrSuccess('');
     setShowAdjustments(false);
+    setIsQrZoomOpen(false);
     setIsCheckoutModalOpen(true);
   };
 
@@ -2271,7 +2273,11 @@ export default function AdminPanel({
                       Khách quét mã bên dưới để thanh toán tự động:
                     </div>
 
-                    <div className="vietqr-img-frame">
+                    <div
+                      className="vietqr-img-frame clickable-qr-zoom"
+                      onClick={() => setIsQrZoomOpen(true)}
+                      title="Nhấn vào mã QR để phóng to toàn màn hình"
+                    >
                       <img
                         src={generateVietQrUrl(
                           bankConfig.bankId,
@@ -2283,6 +2289,21 @@ export default function AdminPanel({
                         alt="Mã VietQR Thanh Toán"
                       />
                     </div>
+
+                    <button
+                      type="button"
+                      className="btn-trigger-qr-zoom"
+                      onClick={() => setIsQrZoomOpen(true)}
+                      title="Phóng to mã QR toàn màn hình"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="11" y1="8" x2="11" y2="14"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                      </svg>
+                      <span>Bấm vào ảnh để phóng to mã QR</span>
+                    </button>
 
                     <div className="vietqr-meta-box">
                       <div className="vietqr-info-row">
@@ -2389,6 +2410,83 @@ export default function AdminPanel({
                   </svg>
                   <span>Thu & In Bill</span>
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL 2.1: PHÓNG TO MÃ VIETQR TOÀN MÀN HÌNH (LIGHTBOX ZOOM)
+            ============================================================================== */}
+        {isQrZoomOpen && checkoutBooking && (
+          <div className="qr-zoom-backdrop" onClick={() => setIsQrZoomOpen(false)}>
+            <div className="qr-zoom-card" onClick={(e) => e.stopPropagation()}>
+              <div className="qr-zoom-header">
+                <div className="qr-zoom-title-box">
+                  <span className="qr-zoom-pill">VIETQR</span>
+                  <span className="qr-zoom-order-id">#{checkoutBooking.id}</span>
+                  <strong className="qr-zoom-amount">{formatVnd(finalCheckoutAmount)}</strong>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close-qr-zoom"
+                  onClick={() => setIsQrZoomOpen(false)}
+                  title="Đóng phóng to"
+                >
+                  ✕ Đóng
+                </button>
+              </div>
+
+              <div className="qr-zoom-img-container" onClick={() => setIsQrZoomOpen(false)} title="Chạm ảnh để thu nhỏ">
+                <img
+                  src={generateVietQrUrl(
+                    bankConfig.bankId,
+                    bankConfig.accountNumber,
+                    finalCheckoutAmount,
+                    checkoutBooking.id,
+                    bankConfig.accountName
+                  )}
+                  alt="Mã VietQR Phóng To"
+                  className="qr-zoom-img"
+                />
+                <div className="qr-zoom-dismiss-hint">
+                  🔍 Chạm vào ảnh hoặc nút Đóng để thu nhỏ lại
+                </div>
+              </div>
+
+              <div className="qr-zoom-footer-meta">
+                <div className="zoom-meta-item">
+                  <div className="zoom-meta-left">
+                    <span className="lbl">Số tài khoản:</span>
+                    <span className="val highlight">{bankConfig.accountNumber}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-mini-copy"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyText(bankConfig.accountNumber, 'Số tài khoản');
+                    }}
+                  >
+                    Sao chép
+                  </button>
+                </div>
+                <div className="zoom-meta-item">
+                  <div className="zoom-meta-left">
+                    <span className="lbl">Nội dung CK:</span>
+                    <span className="val memo">FORHER {checkoutBooking.id}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-mini-copy"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyText(`FORHER ${checkoutBooking.id}`, 'Nội dung');
+                    }}
+                  >
+                    Sao chép
+                  </button>
+                </div>
               </div>
             </div>
           </div>
