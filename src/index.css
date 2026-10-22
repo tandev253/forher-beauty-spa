@@ -7178,6 +7178,83 @@ button {
   background: #FFFFFF;
 }
 
+/* Attendance Toast Alert */
+.attendance-toast-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  margin: 12px 0 16px 0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: fadeInDown 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.attendance-toast-alert.success {
+  background: #ECFDF5;
+  border: 1px solid #10B981;
+  color: #065F46;
+}
+
+.attendance-toast-alert.error {
+  background: #FEF2F2;
+  border: 1px solid #EF4444;
+  color: #991B1B;
+}
+
+.attendance-toast-alert .toast-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.attendance-toast-alert .toast-close-btn:hover {
+  opacity: 1;
+}
+
+/* Check-out Summary Box */
+.checkout-summary-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-summary-box .summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.checkout-summary-box .summary-item .label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.checkout-summary-box .summary-item .value {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+.checkout-summary-box .summary-item .time-green {
+  color: #059669;
+}
+
+.checkout-summary-box .summary-item .time-red {
+  color: #DC2626;
+}
+
+
 
 
 

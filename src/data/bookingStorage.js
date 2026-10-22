@@ -1101,36 +1101,47 @@ export const BookingStorage = {
   getTodayAttendance(username = null) {
     const list = this.getAllAttendance();
     const todayStr = new Date().toISOString().split('T')[0];
+    const localTodayStr = new Date().toLocaleDateString('sv-SE');
     if (username) {
-      return list.find(a => a.username === username && a.date === todayStr) || null;
+      const u = (username || '').toLowerCase();
+      // First priority: currently active working shift
+      const working = list.find(a => a.username?.toLowerCase() === u && a.status === 'working');
+      if (working) return working;
+      // Second priority: today's record (completed, etc.)
+      return list.find(a => a.username?.toLowerCase() === u && (a.date === todayStr || a.date === localTodayStr)) || null;
     }
-    return list.filter(a => a.date === todayStr);
+    return list.filter(a => a.date === todayStr || a.date === localTodayStr || a.status === 'working');
   },
 
   async checkInStaff(username, shiftName = 'Ca Hành Chính', notes = '') {
     const session = this.getCurrentSession();
     const accounts = this.getAllAccounts();
-    const staff = accounts.find(a => a.username === username) || session;
-    const staffName = staff?.fullName || username;
+    const targetUsername = (username || session?.username || '').trim();
+    const staff = accounts.find(a => a.username?.toLowerCase() === targetUsername.toLowerCase()) || session;
+    const staffName = staff?.fullName || targetUsername;
     const todayStr = new Date().toISOString().split('T')[0];
+    const localTodayStr = new Date().toLocaleDateString('sv-SE');
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     const list = this.getAllAttendance();
-    const existingIndex = list.findIndex(a => a.username === username && a.date === todayStr);
+    const existingActive = list.find(a => 
+      a.username?.toLowerCase() === targetUsername.toLowerCase() && 
+      a.status === 'working'
+    );
 
-    if (existingIndex !== -1 && list[existingIndex].status === 'working') {
+    if (existingActive) {
       return { 
         success: false, 
-        message: `Bạn đã chấm công vào ca hôm nay lúc ${list[existingIndex].checkInTime} rồi!` 
+        message: `Bạn đang trong ca làm việc (${existingActive.shiftName}) lúc ${existingActive.checkInTime} rồi!` 
       };
     }
 
     const newRecord = {
       id: `ATT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      username,
+      username: targetUsername,
       staffName,
-      date: todayStr,
+      date: localTodayStr || todayStr,
       checkInTime: timeStr,
       checkOutTime: null,
       status: 'working',
@@ -1141,20 +1152,30 @@ export const BookingStorage = {
       updatedAt: now.toISOString()
     };
 
-    let updatedList;
-    if (existingIndex !== -1) {
-      updatedList = [...list];
-      updatedList[existingIndex] = { ...list[existingIndex], ...newRecord };
-    } else {
-      updatedList = [newRecord, ...list];
-    }
-
+    const updatedList = [newRecord, ...list];
     this.saveAttendance(updatedList);
+
+    try {
+      await supabase.from('staff_attendance').upsert({
+        id: newRecord.id,
+        username: newRecord.username,
+        staff_name: newRecord.staffName,
+        date: newRecord.date,
+        check_in_time: newRecord.checkInTime,
+        check_out_time: null,
+        status: 'working',
+        working_hours: null,
+        shift_name: newRecord.shiftName,
+        notes: newRecord.notes
+      });
+    } catch (e) {
+      // offline fallback
+    }
 
     this.addLog(
       'ATTENDANCE',
       'Chấm công vào ca',
-      `Nhân viên ${staffName} (${username}) đã chấm công VÀO CA lúc ${timeStr} ngày ${todayStr}`,
+      `Nhân viên ${staffName} (${targetUsername}) đã chấm công VÀO CA lúc ${timeStr} (${shiftName})`,
       null,
       staffName,
       staff?.role || 'staff'
@@ -1166,29 +1187,45 @@ export const BookingStorage = {
   async checkOutStaff(username, notes = '') {
     const session = this.getCurrentSession();
     const accounts = this.getAllAccounts();
-    const staff = accounts.find(a => a.username === username) || session;
-    const staffName = staff?.fullName || username;
+    const targetUsername = (username || session?.username || '').trim();
+    const staff = accounts.find(a => a.username?.toLowerCase() === targetUsername.toLowerCase()) || session;
+    const staffName = staff?.fullName || targetUsername;
     const todayStr = new Date().toISOString().split('T')[0];
+    const localTodayStr = new Date().toLocaleDateString('sv-SE');
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     const list = this.getAllAttendance();
-    const index = list.findIndex(a => a.username === username && a.date === todayStr);
+    
+    // Priority 1: Match active working record for this staff
+    let index = list.findIndex(a => 
+      a.username?.toLowerCase() === targetUsername.toLowerCase() && 
+      a.status === 'working'
+    );
+
+    // Priority 2: Match any record today for this staff
+    if (index === -1) {
+      index = list.findIndex(a => 
+        a.username?.toLowerCase() === targetUsername.toLowerCase() && 
+        (a.date === todayStr || a.date === localTodayStr)
+      );
+    }
 
     if (index === -1) {
       return { 
         success: false, 
-        message: 'Bạn chưa chấm công vào ca hôm nay nên không thể bấm tan ca!' 
+        message: 'Không tìm thấy ca làm việc đang mở để tan ca. Vui lòng bấm Vào Ca trước!' 
       };
     }
 
     const target = list[index];
     let hours = 0;
     try {
-      const [inH, inM] = target.checkInTime.split(':').map(Number);
+      const [inH, inM] = (target.checkInTime || '08:30').split(':').map(Number);
       const [outH, outM] = timeStr.split(':').map(Number);
-      const diffMinutes = (outH * 60 + outM) - (inH * 60 + inM);
-      hours = Math.max(0, +(diffMinutes / 60).toFixed(1));
+      let diffMinutes = (outH * 60 + outM) - (inH * 60 + inM);
+      if (diffMinutes < 0) diffMinutes += 24 * 60; // Cross-midnight
+      hours = Math.max(0.1, +(diffMinutes / 60).toFixed(1));
     } catch {
       hours = 8;
     }
@@ -1198,17 +1235,34 @@ export const BookingStorage = {
       checkOutTime: timeStr,
       status: 'completed',
       workingHours: hours,
-      notes: notes ? `${target.notes || ''} | Tan ca: ${notes}` : target.notes,
+      notes: notes ? (target.notes ? `${target.notes} | Tan ca: ${notes}` : `Tan ca: ${notes}`) : (target.notes || 'Hoàn thành ca làm việc'),
       updatedAt: now.toISOString()
     };
 
     list[index] = updatedRecord;
     this.saveAttendance(list);
 
+    try {
+      await supabase.from('staff_attendance').upsert({
+        id: updatedRecord.id,
+        username: updatedRecord.username,
+        staff_name: updatedRecord.staffName,
+        date: updatedRecord.date,
+        check_in_time: updatedRecord.checkInTime,
+        check_out_time: updatedRecord.checkOutTime,
+        status: updatedRecord.status,
+        working_hours: updatedRecord.workingHours,
+        shift_name: updatedRecord.shiftName,
+        notes: updatedRecord.notes
+      });
+    } catch (e) {
+      // offline fallback
+    }
+
     this.addLog(
       'ATTENDANCE',
       'Chấm công tan ca',
-      `Nhân viên ${staffName} (${username}) đã chấm công TAN CA lúc ${timeStr} (Tổng cộng: ${hours} giờ)`,
+      `Nhân viên ${staffName} (${targetUsername}) đã chấm công TAN CA lúc ${timeStr} (Tổng cộng: ${hours} giờ)`,
       null,
       staffName,
       staff?.role || 'staff'

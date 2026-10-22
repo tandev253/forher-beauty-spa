@@ -112,6 +112,10 @@ export default function AdminPanel({
 
   // Attendance & Shifts State
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
+  const [checkOutNotes, setCheckOutNotes] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [attendanceAlert, setAttendanceAlert] = useState(null);
   const [selectedShift, setSelectedShift] = useState(SHIFT_OPTIONS[0]);
   const [checkInNotes, setCheckInNotes] = useState('');
   const [isAdminAttendanceModalOpen, setIsAdminAttendanceModalOpen] = useState(false);
@@ -256,6 +260,14 @@ export default function AdminPanel({
     }
   }, [isAuthenticated, isBoss, activeTab]);
 
+  // Auto-dismiss attendance alert toast
+  useEffect(() => {
+    if (attendanceAlert) {
+      const timer = setTimeout(() => setAttendanceAlert(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [attendanceAlert]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -292,23 +304,47 @@ export default function AdminPanel({
     if (res.success) {
       setIsCheckInModalOpen(false);
       setCheckInNotes('');
-      refreshData();
-      alert(`Chấm công VÀO CA thành công lúc ${res.record.checkInTime} (${res.record.shiftName})! Chúc bạn làm việc tốt lành.`);
+      await refreshData();
+      setAttendanceAlert({
+        type: 'success',
+        message: `Chấm công VÀO CA thành công lúc ${res.record.checkInTime} (${res.record.shiftName})! Chúc bạn làm việc tốt lành.`
+      });
     } else {
-      alert(res.message);
+      setAttendanceAlert({
+        type: 'error',
+        message: res.message
+      });
     }
   };
 
-  // Staff Check-out Action
-  const handleStaffCheckOut = async () => {
+  // Staff Check-out Action (Modal confirmation, non-blocking, reliable)
+  const handleStaffCheckOut = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!session?.username) return;
-    if (!window.confirm('Bạn có chắc chắn muốn kết thúc ca làm việc và TAN CA?')) return;
-    const res = await BookingStorage.checkOutStaff(session.username, '');
-    if (res.success) {
-      refreshData();
-      alert(`Chấm công TAN CA thành công lúc ${res.record.checkOutTime}! Tổng thời gian làm việc: ${res.record.workingHours} giờ.`);
-    } else {
-      alert(res.message);
+    setIsCheckingOut(true);
+    try {
+      const res = await BookingStorage.checkOutStaff(session.username, checkOutNotes);
+      if (res.success) {
+        setIsCheckOutModalOpen(false);
+        setCheckOutNotes('');
+        await refreshData();
+        setAttendanceAlert({
+          type: 'success',
+          message: `Chấm công TAN CA thành công lúc ${res.record.checkOutTime}! Tổng thời gian làm việc: ${res.record.workingHours} giờ.`
+        });
+      } else {
+        setAttendanceAlert({
+          type: 'error',
+          message: res.message
+        });
+      }
+    } catch (err) {
+      setAttendanceAlert({
+        type: 'error',
+        message: 'Lỗi khi chấm công tan ca: ' + (err.message || 'Vui lòng thử lại')
+      });
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -1051,6 +1087,17 @@ export default function AdminPanel({
         ) : (
           /* AUTHENTICATED ADMIN DASHBOARD */
           <div className="admin-dashboard-body">
+            {/* Realtime Attendance Notification Toast */}
+            {attendanceAlert && (
+              <div className={`attendance-toast-alert ${attendanceAlert.type}`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{attendanceAlert.type === 'success' ? '✅' : '⚠️'}</span>
+                  <span>{attendanceAlert.message}</span>
+                </div>
+                <button type="button" className="toast-close-btn" onClick={() => setAttendanceAlert(null)}>✕</button>
+              </div>
+            )}
+
             {/* MOBILE COMPACT EXECUTIVE SUMMARY (Tách biệt Sếp xem cả spa, Nhân viên chỉ thấy của mình) */}
             <div className="mobile-exec-summary">
               {isBoss ? (
@@ -1141,7 +1188,7 @@ export default function AdminPanel({
                         <button 
                           type="button" 
                           className="btn-mobile-quick-checkout"
-                          onClick={handleStaffCheckOut}
+                          onClick={() => setIsCheckOutModalOpen(true)}
                         >
                           Tan Ca
                         </button>
@@ -1278,7 +1325,7 @@ export default function AdminPanel({
                       <button 
                         type="button" 
                         className="btn-attendance-action checkout w-100"
-                        onClick={handleStaffCheckOut}
+                        onClick={() => setIsCheckOutModalOpen(true)}
                       >
                         🏁 Tan Ca Làm Việc
                       </button>
@@ -2064,7 +2111,7 @@ export default function AdminPanel({
                         <button 
                           type="button" 
                           className="btn-attendance-hero checkout"
-                          onClick={handleStaffCheckOut}
+                          onClick={() => setIsCheckOutModalOpen(true)}
                         >
                           <span className="btn-icon">🏁</span>
                           <span>Chấm Công Tan Ca</span>
@@ -3884,6 +3931,67 @@ export default function AdminPanel({
                   </button>
                   <button type="button" className="btn-outline-gold" onClick={() => setIsCheckInModalOpen(false)}>
                     Hủy Bỏ
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ==============================================================================
+            MODAL: NHÂN VIÊN CHẤM CÔNG TAN CA (CHECK-OUT MODAL)
+            ============================================================================== */}
+        {isCheckOutModalOpen && (
+          <div className="admin-submodal-backdrop" onClick={() => setIsCheckOutModalOpen(false)}>
+            <div className="admin-submodal-card" onClick={e => e.stopPropagation()}>
+              <div className="admin-submodal-header">
+                <h3>🏁 Chấm Công Tan Ca Làm Việc</h3>
+                <button type="button" className="btn-close-submodal" onClick={() => setIsCheckOutModalOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleStaffCheckOut} className="admin-submodal-form">
+                <div className="checkout-summary-box">
+                  <div className="summary-item">
+                    <span className="label">Nhân Viên:</span>
+                    <span className="value"><strong>{session?.fullName || ''}</strong> (@{session?.username || ''})</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="label">Ca Đang Làm:</span>
+                    <span className="value">{todayMyAttendance?.shiftName || 'Ca Làm Việc'}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="label">Giờ Vào Ca:</span>
+                    <span className="value time-green">🟢 {todayMyAttendance?.checkInTime || '08:30'}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="label">Giờ Tan Ca Dự Kiến:</span>
+                    <span className="value time-red">🏁 {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} (Hiện tại)</span>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Ghi Chú Tan Ca / Bàn Giao (Tùy chọn):</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Đã bàn giao ca, vệ sinh dụng cụ spa sạch sẽ..."
+                    value={checkOutNotes}
+                    onChange={(e) => setCheckOutNotes(e.target.value)}
+                  />
+                </div>
+
+                <div className="submodal-actions">
+                  <button 
+                    type="submit" 
+                    className="btn-danger-confirm w-100"
+                    disabled={isCheckingOut}
+                    style={{ background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)', color: '#fff', padding: '12px', fontSize: '0.95rem', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                  >
+                    {isCheckingOut ? 'Đang Ghi Nhận Tan Ca...' : '✓ Xác Nhận Tan Ca Ngay'}
+                  </button>
+                  <button type="button" className="btn-outline-gold w-100" onClick={() => setIsCheckOutModalOpen(false)}>
+                    Hủy / Tiếp Tục Làm Việc
                   </button>
                 </div>
               </form>
