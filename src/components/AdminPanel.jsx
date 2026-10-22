@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   BookingStorage, 
   DEFAULT_BANK_CONFIG, 
@@ -407,6 +407,100 @@ export default function AdminPanel({
     const cancelled = bookings.filter(b => b.status === 'cancelled').length;
     return { total, pending, confirmed, completed, cancelled };
   }, [bookings]);
+
+  // Status Chips & Navigation Tabs Horizontal Arrow Switching
+  const chipsTrackRef = useRef(null);
+  const tabsTrackRef = useRef(null);
+
+  const STATUS_CHIPS = useMemo(() => [
+    { id: 'all', label: `Tất Cả (${stats.total})`, className: '' },
+    { id: 'pending', label: `Chờ Duyệt (${stats.pending})`, className: 'pending' },
+    { id: 'confirmed', label: `Đã Xác Nhận (${stats.confirmed})`, className: 'confirmed' },
+    { id: 'completed', label: `Đã Xong (${stats.completed})`, className: 'completed' },
+    { id: 'cancelled', label: `Đã Hủy (${stats.cancelled})`, className: 'cancelled' },
+  ], [stats]);
+
+  const currentChipIndex = useMemo(() => {
+    const idx = STATUS_CHIPS.findIndex(c => c.id === statusFilter);
+    return idx === -1 ? 0 : idx;
+  }, [STATUS_CHIPS, statusFilter]);
+
+  const handlePrevChip = () => {
+    if (currentChipIndex > 0) {
+      setStatusFilter(STATUS_CHIPS[currentChipIndex - 1].id);
+    }
+  };
+
+  const handleNextChip = () => {
+    if (currentChipIndex < STATUS_CHIPS.length - 1) {
+      setStatusFilter(STATUS_CHIPS[currentChipIndex + 1].id);
+    }
+  };
+
+  const availableTabs = useMemo(() => {
+    const list = [
+      { id: 'bookings', label: `Quản Lý Đơn Đặt (${bookings.length})` },
+    ];
+    if (isBoss) {
+      list.push(
+        { id: 'revenue', label: 'Báo Cáo Doanh Thu (Toàn Spa)' },
+        { id: 'attendance', label: 'Chấm Công & Hiệu Suất NV' }
+      );
+    } else {
+      list.push(
+        { id: 'my_performance', label: 'Chấm Công & Doanh Thu Của Tôi' }
+      );
+    }
+    list.push(
+      { id: 'bank', label: `Cài Đặt Ngân Hàng & QR ${isBoss ? '' : '(Xem)'}` }
+    );
+    if (isBoss) {
+      list.push(
+        { id: 'staff', label: `Quản Lý Nhân Viên (${staffAccounts.length})` }
+      );
+    }
+    list.push(
+      { id: 'logs', label: `Lịch Sử Thao Tác (${logs.length})` },
+      { id: 'backup', label: 'Xuất File Dữ Liệu' }
+    );
+    return list;
+  }, [bookings.length, isBoss, staffAccounts.length, logs.length]);
+
+  const currentTabIndex = useMemo(() => {
+    const idx = availableTabs.findIndex(t => t.id === activeTab);
+    return idx === -1 ? 0 : idx;
+  }, [availableTabs, activeTab]);
+
+  const handlePrevTab = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(availableTabs[currentTabIndex - 1].id);
+    }
+  };
+
+  const handleNextTab = () => {
+    if (currentTabIndex < availableTabs.length - 1) {
+      setActiveTab(availableTabs[currentTabIndex + 1].id);
+    }
+  };
+
+  // Auto center active buttons
+  useEffect(() => {
+    if (chipsTrackRef.current) {
+      const activeEl = chipsTrackRef.current.querySelector('.mobile-chip.active');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [statusFilter]);
+
+  useEffect(() => {
+    if (tabsTrackRef.current) {
+      const activeEl = tabsTrackRef.current.querySelector('.admin-tab-btn.active');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [activeTab]);
 
   // Real-time Revenue Calculations (Whole Spa - Admin Only)
   const revenueStats = useMemo(() => {
@@ -1202,42 +1296,45 @@ export default function AdminPanel({
                 </div>
               )}
 
-              {/* MOBILE QUICK STATUS FILTER CHIPS */}
-              <div className="mobile-status-chips-scroll">
+              {/* MOBILE QUICK STATUS FILTER CHIPS (CENTERED WITH ARROWS) */}
+              <div className="centered-chips-strip-wrapper">
                 <button 
                   type="button" 
-                  className={`mobile-chip ${statusFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('all')}
+                  className="chips-arrow-btn left"
+                  disabled={currentChipIndex <= 0}
+                  onClick={handlePrevChip}
+                  title="Chuyển sang bộ lọc trước"
+                  aria-label="Bộ lọc trước"
                 >
-                  Tất Cả ({stats.total})
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
                 </button>
+
+                <div className="mobile-status-chips-scroll centered-chips-track" ref={chipsTrackRef}>
+                  {STATUS_CHIPS.map(chip => (
+                    <button 
+                      key={chip.id}
+                      type="button" 
+                      className={`mobile-chip ${chip.className} ${statusFilter === chip.id ? 'active' : ''}`}
+                      onClick={() => setStatusFilter(chip.id)}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+
                 <button 
                   type="button" 
-                  className={`mobile-chip pending ${statusFilter === 'pending' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('pending')}
+                  className="chips-arrow-btn right"
+                  disabled={currentChipIndex >= STATUS_CHIPS.length - 1}
+                  onClick={handleNextChip}
+                  title="Chuyển sang bộ lọc tiếp theo"
+                  aria-label="Bộ lọc tiếp theo"
                 >
-                  Chờ Duyệt ({stats.pending})
-                </button>
-                <button 
-                  type="button" 
-                  className={`mobile-chip confirmed ${statusFilter === 'confirmed' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('confirmed')}
-                >
-                  Đã Xác Nhận ({stats.confirmed})
-                </button>
-                <button 
-                  type="button" 
-                  className={`mobile-chip completed ${statusFilter === 'completed' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('completed')}
-                >
-                  Đã Xong ({stats.completed})
-                </button>
-                <button 
-                  type="button" 
-                  className={`mobile-chip cancelled ${statusFilter === 'cancelled' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('cancelled')}
-                >
-                  Đã Hủy ({stats.cancelled})
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1366,77 +1463,46 @@ export default function AdminPanel({
               </div>
             </div>
 
-            {/* NAVIGATION TABS & QUICK ACTION */}
+            {/* NAVIGATION TABS & QUICK ACTION (CENTERED WITH ARROWS) */}
             <div className="admin-nav-toolbar">
-              <div className="admin-tabs-list">
+              <div className="centered-tabs-strip-wrapper">
                 <button
                   type="button"
-                  className={`admin-tab-btn ${activeTab === 'bookings' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('bookings')}
+                  className="tabs-arrow-btn left"
+                  disabled={currentTabIndex <= 0}
+                  onClick={handlePrevTab}
+                  title="Chuyển sang tab trước"
+                  aria-label="Tab trước"
                 >
-                  Quản Lý Đơn Đặt ({bookings.length})
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
                 </button>
 
-                {isBoss ? (
-                  <>
+                <div className="admin-tabs-list centered-tabs-track" ref={tabsTrackRef}>
+                  {availableTabs.map(tab => (
                     <button
+                      key={tab.id}
                       type="button"
-                      className={`admin-tab-btn ${activeTab === 'revenue' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('revenue')}
+                      className={`admin-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                      onClick={() => setActiveTab(tab.id)}
                     >
-                      Báo Cáo Doanh Thu (Toàn Spa)
+                      {tab.label}
                     </button>
-
-                    <button
-                      type="button"
-                      className={`admin-tab-btn ${activeTab === 'attendance' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('attendance')}
-                    >
-                      Chấm Công & Hiệu Suất NV
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className={`admin-tab-btn ${activeTab === 'my_performance' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('my_performance')}
-                  >
-                    Chấm Công & Doanh Thu Của Tôi
-                  </button>
-                )}
+                  ))}
+                </div>
 
                 <button
                   type="button"
-                  className={`admin-tab-btn ${activeTab === 'bank' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('bank')}
+                  className="tabs-arrow-btn right"
+                  disabled={currentTabIndex >= availableTabs.length - 1}
+                  onClick={handleNextTab}
+                  title="Chuyển sang tab tiếp theo"
+                  aria-label="Tab tiếp theo"
                 >
-                  Cài Đặt Ngân Hàng & QR {isBoss ? '' : '(Xem)'}
-                </button>
-
-                {isBoss && (
-                  <button
-                    type="button"
-                    className={`admin-tab-btn ${activeTab === 'staff' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('staff')}
-                  >
-                    Quản Lý Nhân Viên ({staffAccounts.length})
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  className={`admin-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('logs')}
-                >
-                  Lịch Sử Thao Tác ({logs.length})
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-tab-btn ${activeTab === 'backup' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('backup')}
-                >
-                  Xuất File Dữ Liệu
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
                 </button>
               </div>
 

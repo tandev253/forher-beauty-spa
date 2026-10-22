@@ -7254,6 +7254,133 @@ button {
   color: #DC2626;
 }
 
+/* ==========================================================================
+   CENTERED STRIP WITH ARROW CONTROLS (QUICK STATUS CHIPS & NAVIGATION TABS)
+   ========================================================================== */
+.centered-chips-strip-wrapper,
+.centered-tabs-strip-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.chips-arrow-btn,
+.tabs-arrow-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  color: #1E293B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  z-index: 2;
+  user-select: none;
+}
+
+.chips-arrow-btn:hover:not(:disabled),
+.tabs-arrow-btn:hover:not(:disabled) {
+  background: #FFFBEB;
+  border-color: var(--primary-gold, #B45309);
+  color: var(--primary-gold, #B45309);
+  transform: scale(1.08);
+  box-shadow: 0 4px 10px rgba(180, 83, 9, 0.2);
+}
+
+.chips-arrow-btn:active:not(:disabled),
+.tabs-arrow-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.chips-arrow-btn:disabled,
+.tabs-arrow-btn:disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+  border-color: #E2E8F0;
+  color: #94A3B8;
+  box-shadow: none;
+  transform: none;
+}
+
+.centered-chips-track,
+.centered-tabs-track {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: safe center !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  padding: 4px 6px !important;
+  flex: 1;
+  max-width: 100%;
+}
+
+.centered-chips-track::-webkit-scrollbar,
+.centered-tabs-track::-webkit-scrollbar {
+  display: none !important;
+}
+
+.centered-chips-track .mobile-chip,
+.centered-tabs-track .admin-tab-btn {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  transition: all 0.2s ease !important;
+}
+
+.centered-chips-track .mobile-chip.active {
+  transform: scale(1.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.centered-tabs-track .admin-tab-btn.active {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.25);
+}
+
+@media (max-width: 768px) {
+  .centered-chips-strip-wrapper {
+    margin: 8px 0 2px !important;
+    gap: 4px !important;
+  }
+
+  .centered-tabs-strip-wrapper {
+    margin: 2px 0 6px !important;
+    gap: 4px !important;
+  }
+
+  .chips-arrow-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+
+  .tabs-arrow-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  .centered-chips-track,
+  .centered-tabs-track {
+    gap: 6px !important;
+    padding: 2px 4px !important;
+  }
+}
+
+
 
 
 
