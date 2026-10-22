@@ -12,20 +12,44 @@ import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const [selectedService, setSelectedService] = useState(null);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isAdminPage, setIsAdminPage] = useState(false);
 
   useEffect(() => {
-    const checkAdminInUrl = () => {
-      const hash = window.location.hash;
-      const search = window.location.search;
-      if (hash.toLowerCase().includes('admin') || search.toLowerCase().includes('admin')) {
-        setIsAdminOpen(true);
-      }
+    const checkRoute = () => {
+      const pathname = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+
+      // Check if user is navigating to /admin, /admin/, #admin, ?admin, or ?p=/admin
+      const isAdmin = (
+        pathname.startsWith('/admin') ||
+        pathname === '/admin' ||
+        pathname === '/admin/' ||
+        hash.includes('admin') ||
+        search.includes('admin') ||
+        search.includes('p=/admin')
+      );
+      setIsAdminPage(isAdmin);
     };
-    checkAdminInUrl();
-    window.addEventListener('hashchange', checkAdminInUrl);
-    return () => window.removeEventListener('hashchange', checkAdminInUrl);
+
+    checkRoute();
+    window.addEventListener('popstate', checkRoute);
+    window.addEventListener('hashchange', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+      window.removeEventListener('hashchange', checkRoute);
+    };
   }, []);
+
+  const navigateTo = (path) => {
+    history.pushState(null, '', path);
+    if (path.startsWith('/admin')) {
+      setIsAdminPage(true);
+    } else {
+      setIsAdminPage(false);
+    }
+    window.scrollTo(0, 0);
+  };
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -39,12 +63,15 @@ export default function App() {
     scrollToSection('booking');
   };
 
-  const handleCloseAdmin = () => {
-    setIsAdminOpen(false);
-    if (window.location.hash.toLowerCase().includes('admin')) {
-      history.replaceState(null, document.title, window.location.pathname);
-    }
-  };
+  // If on /admin route: Render standalone Admin Page (NOT a popup modal)
+  if (isAdminPage) {
+    return (
+      <AdminPanel 
+        isStandalone={true} 
+        onBackToWebsite={() => navigateTo('/')}
+      />
+    );
+  }
 
   return (
     <div className="forher-app-root">
@@ -85,17 +112,11 @@ export default function App() {
         <ContactSection />
       </main>
 
-      {/* 7. Footer: Brand information, commitments, and links */}
-      <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
+      {/* 8. Footer: Brand information, commitments, and link to /admin */}
+      <Footer onOpenAdmin={() => navigateTo('/admin')} />
 
       {/* Floating Action Dock: Quick Zalo, Phone & Book triggers */}
       <FloatingActions onBookClick={() => scrollToSection('booking')} />
-
-      {/* Admin Panel: Bookings management & Audit Logs */}
-      <AdminPanel 
-        isOpen={isAdminOpen} 
-        onClose={handleCloseAdmin} 
-      />
     </div>
   );
 }

@@ -87,14 +87,17 @@ export default function Footer({ onOpenAdmin }) {
             <span>•</span>
             <a href={COMPANY_INFO.social.zalo} target="_blank" rel="noopener noreferrer">Zalo: {COMPANY_INFO.phone}</a>
             <span>•</span>
-            <button 
-              type="button" 
-              onClick={onOpenAdmin} 
+            <a 
+              href="/admin" 
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenAdmin();
+              }} 
               className="footer-admin-btn"
-              title="Đăng nhập quản trị đơn đặt lịch"
+              title="Trang quản trị đơn đặt lịch FORHER"
             >
               Quản Trị Đơn
-            </button>
+            </a>
           </div>
         </div>
       </div>

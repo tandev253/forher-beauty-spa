@@ -10,9 +10,24 @@ import {
 import { SERVICES_CATALOG, COMPANY_INFO } from '../data/servicesData';
 import { SUPABASE_URL } from '../config/supabaseClient';
 
-export default function AdminPanel({ isOpen, onClose }) {
+export default function AdminPanel({ 
+  isOpen = true, 
+  onClose, 
+  isStandalone = false, 
+  onBackToWebsite 
+}) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [session, setSession] = useState(null);
+
+  const handleExit = () => {
+    if (onBackToWebsite) {
+      onBackToWebsite();
+    } else if (onClose) {
+      onClose();
+    } else {
+      window.location.href = '/';
+    }
+  };
 
   // Login Form State
   const [usernameInput, setUsernameInput] = useState('admin');
@@ -478,11 +493,11 @@ export default function AdminPanel({ isOpen, onClose }) {
     setTimeout(() => setSqlCopied(false), 3000);
   };
 
-  if (!isOpen) return null;
+  if (!isStandalone && !isOpen) return null;
 
   return (
-    <div className="admin-overlay-backdrop">
-      <div className="admin-panel-modal">
+    <div className={isStandalone ? "admin-standalone-page" : "admin-overlay-backdrop"}>
+      <div className={`admin-panel-modal ${isStandalone ? 'admin-standalone-modal' : ''}`}>
         {/* TOP BAR */}
         <div className="admin-top-bar">
           <div className="admin-branding">
@@ -521,11 +536,11 @@ export default function AdminPanel({ isOpen, onClose }) {
             )}
             <button 
               type="button" 
-              className="btn-admin-close" 
-              onClick={onClose}
-              title="Đóng Quản Trị"
+              className={isStandalone ? "btn-admin-close btn-admin-home" : "btn-admin-close"} 
+              onClick={handleExit}
+              title={isStandalone ? "Về Trang Chủ FORHER Beauty & Spa" : "Đóng Quản Trị"}
             >
-              ✕ Đóng
+              {isStandalone ? "← Về Trang Chủ Website" : "✕ Đóng"}
             </button>
           </div>
         </div>
@@ -580,8 +595,8 @@ export default function AdminPanel({ isOpen, onClose }) {
                   <button type="submit" className="btn-primary-gold w-100" disabled={isLoggingIn}>
                     {isLoggingIn ? 'Đang Kiểm Tra...' : 'Đăng Nhập Quản Trị'}
                   </button>
-                  <button type="button" className="btn-outline-gold w-100" onClick={onClose}>
-                    Quay Lại Website
+                  <button type="button" className="btn-outline-gold w-100" onClick={handleExit}>
+                    {isStandalone ? '← Về Trang Chủ Website' : 'Quay Lại Website'}
                   </button>
                 </div>
               </form>
