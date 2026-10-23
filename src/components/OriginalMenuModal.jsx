@@ -119,9 +119,8 @@ export default function OriginalMenuModal({ isOpen, onClose }) {
                   </div>
                   <div className="menu-items-table">
                     {[
-                      { n: 'PHUN MÀY HIỆU ỨNG BÚT CHÌ SHADINH', p: '2.000.000' },
-                      { n: 'PHUN MÔI BABY', p: '2.500.000' },
-                      { n: 'KHỬ THÂM', p: '1.000.000-2.500.000' }
+                      { n: 'PHUN MÀY / MÔI', p: '3.500.000-5.000.000' },
+                      { n: 'KHỬ THÂM MÔI', p: '1.500.000-3.000.000' }
                     ].map((row, i) => (
                       <div key={i} className="menu-item-row">
                         <div className="item-name-cell">

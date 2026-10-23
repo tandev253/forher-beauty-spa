@@ -119,7 +119,7 @@ export default function CorporateFooter({ onOpenOriginalMenu }) {
               <li><a href="#pricing">Chemical Peel Thay Da Sinh Học (TCA, Bio, Image)</a></li>
               <li><a href="#pricing">Cấy Tinh Chất Meso Vi Điểm (HA, B5, Mulgwang)</a></li>
               <li><a href="#pricing">Nâng Cơ Mắt RF & Thâm Mắt</a></li>
-              <li><a href="#pricing">Phun Môi Baby & Shading Thẩm Mỹ</a></li>
+              <li><a href="#pricing">Phun Mày / Môi & Khử Thâm</a></li>
             </ul>
           </div>
 

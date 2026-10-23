@@ -32,13 +32,13 @@ export const COMPANY_INFO = {
 };
 
 export const CATEGORIES = [
-  { id: 'all', name: 'Tất Cả Dịch Vụ', count: 39 },
+  { id: 'all', name: 'Tất Cả Dịch Vụ', count: 38 },
   { id: 'triet-long', name: 'Triệt Lông (BH 2 Năm)', count: 10 },
   { id: 'nan-mun', name: 'Chăm Sóc & Trị Mụn', count: 5 },
   { id: 'skincare', name: 'Skincare & Phục Hồi', count: 6 },
   { id: 'chemical-peel', name: 'Chemical Peel Thay Da', count: 13 },
   { id: 'eye', name: 'Chăm Sóc Vùng Mắt', count: 2 },
-  { id: 'shading', name: 'Shading & Phun Xăm', count: 3 }
+  { id: 'shading', name: 'Shading & Phun Xăm', count: 2 }
 ];
 
 export const SERVICES_CATALOG = [
@@ -569,44 +569,30 @@ export const SERVICES_CATALOG = [
 
   // 7. SHADING & PHUN XĂM THẨM MỸ
   {
-    id: 'shading-may',
+    id: 'shading-may-moi',
     code: 'SD-01',
     category: 'shading',
     categoryName: 'Shading & Phun Xăm',
-    name: 'Phun Mày Hiệu Ứng Bút Chì Shading',
-    desc: 'Kỹ thuật phun hạt siêu vi tạo hiệu ứng chân mày mềm mại tự nhiên như phủ phấn chì, dáng mày thanh thoát hài hòa phong thủy.',
+    name: 'Phun Mày / Môi',
+    desc: 'Kỹ thuật phun thêu thẩm mỹ hiện đại với mực hữu cơ Châu Âu an toàn lành tính, tạo dáng chân mày thanh tú hài hòa hoặc sắc môi tươi tắn, căng mọng tự nhiên, không sưng đau.',
     duration: '90-120 phút',
-    singlePrice: 2000000,
-    singlePriceDisplay: '2.000.000đ',
-    coursePrice: 2000000,
-    coursePriceDisplay: 'Trọn Gói Kèm Dặm',
-    highlight: true
-  },
-  {
-    id: 'shading-moi-baby',
-    code: 'SD-02',
-    category: 'shading',
-    categoryName: 'Shading & Phun Xăm',
-    name: 'Phun Môi Baby (Baby Lips)',
-    desc: 'Sử dụng mực hữu cơ Châu Âu an toàn lành tính, sắc môi hồng hào tươi tắn tự nhiên, căng mọng quyến rũ không sưng đau.',
-    duration: '90-120 phút',
-    singlePrice: 2500000,
-    singlePriceDisplay: '2.500.000đ',
-    coursePrice: 2500000,
+    singlePrice: 3500000,
+    singlePriceDisplay: '3.500.000đ - 5.000.000đ',
+    coursePrice: 3500000,
     coursePriceDisplay: 'Trọn Gói Kèm Dặm',
     highlight: true
   },
   {
     id: 'shading-khu-tham',
-    code: 'SD-03',
+    code: 'SD-02',
     category: 'shading',
     categoryName: 'Shading & Phun Xăm',
     name: 'Khử Thâm Môi Chuyên Sâu',
     desc: 'Ứng dụng công nghệ laser vi điểm xử lý sạch viền thâm bẩm sinh, môi loang màu do son chứa chì, đưa sắc môi về nền sáng hồng chuẩn.',
     duration: '60 phút',
-    singlePrice: 1000000,
-    singlePriceDisplay: '1.000.000đ - 2.500.000đ',
-    coursePrice: 1000000,
+    singlePrice: 1500000,
+    singlePriceDisplay: '1.500.000đ - 3.000.000đ',
+    coursePrice: 1500000,
     coursePriceDisplay: 'Tùy Cấp Độ Thâm',
     customPriceNote: 'Khử thâm cấp độ 1 - 3'
   }

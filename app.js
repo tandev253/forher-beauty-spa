@@ -569,28 +569,15 @@ const SERVICES_DATA = [
 
   // 7. SHADING - PHUN XĂM THẨM MỸ
   {
-    id: 'shading-may',
+    id: 'shading-may-moi',
     category: 'shading',
     categoryName: 'Phun Xăm & Shading',
     badgeClass: 'badge-shading',
-    name: 'Phun Mày Hiệu Ứng Bút Chì Shading',
-    notes: 'Tạo hạt siêu mịn tự nhiên như phủ phấn bột, đuôi sắc nét đầu mềm mại, không sưng không đau.',
-    singlePrice: 2000000,
-    singlePriceDisplay: '2.000.000đ',
-    coursePrice: 2000000,
-    coursePriceDisplay: 'Trọn Gói Kèm Dặm',
-    highlight: true
-  },
-  {
-    id: 'shading-moi-baby',
-    category: 'shading',
-    categoryName: 'Phun Xăm & Shading',
-    badgeClass: 'badge-shading',
-    name: 'Phun Môi Baby (Baby Lips)',
-    notes: 'Mực hữu cơ chuẩn Châu Âu, tone màu trong trẻo tươi tắn (hồng cam, đỏ cherry), môi căng mọng như cánh hoa.',
-    singlePrice: 2500000,
-    singlePriceDisplay: '2.500.000đ',
-    coursePrice: 2500000,
+    name: 'Phun Mày / Môi',
+    notes: 'Kỹ thuật phun thêu thẩm mỹ hiện đại với mực hữu cơ Châu Âu tạo dáng mày thanh tú hoặc sắc môi tươi tắn tự nhiên, không sưng không đau.',
+    singlePrice: 3500000,
+    singlePriceDisplay: '3.500.000đ - 5.000.000đ',
+    coursePrice: 3500000,
     coursePriceDisplay: 'Trọn Gói Kèm Dặm',
     highlight: true
   },
@@ -601,9 +588,9 @@ const SERVICES_DATA = [
     badgeClass: 'badge-shading',
     name: 'Khử Thâm Môi Chuyên Sâu',
     notes: 'Bắn tia laser hoặc đi kim vi chạm khử sạch viền thâm bẩm sinh, môi loang màu do son chứa chì.',
-    singlePrice: 1000000,
-    singlePriceDisplay: '1.000.000đ - 2.500.000đ',
-    coursePrice: 1000000,
+    singlePrice: 1500000,
+    singlePriceDisplay: '1.500.000đ - 3.000.000đ',
+    coursePrice: 1500000,
     coursePriceDisplay: 'Tùy mức độ thâm',
     notesDetail: 'Khử thâm cấp độ 1-3'
   }
@@ -1184,7 +1171,7 @@ function showQuizRecommendation() {
     recServiceId = 'sk-diendi-ha';
     reason = 'Điện di tinh chất Hyaluronic Acid đa phân tử cấp ẩm tức thì, giúp hàng rào biểu bì ngậm nước và mịn màng căng bóng.';
   } else if (concern === 'lips') {
-    recServiceId = 'shading-moi-baby';
+    recServiceId = 'shading-may-moi';
     reason = 'Khử sạch thâm môi và phủ sắc hồng đào baby trong trẻo tự nhiên bằng mực hữu cơ không sưng đau.';
   } else if (concern === 'scar') {
     recServiceId = 'peel-tca-cham';
