@@ -26,6 +26,29 @@ export default function ContactSection() {
                 <small className="contact-card-hint">
                   (Khu vực Quận 10 – Gần ngã tư Ngô Quyền & Bà Hạt, thuận tiện di chuyển & đỗ xe)
                 </small>
+                <div style={{ marginTop: '12px' }}>
+                  <a 
+                    href={COMPANY_INFO.googleMaps} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="social-btn-link"
+                    style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '6px', 
+                      padding: '8px 16px', 
+                      fontSize: '0.85rem', 
+                      fontWeight: 600, 
+                      background: 'linear-gradient(135deg, #A8894E, #8C6D37)', 
+                      color: '#fff', 
+                      borderRadius: '8px', 
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 6px rgba(140, 109, 55, 0.25)'
+                    }}
+                  >
+                    📍 Mở Chỉ Đường Google Maps ↗
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -57,6 +80,14 @@ export default function ContactSection() {
 
             <div className="contact-social-links-bar">
               <a 
+                href={COMPANY_INFO.googleMaps} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="social-btn-link"
+              >
+                📍 Google Maps: FORHER Beauty & Spa
+              </a>
+              <a 
                 href={COMPANY_INFO.social.zalo} 
                 target="_blank" 
                 rel="noopener noreferrer" 
@@ -87,8 +118,8 @@ export default function ContactSection() {
           <div className="contact-map-col">
             <div className="map-embed-box">
               <iframe
-                title="Bản đồ chỉ đường 515 Bà Hạt Phường Diên Hồng Quận 10"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.605273752538!2d106.66358487480477!3d10.76480078938361!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752ee17e8c3b77%3A0x6b198c60012e8790!2zNTE1IELDoCBI4bqhdCwIFBoxrDhu51uZyBEacOqbiBI4buTbmcsIFF14bqtbiAxMCwgSOG7kyBDaMOtIE1pbmgsIFZpZXRuYW0!5e0!3m2!1svi!2s!4v1710000000000!5m2!1svi!2s"
+                title="Bản đồ chỉ đường FORHER Beauty & Spa 515 Bà Hạt Phường Diên Hồng Quận 10"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.605282464797!2d106.66099957586866!3d10.764800159371723!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f9cec7c0d95%3A0xc85861d1fae02b27!2sFORHER%20Beauty%20%26%20Spa%20-%20Ch%C4%83m%20S%C3%B3c%20Da%20%26%20Tr%E1%BB%8B%20M%E1%BB%A5n%20Qu%E1%BA%ADn%2010!5e0!3m2!1svi!2svn!4v1761611084206!5m2!1svi!2svn"
                 width="100%"
                 height="380"
                 style={{ border: 0 }}

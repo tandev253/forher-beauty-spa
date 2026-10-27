@@ -79,7 +79,7 @@ export default function Footer({ onOpenAdmin }) {
         <div className="footer-bottom-bar">
           <p>© {currentYear} {COMPANY_INFO.name}. Trang giới thiệu & đặt lịch dịch vụ làm đẹp chính thức.</p>
           <div className="footer-bottom-links">
-            <span>{COMPANY_INFO.addressShort}</span>
+            <a href={COMPANY_INFO.googleMaps} target="_blank" rel="noopener noreferrer" title="Mở chỉ đường trên Google Maps">{COMPANY_INFO.addressShort}</a>
             <span>•</span>
             <a href={COMPANY_INFO.social.facebook} target="_blank" rel="noopener noreferrer">FB: FORHER Beauty & Spa</a>
             <span>•</span>

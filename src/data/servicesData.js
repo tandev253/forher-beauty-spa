@@ -14,6 +14,7 @@ export const COMPANY_INFO = {
   phoneClean: '0703994683',
   email: 'contact@forherbeauty.vn',
   workingHours: '09:00 - 20:00 (Hàng ngày, kể cả Thứ Bảy & Chủ Nhật)',
+  googleMaps: 'https://maps.app.goo.gl/kFc2EFhiWXQZkgDy9',
   social: {
     facebook: 'https://www.facebook.com/forherbeautyspa',
     facebookTag: '@forherbeautyspa',
@@ -21,7 +22,8 @@ export const COMPANY_INFO = {
     tiktokTag: '@forherbeautyclinic',
     instagram: 'https://instagram.com/forher_beauty515',
     instagramTag: '@FORHER_BEAUTY515',
-    zalo: 'https://zalo.me/0703994683'
+    zalo: 'https://zalo.me/0703994683',
+    googleMaps: 'https://maps.app.goo.gl/kFc2EFhiWXQZkgDy9'
   },
   stats: [
     { value: '02 Năm', label: 'Bảo Hành Triệt Lông Cam Kết' },

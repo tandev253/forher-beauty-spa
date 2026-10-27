@@ -87,7 +87,7 @@ export default function CorporateContact() {
                   <p style={{ fontSize: '0.8rem', color: '#7D6B60', margin: 0 }}>515 Bà Hạt, Phường Diên Hồng, Quận 10, TP.HCM</p>
                 </div>
                 <a 
-                  href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY_INFO.address)}`} 
+                  href={COMPANY_INFO.googleMaps} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="corp-btn-primary"
@@ -101,7 +101,7 @@ export default function CorporateContact() {
               <div className="map-embed-wrapper">
                 <iframe 
                   title="Bản đồ chỉ đường FORHER Beauty Spa 515 Bà Hạt Quận 10"
-                  src="https://maps.google.com/maps?q=515+Ba+Hat+Phuong+Dien+Hong+Quan+10+Ho+Chi+Minh&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.605282464797!2d106.66099957586866!3d10.764800159371723!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f9cec7c0d95%3A0xc85861d1fae02b27!2sFORHER%20Beauty%20%26%20Spa%20-%20Ch%C4%83m%20S%C3%B3c%20Da%20%26%20Tr%E1%BB%8B%20M%E1%BB%A5n%20Qu%E1%BA%ADn%2010!5e0!3m2!1svi!2svn!4v1761611084206!5m2!1svi!2svn"
                   width="100%" 
                   height="340" 
                   style={{ border: 0, borderRadius: '8px' }} 
