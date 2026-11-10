@@ -47,7 +47,7 @@ export function formatPublishDate(isoStr) {
  * HOMEPAGE PREVIEW SECTION: Cẩm Nang & Bài Viết Làm Đẹp Mới Nhất
  */
 export function BlogPreviewSection({ onNavigateToArticles, onOpenArticle, onBookClick }) {
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState(() => ArticlesStorage.getPublishedArticles());
 
   useEffect(() => {
     setArticles(ArticlesStorage.getPublishedArticles());
@@ -154,7 +154,7 @@ export default function ArticlesPage({
   onBookService,
   onOpenAdmin
 }) {
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState(() => ArticlesStorage.getPublishedArticles());
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);

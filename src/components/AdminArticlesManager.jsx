@@ -16,7 +16,7 @@ export default function AdminArticlesManager({
   externalTriggerCreate = 0,
   onArticlesCountChange
 }) {
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState(() => ArticlesStorage.getAllArticles(true));
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'published' | 'draft' | 'featured'

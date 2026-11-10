@@ -876,6 +876,27 @@ export default function AdminPanel({
               <>
                 <button 
                   type="button" 
+                  className="btn-admin-action gold" 
+                  onClick={() => {
+                    setActiveTab('articles');
+                    setTriggerCreateArticle(prev => prev + 1);
+                  }}
+                  title="Soạn thảo và đăng bài viết mới lên Website"
+                  style={{ padding: '7px 14px', fontSize: '0.82rem' }}
+                >
+                  ✍️ + Đăng Bài Viết
+                </button>
+                <a
+                  href="/bai-viet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-admin-nav"
+                  title="Mở trang Bài Viết trên Website"
+                >
+                  🌐 Trang Bài Viết
+                </a>
+                <button 
+                  type="button" 
                   className="btn-admin-nav" 
                   onClick={() => setIsPasswordModalOpen(true)}
                   title="Đổi mật khẩu cá nhân"

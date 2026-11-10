@@ -1,8 +1,9 @@
-// FORHER Beauty & Spa — Admin Service Worker
-const CACHE_NAME = 'forher-v2';
+// FORHER Beauty & Spa — Admin & Website Service Worker
+const CACHE_NAME = 'forher-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/admin',
+  '/bai-viet',
   '/manifest.json',
   '/favicon.png',
   '/apple-touch-icon.png'
