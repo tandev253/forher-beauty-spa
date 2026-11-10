@@ -76,6 +76,29 @@ CREATE TABLE IF NOT EXISTS public.staff_attendance (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5. Bảng Bài Viết & Cẩm Nang Làm Đẹp (Blog Posts / Articles)
+CREATE TABLE IF NOT EXISTS public.blog_posts (
+    id TEXT PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    category_name TEXT NOT NULL,
+    excerpt TEXT,
+    content TEXT NOT NULL,
+    cover_image TEXT,
+    author TEXT DEFAULT 'Chuyên viên FORHER Spa',
+    read_time TEXT DEFAULT '4 phút đọc',
+    tags TEXT,
+    related_service_id TEXT,
+    status TEXT NOT NULL DEFAULT 'published', -- 'published' | 'draft'
+    is_featured BOOLEAN DEFAULT FALSE,
+    views INTEGER DEFAULT 0,
+    created_by TEXT DEFAULT 'admin',
+    published_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Bổ sung cột nhân viên phụ trách vào bookings (nếu chưa có)
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS assigned_staff TEXT;
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS assigned_staff_name TEXT;
@@ -90,6 +113,7 @@ ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.staff_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.staff_attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow anon on bookings" ON public.bookings;
 CREATE POLICY "Allow anon on bookings" ON public.bookings FOR ALL USING (true) WITH CHECK (true);
@@ -102,4 +126,7 @@ CREATE POLICY "Allow anon on audit_logs" ON public.audit_logs FOR ALL USING (tru
 
 DROP POLICY IF EXISTS "Allow anon on staff_attendance" ON public.staff_attendance;
 CREATE POLICY "Allow anon on staff_attendance" ON public.staff_attendance FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon on blog_posts" ON public.blog_posts;
+CREATE POLICY "Allow anon on blog_posts" ON public.blog_posts FOR ALL USING (true) WITH CHECK (true);
 `;

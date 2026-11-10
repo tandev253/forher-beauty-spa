@@ -1,15 +1,32 @@
 import React, { useState } from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
 
-export default function Header({ onBookClick }) {
+export default function Header({
+  onBookClick,
+  onNavigateSection,
+  onNavigateArticles,
+  isArticlesActive = false
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleNavClick = (e, targetId) => {
     e.preventDefault();
     setMobileMenuOpen(false);
+    if (onNavigateSection) {
+      onNavigateSection(targetId);
+      return;
+    }
     const elem = document.getElementById(targetId);
     if (elem) {
       elem.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleArticlesClick = (e) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    if (onNavigateArticles) {
+      onNavigateArticles();
     }
   };
 
@@ -54,6 +71,15 @@ export default function Header({ onBookClick }) {
             </li>
             <li>
               <a href="#booking" onClick={(e) => handleNavClick(e, 'booking')}>Đặt Lịch Hẹn</a>
+            </li>
+            <li>
+              <a
+                href="/bai-viet"
+                className={isArticlesActive ? 'active-nav-item' : ''}
+                onClick={handleArticlesClick}
+              >
+                Bài Viết
+              </a>
             </li>
             <li>
               <a href="#faq" onClick={(e) => handleNavClick(e, 'faq')}>Hỏi Đáp</a>

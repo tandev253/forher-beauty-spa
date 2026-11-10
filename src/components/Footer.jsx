@@ -1,10 +1,14 @@
 import React from 'react';
 import { COMPANY_INFO } from '../data/servicesData';
 
-export default function Footer({ onOpenAdmin }) {
+export default function Footer({ onOpenAdmin, onNavigateArticles, onNavigateSection }) {
   const currentYear = new Date().getFullYear();
 
   const handleScrollTo = (id) => {
+    if (onNavigateSection) {
+      onNavigateSection(id);
+      return;
+    }
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
@@ -33,6 +37,14 @@ export default function Footer({ onOpenAdmin }) {
               <li><button type="button" onClick={() => handleScrollTo('about')}>Giới Thiệu FORHER</button></li>
               <li><button type="button" onClick={() => handleScrollTo('services')}>Bảng Giá Dịch Vụ</button></li>
               <li><button type="button" onClick={() => handleScrollTo('booking')}>Đặt Lịch Hẹn Trực Tuyến</button></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => (onNavigateArticles ? onNavigateArticles() : handleScrollTo('articles-preview'))}
+                >
+                  Bài Viết & Cẩm Nang Làm Đẹp
+                </button>
+              </li>
               <li><button type="button" onClick={() => handleScrollTo('faq')}>Hỏi Đáp Dịch Vụ (FAQ)</button></li>
               <li><button type="button" onClick={() => handleScrollTo('contact')}>Địa Chỉ & Bản Đồ</button></li>
             </ul>

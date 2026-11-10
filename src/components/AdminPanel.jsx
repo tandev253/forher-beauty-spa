@@ -9,6 +9,8 @@ import {
 } from '../data/bookingStorage';
 import { SERVICES_CATALOG, COMPANY_INFO } from '../data/servicesData';
 import { SUPABASE_URL } from '../config/supabaseClient';
+import { ArticlesStorage } from '../data/articlesStorage';
+import AdminArticlesManager from './AdminArticlesManager';
 
 export const SHIFT_OPTIONS = [
   'Ca Hành Chính (08:30 - 17:30)',
@@ -103,12 +105,14 @@ export default function AdminPanel({
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Navigation Tabs: 'bookings' | 'revenue' | 'attendance' | 'my_performance' | 'bank' | 'logs' | 'staff' | 'backup'
+  // Navigation Tabs: 'bookings' | 'articles' | 'revenue' | 'attendance' | 'my_performance' | 'bank' | 'logs' | 'staff' | 'backup'
   const [activeTab, setActiveTab] = useState('bookings');
   const [bookings, setBookings] = useState([]);
   const [logs, setLogs] = useState([]);
   const [staffAccounts, setStaffAccounts] = useState([]);
   const [attendanceList, setAttendanceList] = useState([]);
+  const [articlesCount, setArticlesCount] = useState(() => ArticlesStorage.getAllArticles(true).length);
+  const [triggerCreateArticle, setTriggerCreateArticle] = useState(0);
 
   // Attendance & Shifts State
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
@@ -440,6 +444,7 @@ export default function AdminPanel({
   const availableTabs = useMemo(() => {
     const list = [
       { id: 'bookings', label: `Quản Lý Đơn Đặt (${bookings.length})` },
+      { id: 'articles', label: `Đăng & Quản Lý Bài Viết (${articlesCount})` },
     ];
     if (isBoss) {
       list.push(
@@ -456,7 +461,7 @@ export default function AdminPanel({
       );
     }
     return list;
-  }, [bookings.length, isBoss, staffAccounts.length, logs.length]);
+  }, [bookings.length, articlesCount, isBoss, staffAccounts.length, logs.length]);
 
   const currentTabIndex = useMemo(() => {
     const idx = availableTabs.findIndex(t => t.id === activeTab);
@@ -953,6 +958,13 @@ export default function AdminPanel({
                       onClick={() => { setActiveTab('bookings'); setIsMobileMenuOpen(false); }}
                     >
                       Quản Lý Đơn Đặt ({bookings.length})
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`drawer-link-item ${activeTab === 'articles' ? 'active-tab-drawer' : ''}`}
+                      onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }}
+                    >
+                      ✍️ Đăng & Quản Lý Bài Viết ({articlesCount})
                     </button>
                     {isBoss ? (
                       <>
@@ -1469,14 +1481,34 @@ export default function AdminPanel({
                   >
                     + Tạo Tài Khoản Nhân Viên
                   </button>
-                ) : (
+                ) : activeTab === 'articles' ? (
                   <button 
                     type="button" 
                     className="btn-admin-action gold"
-                    onClick={handleOpenCreateModal}
+                    onClick={() => setTriggerCreateArticle(prev => prev + 1)}
                   >
-                    + Thêm Đơn Mới
+                    + Đăng Bài Viết Mới
                   </button>
+                ) : (
+                  <>
+                    <button 
+                      type="button" 
+                      className="btn-admin-action gold"
+                      onClick={handleOpenCreateModal}
+                    >
+                      + Thêm Đơn Mới
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn-admin-action outline"
+                      onClick={() => {
+                        setActiveTab('articles');
+                        setTriggerCreateArticle(prev => prev + 1);
+                      }}
+                    >
+                      ✍️ Đăng Bài Viết
+                    </button>
+                  </>
                 )}
                 {isBoss && (
                   <button 
@@ -2885,6 +2917,16 @@ export default function AdminPanel({
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* TAB CONTENT 7: ARTICLES / BLOG CMS MANAGEMENT */}
+            {activeTab === 'articles' && (
+              <AdminArticlesManager
+                session={session}
+                isBoss={isBoss}
+                externalTriggerCreate={triggerCreateArticle}
+                onArticlesCountChange={(count) => setArticlesCount(count)}
+              />
             )}
           </div>
         )}
