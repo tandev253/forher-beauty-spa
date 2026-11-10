@@ -35,3 +35,4 @@ jobs:
           publish_dir: ./dist
           cname: forherbeauty.vn
           force_orphan: false
+

@@ -7,6 +7,16 @@ import {
   estimateReadingTime,
   compressImageFileToDataUrl
 } from '../data/articlesStorage';
+import {
+  AI_WRITING_TONES,
+  QUICK_TOPIC_PRESETS,
+  generateAiSeoArticle,
+  generateSeoTitleSuggestions,
+  generateFaqAppendBlock,
+  evaluateSeoScore,
+  getSavedGeminiKey,
+  saveGeminiKey
+} from '../data/aiSeoWriter';
 import { SERVICES_CATALOG } from '../data/servicesData';
 import { formatArticleHtml, formatPublishDate } from './ArticlesPage';
 
@@ -23,13 +33,23 @@ export default function AdminArticlesManager({
   const [toastMsg, setToastMsg] = useState(null);
 
   // Editor Modal State
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(() => Boolean(externalTriggerCreate > 0));
   const [editingArticle, setEditingArticle] = useState(null);
   const [editorMode, setEditorMode] = useState('write'); // 'write' | 'preview'
-  const [coverPickerMode, setCoverPickerMode] = useState('upload'); // 'upload' | 'preset' | 'url'
+  const [coverPickerMode, setCoverPickerMode] = useState('preset'); // 'upload' | 'preset' | 'url'
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingInline, setIsUploadingInline] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // AI SEO Assistant State
+  const [showAiPanel, setShowAiPanel] = useState(true);
+  const [aiTopicInput, setAiTopicInput] = useState('');
+  const [aiTone, setAiTone] = useState(AI_WRITING_TONES[0].id);
+  const [aiCustomKeywords, setAiCustomKeywords] = useState('');
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiSuggestedTitles, setAiSuggestedTitles] = useState([]);
+  const [showGeminiKeyConfig, setShowGeminiKeyConfig] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState(() => getSavedGeminiKey());
 
   // Preview Modal for existing article
   const [previewingArticle, setPreviewingArticle] = useState(null);
@@ -57,11 +77,14 @@ export default function AdminArticlesManager({
     isFeatured: false
   });
 
+  // Real-time SEO Score Evaluation
+  const seoEvaluation = useMemo(() => evaluateSeoScore(formData), [formData]);
+
   const showToast = (message, type = 'success') => {
     setToastMsg({ message, type });
     setTimeout(() => {
       setToastMsg(null);
-    }, 3500);
+    }, 3800);
   };
 
   const loadArticles = async () => {
@@ -84,7 +107,7 @@ export default function AdminArticlesManager({
   // Trigger create modal when parent header button "+ Đăng Bài Viết Mới" is clicked
   useEffect(() => {
     if (externalTriggerCreate > 0) {
-      handleOpenCreate();
+      handleOpenCreate(true);
     }
   }, [externalTriggerCreate]);
 
@@ -119,10 +142,12 @@ export default function AdminArticlesManager({
   }, [articles, categoryFilter, statusFilter, searchTerm]);
 
   // Open Create Modal
-  const handleOpenCreate = () => {
+  const handleOpenCreate = (openAiByDefault = true) => {
     setEditingArticle(null);
     setEditorMode('write');
     setCoverPickerMode('preset');
+    setShowAiPanel(openAiByDefault);
+    setAiSuggestedTitles([]);
     setFormData({
       title: '',
       slug: '',
@@ -144,6 +169,8 @@ export default function AdminArticlesManager({
   const handleOpenEdit = (article) => {
     setEditingArticle(article);
     setEditorMode('write');
+    setShowAiPanel(false);
+    setAiSuggestedTitles([]);
     setCoverPickerMode(
       article.coverImage?.startsWith('data:')
         ? 'upload'
@@ -166,6 +193,92 @@ export default function AdminArticlesManager({
       isFeatured: Boolean(article.isFeatured)
     });
     setIsEditorOpen(true);
+  };
+
+  // AI Action 1: Generate Full SEO Article
+  const handleAiGenerateFullArticle = async () => {
+    const selectedSvc = SERVICES_CATALOG.find(s => s.id === formData.relatedServiceId);
+    const effectiveTopic =
+      aiTopicInput.trim() ||
+      formData.title.trim() ||
+      (selectedSvc ? `${selectedSvc.name} chuẩn y khoa tại Quận 10` : '');
+
+    if (!effectiveTopic) {
+      alert('Vui lòng nhập chủ đề muốn viết hoặc bấm chọn 1 chủ đề gợi ý bên dưới!');
+      return;
+    }
+
+    setIsAiGenerating(true);
+    try {
+      const generated = await generateAiSeoArticle({
+        topic: effectiveTopic,
+        category: formData.category,
+        tone: aiTone,
+        serviceId: formData.relatedServiceId,
+        customKeywords: aiCustomKeywords
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        title: generated.title,
+        slug: generated.slug,
+        category: generated.category || prev.category,
+        excerpt: generated.excerpt,
+        content: generated.content,
+        coverImage: generated.coverImage || prev.coverImage,
+        tags: generated.tags,
+        relatedServiceId: generated.relatedServiceId || prev.relatedServiceId,
+        readTime: generated.readTime
+      }));
+
+      // Also generate 5 alternative titles in case user wants to switch title
+      const altTitles = generateSeoTitleSuggestions(
+        effectiveTopic,
+        formData.category,
+        formData.relatedServiceId
+      );
+      setAiSuggestedTitles(altTitles);
+
+      showToast(`✨ AI đã viết xong trọn bộ bài chuẩn SEO (Điểm SEO: 100/100)!`);
+    } catch (err) {
+      alert('Có lỗi khi tạo nội dung AI: ' + (err.message || 'Vui lòng thử lại'));
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  // AI Action 2: Suggest 5 SEO Titles
+  const handleAiSuggestTitles = () => {
+    const selectedSvc = SERVICES_CATALOG.find(s => s.id === formData.relatedServiceId);
+    const effectiveTopic =
+      aiTopicInput.trim() ||
+      formData.title.trim() ||
+      (selectedSvc ? selectedSvc.name : 'Chăm sóc da chuẩn y khoa');
+
+    const titles = generateSeoTitleSuggestions(
+      effectiveTopic,
+      formData.category,
+      formData.relatedServiceId
+    );
+    setAiSuggestedTitles(titles);
+  };
+
+  // AI Action 3: Append FAQ Section to Content
+  const handleAiAppendFaq = () => {
+    const faqHtml = generateFaqAppendBlock(
+      formData.title,
+      formData.category,
+      formData.relatedServiceId
+    );
+    setFormData(prev => {
+      const nextContent = (prev.content || '') + '\n' + faqHtml;
+      return {
+        ...prev,
+        content: nextContent,
+        readTime: estimateReadingTime(nextContent)
+      };
+    });
+    showToast('✨ AI đã thêm mục Câu Hỏi Thường Gặp (FAQ chuẩn SEO) vào cuối bài viết!');
   };
 
   // Handle Title Change & Auto-Slug
@@ -219,7 +332,10 @@ export default function AdminArticlesManager({
 
     setTimeout(() => {
       textarea.focus();
-      textarea.setSelectionRange(start + beforeText.length, start + beforeText.length + selected.length);
+      textarea.setSelectionRange(
+        start + beforeText.length,
+        start + beforeText.length + selected.length
+      );
     }, 20);
   };
 
@@ -241,44 +357,15 @@ export default function AdminArticlesManager({
     }
   };
 
-  // Insert SEO Article Template
-  const handleInsertSeoTemplate = () => {
-    const tpl = `<h2>1. Giới thiệu về liệu trình tại FORHER Beauty & Spa</h2>
-<p>Chia sẻ tổng quan về dịch vụ và lý do khách hàng tại Quận 10 luôn tin chọn <strong>FORHER Beauty & Spa (515 Bà Hạt, Phường Diên Hồng)</strong>.</p>
-
-<blockquote>Cam kết 100% dụng cụ tiệt trùng riêng biệt, bảng giá niêm yết minh bạch và không phát sinh chi phí.</blockquote>
-
-<h2>2. Ưu điểm vượt trội & Quy trình thực hiện</h2>
-<ul>
-  <li><strong>Bước 1 - Thăm khám & Tư vấn 1:1:</strong> Kiểm tra tình trạng thực tế và lên phác đồ phù hợp.</li>
-  <li><strong>Bước 2 - Làm sạch sâu & Chuẩn bị:</strong> Vô khuẩn dụng cụ và làm dịu vùng da.</li>
-  <li><strong>Bước 3 - Thực hiện chuyên sâu:</strong> Kỹ thuật viên tay nghề cao thao tác êm ái, nhẹ nhàng.</li>
-  <li><strong>Bước 4 - Phục hồi & Hướng dẫn chăm sóc tại nhà:</strong> Thoa dưỡng chất khóa ẩm và dặn dò kỹ lưỡng.</li>
-</ul>
-
-<h2>3. Lưu ý chăm sóc sau khi thực hiện</h2>
-<p>Để đạt hiệu quả tối ưu nhất, quý khách nên duy trì cấp ẩm đều đặn và che chắn chống nắng kỹ khi ra ngoài. Liên hệ ngay Hotline <strong>0703 994 683</strong> để đặt lịch hẹn trước!</p>`;
-
-    setFormData(prev => {
-      const nextContent = prev.content ? `${prev.content}\n\n${tpl}` : tpl;
-      return {
-        ...prev,
-        content: nextContent,
-        readTime: estimateReadingTime(nextContent)
-      };
-    });
-    showToast('Đã chèn dàn ý bài viết chuẩn SEO!');
-  };
-
   // Save Article (Create or Update)
   const handleSaveArticle = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!formData.title.trim()) {
-      alert('Vui lòng nhập tiêu đề bài viết!');
+      alert('Vui lòng nhập tiêu đề bài viết (hoặc bấm nút AI Viết Bài Chuẩn SEO)!');
       return;
     }
     if (!formData.content.trim()) {
-      alert('Vui lòng nhập nội dung bài viết!');
+      alert('Vui lòng nhập nội dung bài viết (hoặc bấm nút AI Viết Bài Chuẩn SEO)!');
       return;
     }
 
@@ -353,7 +440,10 @@ export default function AdminArticlesManager({
     <div className="admin-tab-content admin-articles-wrapper">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className={`attendance-toast-alert ${toastMsg.type === 'warning' ? 'warning' : 'success'}`} style={{ marginBottom: '16px' }}>
+        <div
+          className={`attendance-toast-alert ${toastMsg.type === 'warning' ? 'warning' : 'success'}`}
+          style={{ marginBottom: '16px' }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{toastMsg.type === 'warning' ? '🗑️' : '✅'}</span>
             <span>{toastMsg.message}</span>
@@ -367,9 +457,9 @@ export default function AdminArticlesManager({
       {/* Top Header & Quick Post CTA */}
       <div className="admin-articles-top-header">
         <div>
-          <h3 className="admin-section-heading">Quản Lý & Đăng Bài Viết Website (CMS)</h3>
+          <h3 className="admin-section-heading">Quản Lý & Đăng Bài Viết Website (Tích Hợp AI Chuẩn SEO)</h3>
           <p className="admin-section-sub">
-            Soạn thảo và xuất bản bài viết cẩm nang làm đẹp, quy trình dịch vụ và chương trình ưu đãi trực tiếp lên trang <strong>/bai-viet</strong>.
+            Tự động viết bài chuẩn SEO Google chỉ với 1 chạm bằng Trợ lý AI FORHER, hoặc tự soạn thảo và xuất bản lên trang <strong>/bai-viet</strong>.
           </p>
         </div>
 
@@ -386,9 +476,9 @@ export default function AdminArticlesManager({
           <button
             type="button"
             className="btn-primary-gold"
-            onClick={handleOpenCreate}
+            onClick={() => handleOpenCreate(true)}
           >
-            ✍️ + Đăng Bài Viết Mới
+            🤖 + AI Viết & Đăng Bài Mới
           </button>
         </div>
       </div>
@@ -467,8 +557,8 @@ export default function AdminArticlesManager({
       {filteredArticles.length === 0 ? (
         <div className="admin-empty-state">
           <p>Không tìm thấy bài viết nào khớp với bộ lọc hiện tại.</p>
-          <button type="button" className="btn-primary-gold" onClick={handleOpenCreate}>
-            + Viết Bài Mới Ngay
+          <button type="button" className="btn-primary-gold" onClick={() => handleOpenCreate(true)}>
+            🤖 + AI Viết Bài Mới Ngay
           </button>
         </div>
       ) : (
@@ -558,7 +648,7 @@ export default function AdminArticlesManager({
       )}
 
       {/* ==============================================================================
-          MODAL 1: TRÌNH SOẠN THẢO & ĐĂNG BÀI VIẾT MỚI / CHỈNH SỬA BÀI VIẾT
+          MODAL 1: TRÌNH SOẠN THẢO & TRỢ LÝ AI VIẾT BÀI CHUẨN SEO
           ============================================================================== */}
       {isEditorOpen && (
         <div className="admin-submodal-backdrop" onClick={() => setIsEditorOpen(false)}>
@@ -571,11 +661,21 @@ export default function AdminArticlesManager({
                 <h3>
                   {editingArticle
                     ? `Chỉnh Sửa Bài Viết #${editingArticle.id}`
-                    : '✍️ Đăng Bài Viết Mới Lên Website'}
+                    : '🤖 Đăng Bài Viết Mới (Trợ Lý AI Chuẩn SEO)'}
                 </h3>
               </div>
 
               <div className="editor-header-right-tabs">
+                <button
+                  type="button"
+                  className={`editor-mode-btn ${showAiPanel ? 'active' : ''}`}
+                  onClick={() => {
+                    setEditorMode('write');
+                    setShowAiPanel(!showAiPanel);
+                  }}
+                >
+                  🤖 {showAiPanel ? 'Thu Gọn AI' : 'Mở Trợ Lý AI'}
+                </button>
                 <button
                   type="button"
                   className={`editor-mode-btn ${editorMode === 'write' ? 'active' : ''}`}
@@ -588,7 +688,7 @@ export default function AdminArticlesManager({
                   className={`editor-mode-btn ${editorMode === 'preview' ? 'active' : ''}`}
                   onClick={() => setEditorMode('preview')}
                 >
-                  👁️ Xem Trước Bài Đăng
+                  👁️ Xem Trước
                 </button>
                 <button
                   type="button"
@@ -604,7 +704,9 @@ export default function AdminArticlesManager({
               /* LIVE PREVIEW TAB INSIDE MODAL */
               <div className="admin-article-live-preview">
                 <div className="preview-banner-note">
-                  <span>Đây là bản xem trước giao diện khi khách hàng đọc bài viết trên Website:</span>
+                  <span>
+                    Điểm Chuẩn SEO hiện tại: <strong>{seoEvaluation.score}/100 điểm</strong> ({seoEvaluation.wordCount} từ)
+                  </span>
                   <button
                     type="button"
                     className="btn-outline-gold"
@@ -669,8 +771,214 @@ export default function AdminArticlesManager({
                 </div>
               </div>
             ) : (
-              /* WRITE / EDIT FORM TAB */
+              /* WRITE / EDIT FORM TAB WITH AI SEO STUDIO */
               <form onSubmit={handleSaveArticle} className="admin-submodal-form article-editor-form">
+                {/* ==============================================================
+                    TRỢ LÝ AI VIẾT BÀI CHUẨN SEO (AI SEO COPILOT STUDIO)
+                   ============================================================== */}
+                {showAiPanel && (
+                  <div className="ai-seo-studio-box">
+                    <div className="ai-studio-header">
+                      <div className="ai-studio-title-wrap">
+                        <span className="ai-badge-pulse">🤖 AI SEO STUDIO</span>
+                        <h4>Trợ Lý AI Tự Động Viết Bài Chuẩn SEO Google Cho FORHER Spa</h4>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-ai-key-toggle"
+                        onClick={() => setShowGeminiKeyConfig(!showGeminiKeyConfig)}
+                      >
+                        ⚙️ {geminiApiKey ? 'Đã kết nối Gemini Key' : 'Cài đặt Gemini Key (Tùy chọn)'}
+                      </button>
+                    </div>
+
+                    {showGeminiKeyConfig && (
+                      <div className="ai-gemini-config-bar">
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                            Google Gemini API Key (Không bắt buộc — Mặc định hệ thống đã có sẵn FORHER AI SEO Engine miễn phí):
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="Dán mã AIzaSy... từ Google AI Studio nếu muốn dùng Gemini 2.5 Flash..."
+                            value={geminiApiKey}
+                            onChange={(e) => {
+                              setGeminiApiKey(e.target.value);
+                              saveGeminiKey(e.target.value);
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-outline-gold"
+                          onClick={() => {
+                            saveGeminiKey(geminiApiKey);
+                            setShowGeminiKeyConfig(false);
+                            showToast('Đã lưu cấu hình AI!');
+                          }}
+                        >
+                          Lưu & Đóng
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Quick Topic Presets */}
+                    <div className="ai-quick-presets">
+                      <span className="preset-lbl">💡 Chọn nhanh chủ đề gợi ý (1 chạm):</span>
+                      <div className="preset-chips-row">
+                        {QUICK_TOPIC_PRESETS.map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="ai-preset-chip"
+                            onClick={() => {
+                              setAiTopicInput(preset.topic);
+                              setFormData(prev => ({
+                                ...prev,
+                                category: preset.category,
+                                relatedServiceId: preset.serviceId
+                              }));
+                            }}
+                          >
+                            + {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Topic Input & Tone Selection */}
+                    <div className="form-group" style={{ marginTop: '10px', marginBottom: '10px' }}>
+                      <label>Nhập Chủ Đề / Ý Tưởng Hoặc Từ Khóa Bạn Muốn AI Viết:</label>
+                      <input
+                        type="text"
+                        placeholder="Ví dụ: Kinh nghiệm triệt lông nách không thâm tại Quận 10, Ưu đãi tháng 11 giảm 30%..."
+                        value={aiTopicInput}
+                        onChange={(e) => setAiTopicInput(e.target.value)}
+                        style={{ background: '#FFFFFF', border: '1.5px solid var(--primary-gold)' }}
+                      />
+                    </div>
+
+                    <div className="form-row-two" style={{ marginBottom: '12px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label>Phong Cách Viết Của AI:</label>
+                        <select value={aiTone} onChange={(e) => setAiTone(e.target.value)}>
+                          {AI_WRITING_TONES.map(t => (
+                            <option key={t.id} value={t.id}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label>Gắn Dịch Vụ Bảng Giá FORHER Vào Bài (Tự động chèn giá):</label>
+                        <select
+                          value={formData.relatedServiceId}
+                          onChange={(e) =>
+                            setFormData({ ...formData, relatedServiceId: e.target.value })
+                          }
+                        >
+                          <option value="">-- Tư vấn tổng quát mọi dịch vụ --</option>
+                          {SERVICES_CATALOG.map(s => (
+                            <option key={s.id} value={s.id}>
+                              [{s.categoryName}] {s.name} ({s.singlePriceDisplay})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* AI Action Buttons */}
+                    <div className="ai-studio-action-row">
+                      <button
+                        type="button"
+                        className="btn-ai-generate-main"
+                        onClick={handleAiGenerateFullArticle}
+                        disabled={isAiGenerating}
+                      >
+                        {isAiGenerating
+                          ? '⏳ AI Đang Phân Tích Từ Khóa & Viết Bài Chuẩn SEO...'
+                          : '✨ AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO (1-Chạm)'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-ai-sub-action"
+                        onClick={handleAiSuggestTitles}
+                      >
+                        🎯 Gợi Ý 5 Tiêu Đề Hút Khách
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-ai-sub-action"
+                        onClick={handleAiAppendFaq}
+                      >
+                        ➕ Chèn Mục Hỏi Đáp (FAQ)
+                      </button>
+                    </div>
+
+                    {/* 5 Suggested Titles Picker */}
+                    {aiSuggestedTitles.length > 0 && (
+                      <div className="ai-suggested-titles-box">
+                        <span className="sug-title-lbl">
+                          🎯 Bấm chọn 1 trong 5 tiêu đề chuẩn SEO dưới đây để áp dụng:
+                        </span>
+                        <div className="sug-titles-list">
+                          {aiSuggestedTitles.map((sug, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className={`sug-title-item ${formData.title === sug ? 'active' : ''}`}
+                              onClick={() => handleTitleChange(sug)}
+                            >
+                              <span>{i + 1}. {sug}</span>
+                              <span className="use-txt">Chọn</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ==============================================================
+                    BẢNG CHẤM ĐIỂM CHUẨN SEO REALTIME (SEO SCORE BAR)
+                   ============================================================== */}
+                <div className="seo-score-analyzer-card">
+                  <div className="seo-score-top">
+                    <div className="seo-score-badge-wrap">
+                      <span
+                        className={`seo-score-circle ${
+                          seoEvaluation.score >= 80
+                            ? 'excellent'
+                            : seoEvaluation.score >= 50
+                            ? 'good'
+                            : 'low'
+                        }`}
+                      >
+                        {seoEvaluation.score}/100
+                      </span>
+                      <div>
+                        <strong>Điểm Chuẩn SEO Google Bài Viết</strong>
+                        <p>
+                          Độ dài: <strong>{seoEvaluation.wordCount} từ</strong> • Thời gian đọc:{' '}
+                          <strong>{formData.readTime}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="seo-checks-grid">
+                    {seoEvaluation.checks.map((chk, idx) => (
+                      <div key={idx} className={`seo-check-item ${chk.ok ? 'pass' : 'warn'}`}>
+                        <span>{chk.ok ? '✓' : '○'}</span>
+                        <span>{chk.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* 1. Title & Slug */}
                 <div className="form-group">
                   <label>
@@ -859,10 +1167,10 @@ export default function AdminArticlesManager({
 
                 {/* 4. Excerpt / Short Description */}
                 <div className="form-group">
-                  <label>Tóm Tắt Ngắn (Mô tả hấp dẫn hiển thị ngoài danh sách):</label>
+                  <label>Tóm Tắt Ngắn Chuẩn SEO (Meta Description):</label>
                   <textarea
                     rows={2}
-                    placeholder="Nhập 1 - 2 câu tóm tắt nội dung chính của bài viết (Nếu bỏ trống, hệ thống sẽ tự động lấy đoạn mở đầu)..."
+                    placeholder="Nhập 1 - 2 câu tóm tắt nội dung chính của bài viết..."
                     value={formData.excerpt}
                     onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
                   />
@@ -877,9 +1185,10 @@ export default function AdminArticlesManager({
                     <button
                       type="button"
                       className="btn-insert-template"
-                      onClick={handleInsertSeoTemplate}
+                      onClick={handleAiGenerateFullArticle}
+                      disabled={isAiGenerating}
                     >
-                      ✨ Chèn Mẫu Dàn Ý Chuẩn SEO Spa
+                      🤖 Nhờ AI Viết Lại Nội Dung Theo Tiêu Đề
                     </button>
                   </div>
 
@@ -969,7 +1278,7 @@ export default function AdminArticlesManager({
                     ref={contentTextareaRef}
                     rows={12}
                     className="article-content-textarea"
-                    placeholder="Nhập nội dung bài viết tại đây... Bạn có thể gõ văn bản bình thường (xuống dòng tự nhiên) hoặc dùng thanh công cụ bên trên để chèn Tiêu đề, In đậm, Danh sách và Hình ảnh minh họa."
+                    placeholder="Bấm nút '✨ AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO' ở trên để AI viết sẵn toàn bộ bài, hoặc tự nhập nội dung tại đây..."
                     value={formData.content}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -981,9 +1290,6 @@ export default function AdminArticlesManager({
                     }}
                     required
                   />
-                  <small className="text-muted">
-                    Mẹo: Bạn có thể viết văn bản bình thường hoặc bấm tab <strong>"👁️ Xem Trước Bài Đăng"</strong> ở góc trên để xem ngay kết quả trình bày.
-                  </small>
                 </div>
 
                 {/* 6. SEO Tags & Read Time */}
@@ -1022,7 +1328,7 @@ export default function AdminArticlesManager({
                     className="btn-outline-gold"
                     onClick={() => setEditorMode('preview')}
                   >
-                    👁️ Xem Trước Giao Diện
+                    👁️ Xem Trước Giao Diện ({seoEvaluation.score}/100 SEO)
                   </button>
                   <button
                     type="button"
@@ -1153,4 +1459,3 @@ export default function AdminArticlesManager({
     </div>
   );
 }
-

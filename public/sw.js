@@ -1,5 +1,5 @@
 // FORHER Beauty & Spa — Admin & Website Service Worker
-const CACHE_NAME = 'forher-v3';
+const CACHE_NAME = 'forher-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/admin',
