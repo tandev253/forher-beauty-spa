@@ -1,5 +1,5 @@
 // FORHER Beauty & Spa — Admin & Website Service Worker (Network-First, Always Fresh)
-const CACHE_NAME = 'forher-v5-ai-seo';
+const CACHE_NAME = 'forher-v6-clean';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

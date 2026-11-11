@@ -15,22 +15,22 @@ const GEMINI_KEY_STORAGE = 'forher_gemini_api_key_v1';
 export const AI_WRITING_TONES = [
   {
     id: 'chuan-seo-y-khoa',
-    label: '🔬 Chuẩn SEO & Chuyên Khoa Da Liễu (Khuyên dùng)',
+    label: 'Chuẩn SEO & Chuyên Khoa Da Liễu (Khuyên dùng)',
     desc: 'Phân tích nguyên nhân, cơ chế khoa học, quy trình chuẩn y khoa và cam kết bảo hành.'
   },
   {
     id: 'cam-nang-chia-se',
-    label: '🌸 Cẩm Nang Làm Đẹp & Bí Quyết Chăm Sóc Tại Nhà',
+    label: 'Cẩm Nang Làm Đẹp & Bí Quyết Chăm Sóc Tại Nhà',
     desc: 'Giọng văn gần gũi, tinh tế, hướng dẫn chi tiết cách chăm sóc da/tóc/móng khỏe đẹp.'
   },
   {
     id: 'review-trai-nghiem',
-    label: '✨ Review Trải Nghiệm Thực Tế 3 Tầng FORHER Spa',
+    label: 'Review Trải Nghiệm Thực Tế 3 Tầng FORHER Spa',
     desc: 'Kể chuyện trải nghiệm không gian ấm cúng, rèm che riêng tư, kỹ thuật viên 1:1 tận tâm.'
   },
   {
     id: 'khuyen-mai-uu-dai',
-    label: '🎁 Bài Viết Ưu Đãi & Sự Kiện Thu Hút Đặt Lịch',
+    label: 'Bài Viết Ưu Đãi & Sự Kiện Thu Hút Đặt Lịch',
     desc: 'Tập trung làm nổi bật lợi ích, bảng giá niêm yết minh bạch và thúc đẩy khách đặt hẹn.'
   }
 ];

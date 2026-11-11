@@ -90,22 +90,22 @@ export function BlogPreviewSection({ onNavigateToArticles, onOpenArticle, onBook
                 />
                 <span className="blog-card-cat-badge">{post.categoryName}</span>
                 {post.isFeatured && (
-                  <span className="blog-card-featured-pill">★ Nổi Bật</span>
+                  <span className="blog-card-featured-pill">Nổi Bật</span>
                 )}
               </div>
 
               <div className="blog-card-body">
                 <div className="blog-card-meta">
-                  <span>📅 {formatPublishDate(post.publishedAt)}</span>
+                  <span>{formatPublishDate(post.publishedAt)}</span>
                   <span className="meta-dot">•</span>
-                  <span>⏱ {post.readTime || '4 phút đọc'}</span>
+                  <span>{post.readTime || '4 phút đọc'}</span>
                 </div>
 
                 <h3 className="blog-card-title">{post.title}</h3>
                 <p className="blog-card-excerpt">{post.excerpt}</p>
 
                 <div className="blog-card-footer">
-                  <span className="blog-card-author">✍️ {post.author}</span>
+                  <span className="blog-card-author">{post.author}</span>
                   <button
                     type="button"
                     className="blog-card-read-btn"
@@ -272,7 +272,7 @@ export default function ArticlesPage({
               <div className="article-detail-badges">
                 <span className="article-cat-pill">{currentArticle.categoryName}</span>
                 {currentArticle.isFeatured && (
-                  <span className="article-featured-tag">★ Bài Viết Tiêu Điểm</span>
+                  <span className="article-featured-tag">Bài Viết Tiêu Điểm</span>
                 )}
               </div>
 
@@ -290,7 +290,7 @@ export default function ArticlesPage({
                       <span>•</span>
                       <span>{currentArticle.readTime || '4 phút đọc'}</span>
                       <span>•</span>
-                      <span>👁 {(Number(currentArticle.views) || 1) + 1} lượt xem</span>
+                      <span>{(Number(currentArticle.views) || 1) + 1} lượt xem</span>
                     </div>
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function ArticlesPage({
                     onClick={handleCopyShareLink}
                     title="Sao chép đường dẫn bài viết"
                   >
-                    {copySuccess ? '✓ Đã sao chép link!' : '🔗 Chia sẻ bài viết'}
+                    {copySuccess ? 'Đã sao chép link!' : 'Chia sẻ bài viết'}
                   </button>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function ArticlesPage({
                 className="btn-outline-gold w-100"
                 style={{ marginTop: '10px', textAlign: 'center', display: 'block' }}
               >
-                📞 Gọi Hotline: {COMPANY_INFO.phone}
+                Gọi Hotline: {COMPANY_INFO.phone}
               </a>
 
               <div className="sidebar-categories-box">
@@ -484,14 +484,14 @@ export default function ArticlesPage({
                     </div>
                     <div className="blog-card-body">
                       <div className="blog-card-meta">
-                        <span>📅 {formatPublishDate(rel.publishedAt)}</span>
+                        <span>{formatPublishDate(rel.publishedAt)}</span>
                         <span className="meta-dot">•</span>
-                        <span>⏱ {rel.readTime || '4 phút đọc'}</span>
+                        <span>{rel.readTime || '4 phút đọc'}</span>
                       </div>
                       <h4 className="blog-card-title">{rel.title}</h4>
                       <p className="blog-card-excerpt">{rel.excerpt}</p>
                       <div className="blog-card-footer">
-                        <span className="blog-card-author">✍️ {rel.author}</span>
+                        <span className="blog-card-author">{rel.author}</span>
                         <span className="blog-card-read-btn">Đọc tiếp →</span>
                       </div>
                     </div>
@@ -590,20 +590,20 @@ export default function ArticlesPage({
                   src={spotlightArticle.coverImage || '/forher_facial_treatment_real.jpg'}
                   alt={spotlightArticle.title}
                 />
-                <span className="spotlight-badge">★ BÀI VIẾT TIÊU ĐIỂM</span>
+                <span className="spotlight-badge">BÀI VIẾT TIÊU ĐIỂM</span>
               </div>
               <div className="spotlight-info-col">
                 <div className="spotlight-meta">
                   <span className="spotlight-cat">{spotlightArticle.categoryName}</span>
                   <span>•</span>
-                  <span>📅 {formatPublishDate(spotlightArticle.publishedAt)}</span>
+                  <span>{formatPublishDate(spotlightArticle.publishedAt)}</span>
                   <span>•</span>
-                  <span>⏱ {spotlightArticle.readTime || '5 phút đọc'}</span>
+                  <span>{spotlightArticle.readTime || '5 phút đọc'}</span>
                 </div>
                 <h2 className="spotlight-title">{spotlightArticle.title}</h2>
                 <p className="spotlight-excerpt">{spotlightArticle.excerpt}</p>
                 <div className="spotlight-footer">
-                  <span className="spotlight-author">✍️ {spotlightArticle.author}</span>
+                  <span className="spotlight-author">{spotlightArticle.author}</span>
                   <button
                     type="button"
                     className="btn-primary-gold"
@@ -652,24 +652,24 @@ export default function ArticlesPage({
                     />
                     <span className="blog-card-cat-badge">{post.categoryName}</span>
                     {post.isFeatured && (
-                      <span className="blog-card-featured-pill">★ Nổi Bật</span>
+                      <span className="blog-card-featured-pill">Nổi Bật</span>
                     )}
                   </div>
 
                   <div className="blog-card-body">
                     <div className="blog-card-meta">
-                      <span>📅 {formatPublishDate(post.publishedAt)}</span>
+                      <span>{formatPublishDate(post.publishedAt)}</span>
                       <span className="meta-dot">•</span>
-                      <span>⏱ {post.readTime || '4 phút đọc'}</span>
+                      <span>{post.readTime || '4 phút đọc'}</span>
                       <span className="meta-dot">•</span>
-                      <span>👁 {post.views || 1}</span>
+                      <span>{post.views || 1} lượt xem</span>
                     </div>
 
                     <h3 className="blog-card-title">{post.title}</h3>
                     <p className="blog-card-excerpt">{post.excerpt}</p>
 
                     <div className="blog-card-footer">
-                      <span className="blog-card-author">✍️ {post.author}</span>
+                      <span className="blog-card-author">{post.author}</span>
                       <button
                         type="button"
                         className="blog-card-read-btn"
@@ -710,7 +710,7 @@ export default function ArticlesPage({
                   onClick={onOpenAdmin}
                   title="Đăng bài viết mới trong trang Quản Trị"
                 >
-                  ✍️ Đăng Bài (Admin)
+                  Đăng Bài (Admin)
                 </button>
               )}
             </div>

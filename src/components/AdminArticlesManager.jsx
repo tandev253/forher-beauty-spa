@@ -239,7 +239,7 @@ export default function AdminArticlesManager({
       );
       setAiSuggestedTitles(altTitles);
 
-      showToast(`✨ AI đã viết xong trọn bộ bài chuẩn SEO (Điểm SEO: 100/100)!`);
+      showToast(`AI đã viết xong trọn bộ bài chuẩn SEO (Điểm SEO: 100/100)!`);
     } catch (err) {
       alert('Có lỗi khi tạo nội dung AI: ' + (err.message || 'Vui lòng thử lại'));
     } finally {
@@ -278,7 +278,7 @@ export default function AdminArticlesManager({
         readTime: estimateReadingTime(nextContent)
       };
     });
-    showToast('✨ AI đã thêm mục Câu Hỏi Thường Gặp (FAQ chuẩn SEO) vào cuối bài viết!');
+    showToast('AI đã thêm mục Câu Hỏi Thường Gặp (FAQ chuẩn SEO) vào cuối bài viết!');
   };
 
   // Handle Title Change & Auto-Slug
@@ -383,7 +383,7 @@ export default function AdminArticlesManager({
       } else {
         const res = await ArticlesStorage.createArticle(formData);
         if (res.success) {
-          showToast(`🎉 Đã đăng bài viết mới "${res.article.title}" thành công!`);
+          showToast(`Đã đăng bài viết mới "${res.article.title}" thành công!`);
           setIsEditorOpen(false);
           loadArticles();
         } else {
@@ -416,7 +416,7 @@ export default function AdminArticlesManager({
     if (res.success) {
       showToast(
         nextFeatured
-          ? `★ Đã ghim "${article.title}" làm bài viết tiêu điểm đầu trang!`
+          ? `Đã ghim "${article.title}" làm bài viết tiêu điểm đầu trang!`
           : `Đã bỏ ghim nổi bật cho bài viết "${article.title}".`
       );
       loadArticles();
@@ -445,7 +445,6 @@ export default function AdminArticlesManager({
           style={{ marginBottom: '16px' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>{toastMsg.type === 'warning' ? '🗑️' : '✅'}</span>
             <span>{toastMsg.message}</span>
           </div>
           <button type="button" className="toast-close-btn" onClick={() => setToastMsg(null)}>
@@ -471,14 +470,14 @@ export default function AdminArticlesManager({
             className="btn-outline-gold"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <span>🌐 Mở Trang Bài Viết</span>
+            <span>Mở Trang Bài Viết</span>
           </a>
           <button
             type="button"
             className="btn-primary-gold"
             onClick={() => handleOpenCreate(true)}
           >
-            🤖 + AI Viết & Đăng Bài Mới
+            + AI Viết & Đăng Bài Mới
           </button>
         </div>
       </div>
@@ -548,7 +547,7 @@ export default function AdminArticlesManager({
             <option value="all">Tất cả trạng thái ({articleStats.total})</option>
             <option value="published">Đang công khai ({articleStats.published})</option>
             <option value="draft">Bản nháp / Ẩn ({articleStats.draft})</option>
-            <option value="featured">★ Bài ghim nổi bật ({articleStats.featured})</option>
+            <option value="featured">Bài ghim nổi bật ({articleStats.featured})</option>
           </select>
         </div>
       </div>
@@ -558,7 +557,7 @@ export default function AdminArticlesManager({
         <div className="admin-empty-state">
           <p>Không tìm thấy bài viết nào khớp với bộ lọc hiện tại.</p>
           <button type="button" className="btn-primary-gold" onClick={() => handleOpenCreate(true)}>
-            🤖 + AI Viết Bài Mới Ngay
+            + AI Viết Bài Mới Ngay
           </button>
         </div>
       ) : (
@@ -575,7 +574,7 @@ export default function AdminArticlesManager({
                   className="admin-art-thumb"
                 />
                 <span className={`admin-art-status-pill ${art.status}`}>
-                  {art.status === 'published' ? '● Công khai' : '○ Bản nháp'}
+                  {art.status === 'published' ? 'Công khai' : 'Bản nháp'}
                 </span>
               </div>
 
@@ -583,12 +582,12 @@ export default function AdminArticlesManager({
                 <div className="admin-art-meta-top">
                   <span className="admin-art-cat-tag">{art.categoryName}</span>
                   <span className="admin-art-date">
-                    📅 {formatPublishDate(art.publishedAt)} • ✍️ {art.author} • 👁 {art.views || 1} lượt xem
+                    {formatPublishDate(art.publishedAt)} • {art.author} • {art.views || 1} lượt xem
                   </span>
                 </div>
 
                 <h4 className="admin-art-title">
-                  {art.isFeatured && <span className="featured-star-inline">★ </span>}
+                  {art.isFeatured && <span className="featured-star-inline">[Nổi bật] </span>}
                   {art.title}
                 </h4>
 
@@ -606,7 +605,7 @@ export default function AdminArticlesManager({
                   className="btn-tbl-action edit"
                   onClick={() => handleOpenEdit(art)}
                 >
-                  ✏️ Sửa Bài
+                  Sửa Bài
                 </button>
 
                 <button
@@ -614,7 +613,7 @@ export default function AdminArticlesManager({
                   className="btn-tbl-action view"
                   onClick={() => setPreviewingArticle(art)}
                 >
-                  👁️ Xem Thử
+                  Xem Thử
                 </button>
 
                 <button
@@ -623,7 +622,7 @@ export default function AdminArticlesManager({
                   onClick={() => handleToggleFeatured(art)}
                   title="Ghim hoặc bỏ ghim bài viết nổi bật đầu trang"
                 >
-                  {art.isFeatured ? '★ Đã Ghim' : '☆ Ghim Đầu'}
+                  {art.isFeatured ? 'Đã Ghim' : 'Ghim Đầu'}
                 </button>
 
                 <button
@@ -661,7 +660,7 @@ export default function AdminArticlesManager({
                 <h3>
                   {editingArticle
                     ? `Chỉnh Sửa Bài Viết #${editingArticle.id}`
-                    : '🤖 Đăng Bài Viết Mới (Trợ Lý AI Chuẩn SEO)'}
+                    : 'Đăng Bài Viết Mới (Trợ Lý AI Chuẩn SEO)'}
                 </h3>
               </div>
 
@@ -674,21 +673,21 @@ export default function AdminArticlesManager({
                     setShowAiPanel(!showAiPanel);
                   }}
                 >
-                  🤖 {showAiPanel ? 'Thu Gọn AI' : 'Mở Trợ Lý AI'}
+                  {showAiPanel ? 'Thu Gọn AI' : 'Mở Trợ Lý AI'}
                 </button>
                 <button
                   type="button"
                   className={`editor-mode-btn ${editorMode === 'write' ? 'active' : ''}`}
                   onClick={() => setEditorMode('write')}
                 >
-                  ✍️ Soạn Thảo
+                  Soạn Thảo
                 </button>
                 <button
                   type="button"
                   className={`editor-mode-btn ${editorMode === 'preview' ? 'active' : ''}`}
                   onClick={() => setEditorMode('preview')}
                 >
-                  👁️ Xem Trước
+                  Xem Trước
                 </button>
                 <button
                   type="button"
@@ -712,7 +711,7 @@ export default function AdminArticlesManager({
                     className="btn-outline-gold"
                     onClick={() => setEditorMode('write')}
                   >
-                    ← Quay Lại Chỉnh Sửa
+                    Quay Lại Chỉnh Sửa
                   </button>
                 </div>
 
@@ -727,7 +726,7 @@ export default function AdminArticlesManager({
                     {formData.excerpt || '(Mô tả tóm tắt sẽ tự động trích xuất từ nội dung bài viết)'}
                   </p>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                    ✍️ Tác giả: <strong>{formData.author}</strong> • ⏱ {formData.readTime}
+                    Tác giả: <strong>{formData.author}</strong> • {formData.readTime}
                   </div>
                   {formData.coverImage && (
                     <div className="article-cover-showcase" style={{ marginBottom: '20px' }}>
@@ -758,8 +757,8 @@ export default function AdminArticlesManager({
                     {isSaving
                       ? 'Đang Lưu...'
                       : editingArticle
-                      ? '✓ Lưu Cập Nhật Bài Viết'
-                      : '🚀 Xuất Bản Bài Viết Ngay'}
+                      ? 'Lưu Cập Nhật Bài Viết'
+                      : 'Xuất Bản Bài Viết Ngay'}
                   </button>
                   <button
                     type="button"
@@ -780,7 +779,7 @@ export default function AdminArticlesManager({
                   <div className="ai-seo-studio-box">
                     <div className="ai-studio-header">
                       <div className="ai-studio-title-wrap">
-                        <span className="ai-badge-pulse">🤖 AI SEO STUDIO</span>
+                        <span className="ai-badge-pulse">AI SEO STUDIO</span>
                         <h4>Trợ Lý AI Tự Động Viết Bài Chuẩn SEO Google Cho FORHER Spa</h4>
                       </div>
                       <button
@@ -788,7 +787,7 @@ export default function AdminArticlesManager({
                         className="btn-ai-key-toggle"
                         onClick={() => setShowGeminiKeyConfig(!showGeminiKeyConfig)}
                       >
-                        ⚙️ {geminiApiKey ? 'Đã kết nối Gemini Key' : 'Cài đặt Gemini Key (Tùy chọn)'}
+                        {geminiApiKey ? 'Đã kết nối Gemini Key' : 'Cài đặt Gemini Key (Tùy chọn)'}
                       </button>
                     </div>
 
@@ -824,7 +823,7 @@ export default function AdminArticlesManager({
 
                     {/* Quick Topic Presets */}
                     <div className="ai-quick-presets">
-                      <span className="preset-lbl">💡 Chọn nhanh chủ đề gợi ý (1 chạm):</span>
+                      <span className="preset-lbl">Chọn nhanh chủ đề gợi ý (1 chạm):</span>
                       <div className="preset-chips-row">
                         {QUICK_TOPIC_PRESETS.map((preset, idx) => (
                           <button
@@ -897,8 +896,8 @@ export default function AdminArticlesManager({
                         disabled={isAiGenerating}
                       >
                         {isAiGenerating
-                          ? '⏳ AI Đang Phân Tích Từ Khóa & Viết Bài Chuẩn SEO...'
-                          : '✨ AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO (1-Chạm)'}
+                          ? 'AI Đang Phân Tích Từ Khóa & Viết Bài Chuẩn SEO...'
+                          : 'AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO (1-Chạm)'}
                       </button>
 
                       <button
@@ -906,7 +905,7 @@ export default function AdminArticlesManager({
                         className="btn-ai-sub-action"
                         onClick={handleAiSuggestTitles}
                       >
-                        🎯 Gợi Ý 5 Tiêu Đề Hút Khách
+                        Gợi Ý 5 Tiêu Đề Hút Khách
                       </button>
 
                       <button
@@ -914,7 +913,7 @@ export default function AdminArticlesManager({
                         className="btn-ai-sub-action"
                         onClick={handleAiAppendFaq}
                       >
-                        ➕ Chèn Mục Hỏi Đáp (FAQ)
+                        + Chèn Mục Hỏi Đáp (FAQ)
                       </button>
                     </div>
 
@@ -922,7 +921,7 @@ export default function AdminArticlesManager({
                     {aiSuggestedTitles.length > 0 && (
                       <div className="ai-suggested-titles-box">
                         <span className="sug-title-lbl">
-                          🎯 Bấm chọn 1 trong 5 tiêu đề chuẩn SEO dưới đây để áp dụng:
+                          Bấm chọn 1 trong 5 tiêu đề chuẩn SEO dưới đây để áp dụng:
                         </span>
                         <div className="sug-titles-list">
                           {aiSuggestedTitles.map((sug, i) => (
@@ -972,7 +971,7 @@ export default function AdminArticlesManager({
                   <div className="seo-checks-grid">
                     {seoEvaluation.checks.map((chk, idx) => (
                       <div key={idx} className={`seo-check-item ${chk.ok ? 'pass' : 'warn'}`}>
-                        <span>{chk.ok ? '✓' : '○'}</span>
+                        <span>{chk.ok ? 'Đạt:' : 'Cần thêm:'}</span>
                         <span>{chk.text}</span>
                       </div>
                     ))}
@@ -1055,8 +1054,8 @@ export default function AdminArticlesManager({
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     >
-                      <option value="published">🟢 Công khai ngay trên Website</option>
-                      <option value="draft">⚪ Lưu bản nháp (Chưa hiển thị)</option>
+                      <option value="published">Công khai ngay trên Website</option>
+                      <option value="draft">Lưu bản nháp (Chưa hiển thị)</option>
                     </select>
                   </div>
                 </div>
@@ -1072,7 +1071,7 @@ export default function AdminArticlesManager({
                       }
                     />
                     <span>
-                      <strong>★ Ghim làm Bài Viết Tiêu Điểm Nổi Bật</strong> (Ưu tiên hiển thị lớn ở đầu trang Bài Viết & Trang Chủ)
+                      <strong>Ghim làm Bài Viết Tiêu Điểm Nổi Bật</strong> (Ưu tiên hiển thị lớn ở đầu trang Bài Viết & Trang Chủ)
                     </span>
                   </label>
                 </div>
@@ -1087,21 +1086,21 @@ export default function AdminArticlesManager({
                         className={`cp-tab ${coverPickerMode === 'preset' ? 'active' : ''}`}
                         onClick={() => setCoverPickerMode('preset')}
                       >
-                        🖼️ Kho Ảnh Spa Có Sẵn
+                        Kho Ảnh Spa Có Sẵn
                       </button>
                       <button
                         type="button"
                         className={`cp-tab ${coverPickerMode === 'upload' ? 'active' : ''}`}
                         onClick={() => setCoverPickerMode('upload')}
                       >
-                        📤 Tải Ảnh Từ Máy/Điện Thoại
+                        Tải Ảnh Từ Máy/Điện Thoại
                       </button>
                       <button
                         type="button"
                         className={`cp-tab ${coverPickerMode === 'url' ? 'active' : ''}`}
                         onClick={() => setCoverPickerMode('url')}
                       >
-                        🔗 Dán Link Ảnh
+                        Dán Link Ảnh
                       </button>
                     </div>
                   </div>
@@ -1136,7 +1135,7 @@ export default function AdminArticlesManager({
                         <label htmlFor="cover-upload-input" className="btn-upload-trigger">
                           {isUploadingCover
                             ? 'Đang xử lý & tối ưu ảnh...'
-                            : '📸 Bấm Chọn Ảnh Từ Thiết Bị (Tự động tối ưu dung lượng)'}
+                            : '+ Bấm Chọn Ảnh Từ Thiết Bị (Tự động tối ưu dung lượng)'}
                         </label>
                       </div>
                     )}
@@ -1188,7 +1187,7 @@ export default function AdminArticlesManager({
                       onClick={handleAiGenerateFullArticle}
                       disabled={isAiGenerating}
                     >
-                      🤖 Nhờ AI Viết Lại Nội Dung Theo Tiêu Đề
+                      Nhờ AI Viết Lại Nội Dung Theo Tiêu Đề
                     </button>
                   </div>
 
@@ -1238,7 +1237,7 @@ export default function AdminArticlesManager({
                       }
                       title="Chèn danh sách gạch đầu dòng"
                     >
-                      • Danh sách
+                      Danh sách
                     </button>
                     <button
                       type="button"
@@ -1252,7 +1251,7 @@ export default function AdminArticlesManager({
                       }
                       title="Chèn hộp trích dẫn nổi bật"
                     >
-                      ❝ Hộp nhấn mạnh
+                      Hộp nhấn mạnh
                     </button>
 
                     {/* Upload Image Inline */}
@@ -1270,7 +1269,7 @@ export default function AdminArticlesManager({
                       disabled={isUploadingInline}
                       title="Tải ảnh từ thiết bị và chèn vào giữa bài viết"
                     >
-                      {isUploadingInline ? 'Đang chèn ảnh...' : '📷 Chèn Ảnh Vào Bài'}
+                      {isUploadingInline ? 'Đang chèn ảnh...' : '+ Chèn Ảnh Vào Bài'}
                     </button>
                   </div>
 
@@ -1278,7 +1277,7 @@ export default function AdminArticlesManager({
                     ref={contentTextareaRef}
                     rows={12}
                     className="article-content-textarea"
-                    placeholder="Bấm nút '✨ AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO' ở trên để AI viết sẵn toàn bộ bài, hoặc tự nhập nội dung tại đây..."
+                    placeholder="Bấm nút 'AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO' ở trên để AI viết sẵn toàn bộ bài, hoặc tự nhập nội dung tại đây..."
                     value={formData.content}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -1320,15 +1319,15 @@ export default function AdminArticlesManager({
                     {isSaving
                       ? 'Đang Lưu Bài Viết...'
                       : editingArticle
-                      ? '✓ Lưu Thay Đổi Bài Viết'
-                      : '🚀 Đăng Bài Viết Lên Website'}
+                      ? 'Lưu Thay Đổi Bài Viết'
+                      : 'Đăng Bài Viết Lên Website'}
                   </button>
                   <button
                     type="button"
                     className="btn-outline-gold"
                     onClick={() => setEditorMode('preview')}
                   >
-                    👁️ Xem Trước Giao Diện ({seoEvaluation.score}/100 SEO)
+                    Xem Trước Giao Diện ({seoEvaluation.score}/100 SEO)
                   </button>
                   <button
                     type="button"
@@ -1372,7 +1371,7 @@ export default function AdminArticlesManager({
                 </h1>
                 <p className="article-detail-lead">{previewingArticle.excerpt}</p>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                  📅 {formatPublishDate(previewingArticle.publishedAt)} • ✍️ {previewingArticle.author} • ⏱ {previewingArticle.readTime}
+                  {formatPublishDate(previewingArticle.publishedAt)} • {previewingArticle.author} • {previewingArticle.readTime}
                 </div>
                 {previewingArticle.coverImage && (
                   <div className="article-cover-showcase" style={{ marginBottom: '20px' }}>
@@ -1401,7 +1400,7 @@ export default function AdminArticlesManager({
                     handleOpenEdit(art);
                   }}
                 >
-                  ✏️ Chỉnh Sửa Bài Viết Này
+                  Chỉnh Sửa Bài Viết Này
                 </button>
                 <a
                   href={`/bai-viet/${previewingArticle.slug}`}
@@ -1409,7 +1408,7 @@ export default function AdminArticlesManager({
                   rel="noopener noreferrer"
                   className="btn-outline-gold"
                 >
-                  🌐 Xem Trên Website Thực Tế ↗
+                  Xem Trên Website Thực Tế
                 </a>
                 <button
                   type="button"

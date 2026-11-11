@@ -884,7 +884,7 @@ export default function AdminPanel({
                   title="Soạn thảo và đăng bài viết mới lên Website"
                   style={{ padding: '7px 14px', fontSize: '0.82rem' }}
                 >
-                  ✍️ + Đăng Bài Viết
+                  + Đăng Bài Viết
                 </button>
                 <a
                   href="/bai-viet"
@@ -893,7 +893,7 @@ export default function AdminPanel({
                   className="btn-admin-nav"
                   title="Mở trang Bài Viết trên Website"
                 >
-                  🌐 Trang Bài Viết
+                  Trang Bài Viết
                 </a>
                 <button 
                   type="button" 
@@ -985,7 +985,7 @@ export default function AdminPanel({
                       className={`drawer-link-item ${activeTab === 'articles' ? 'active-tab-drawer' : ''}`}
                       onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }}
                     >
-                      ✍️ Đăng & Quản Lý Bài Viết ({articlesCount})
+                      Đăng & Quản Lý Bài Viết ({articlesCount})
                     </button>
                     {isBoss ? (
                       <>
@@ -1527,7 +1527,7 @@ export default function AdminPanel({
                         setTriggerCreateArticle(prev => prev + 1);
                       }}
                     >
-                      ✍️ Đăng Bài Viết
+                      + Đăng Bài Viết
                     </button>
                   </>
                 )}
