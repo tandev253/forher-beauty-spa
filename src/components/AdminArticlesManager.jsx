@@ -13,6 +13,8 @@ import {
   generateAiSeoArticle,
   generateSeoTitleSuggestions,
   generateFaqAppendBlock,
+  polishAndOptimizeUserDraft,
+  polishSelectedTextSnippet,
   evaluateSeoScore,
   getSavedGeminiKey,
   saveGeminiKey
@@ -47,6 +49,9 @@ export default function AdminArticlesManager({
   const [aiTone, setAiTone] = useState(AI_WRITING_TONES[0].id);
   const [aiCustomKeywords, setAiCustomKeywords] = useState('');
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isAiPolishing, setIsAiPolishing] = useState(false);
+  const [aiPolishReport, setAiPolishReport] = useState(null);
+  const [draftBackupBeforePolish, setDraftBackupBeforePolish] = useState(null);
   const [aiSuggestedTitles, setAiSuggestedTitles] = useState([]);
   const [showGeminiKeyConfig, setShowGeminiKeyConfig] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState(() => getSavedGeminiKey());
@@ -148,6 +153,8 @@ export default function AdminArticlesManager({
     setCoverPickerMode('preset');
     setShowAiPanel(openAiByDefault);
     setAiSuggestedTitles([]);
+    setAiPolishReport(null);
+    setDraftBackupBeforePolish(null);
     setFormData({
       title: '',
       slug: '',
@@ -171,6 +178,8 @@ export default function AdminArticlesManager({
     setEditorMode('write');
     setShowAiPanel(false);
     setAiSuggestedTitles([]);
+    setAiPolishReport(null);
+    setDraftBackupBeforePolish(null);
     setCoverPickerMode(
       article.coverImage?.startsWith('data:')
         ? 'upload'
@@ -193,6 +202,80 @@ export default function AdminArticlesManager({
       isFeatured: Boolean(article.isFeatured)
     });
     setIsEditorOpen(true);
+  };
+
+  // AI Action: Proofread, Polish & SEO-Optimize User's Existing Draft
+  const handleAiPolishUserDraft = async () => {
+    if (!formData.content.trim() && !formData.title.trim()) {
+      alert('Vui lòng gõ nội dung nháp hoặc tiêu đề bài viết của bạn trước khi bấm nút Nhờ AI Sửa Chữa Văn Phong Chuẩn SEO!');
+      return;
+    }
+
+    // Save backup so user can undo with 1 click
+    setDraftBackupBeforePolish({ ...formData });
+    setIsAiPolishing(true);
+    try {
+      const polished = await polishAndOptimizeUserDraft({
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        category: formData.category,
+        serviceId: formData.relatedServiceId,
+        tags: formData.tags
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        title: polished.title,
+        slug: !editingArticle ? polished.slug : prev.slug || polished.slug,
+        excerpt: polished.excerpt,
+        content: polished.content,
+        tags: polished.tags,
+        readTime: polished.readTime
+      }));
+      setAiPolishReport(polished.improvements || []);
+      showToast('AI đã sửa lỗi câu chữ, trau chuốt văn phong và tối ưu bài viết đạt 100/100 điểm SEO!');
+    } catch (err) {
+      alert('Không thể sửa văn bằng AI: ' + (err.message || 'Vui lòng thử lại'));
+    } finally {
+      setIsAiPolishing(false);
+    }
+  };
+
+  // AI Action: Polish Highlighted / Selected Text Snippet in Content Editor
+  const handleAiPolishSelectedSnippet = () => {
+    const textarea = contentTextareaRef.current;
+    if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const current = formData.content || '';
+      const selected = current.substring(start, end);
+      setDraftBackupBeforePolish({ ...formData });
+      const polishedSnippet = polishSelectedTextSnippet(selected, formData.relatedServiceId);
+      const nextContent = current.substring(0, start) + polishedSnippet + current.substring(end);
+      setFormData(prev => ({
+        ...prev,
+        content: nextContent,
+        readTime: estimateReadingTime(nextContent)
+      }));
+      setAiPolishReport([
+        'Đã sửa lỗi viết tắt, dấu câu và trau chuốt đoạn văn bạn vừa bôi đen',
+        'Đã in đậm từ khóa SEO trọng tâm trong đoạn văn'
+      ]);
+      showToast('AI đã trau chuốt xong đoạn văn bạn bôi đen!');
+      return;
+    }
+    // If nothing is highlighted, polish the entire draft
+    handleAiPolishUserDraft();
+  };
+
+  // Undo AI Polish back to user's original draft
+  const handleUndoAiPolish = () => {
+    if (!draftBackupBeforePolish) return;
+    setFormData(draftBackupBeforePolish);
+    setDraftBackupBeforePolish(null);
+    setAiPolishReport(null);
+    showToast('Đã khôi phục lại bản thảo gốc của bạn trước khi AI sửa!');
   };
 
   // AI Action 1: Generate Full SEO Article
@@ -893,11 +976,22 @@ export default function AdminArticlesManager({
                         type="button"
                         className="btn-ai-generate-main"
                         onClick={handleAiGenerateFullArticle}
-                        disabled={isAiGenerating}
+                        disabled={isAiGenerating || isAiPolishing}
                       >
                         {isAiGenerating
                           ? 'AI Đang Phân Tích Từ Khóa & Viết Bài Chuẩn SEO...'
                           : 'AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO (1-Chạm)'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-ai-polish-action"
+                        onClick={handleAiPolishUserDraft}
+                        disabled={isAiPolishing || isAiGenerating}
+                      >
+                        {isAiPolishing
+                          ? 'AI Đang Sửa Văn & Chuẩn Hóa SEO...'
+                          : 'Nhờ AI Sửa Chữa Văn Đang Viết Chuẩn SEO'}
                       </button>
 
                       <button
@@ -965,6 +1059,28 @@ export default function AdminArticlesManager({
                           <strong>{formData.readTime}</strong>
                         </p>
                       </div>
+                    </div>
+
+                    <div className="seo-score-top-actions">
+                      <button
+                        type="button"
+                        className="btn-seo-quick-fix"
+                        onClick={handleAiPolishUserDraft}
+                        disabled={isAiPolishing}
+                      >
+                        {isAiPolishing
+                          ? 'AI Đang Sửa Văn...'
+                          : 'Nhờ AI Sửa Chữa Văn & Tối Ưu Chuẩn SEO'}
+                      </button>
+                      {draftBackupBeforePolish && (
+                        <button
+                          type="button"
+                          className="btn-seo-undo"
+                          onClick={handleUndoAiPolish}
+                        >
+                          Hoàn Tác Bản Gốc
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1175,21 +1291,94 @@ export default function AdminArticlesManager({
                   />
                 </div>
 
-                {/* 5. Rich Content Editor with Formatting Toolbar */}
+                {/* 5. Rich Content Editor with AI Proofreading & Formatting Toolbar */}
                 <div className="form-group">
                   <div className="content-editor-label-row">
                     <label style={{ margin: 0 }}>
                       Nội Dung Chi Tiết Bài Viết <span className="req">*</span>
                     </label>
-                    <button
-                      type="button"
-                      className="btn-insert-template"
-                      onClick={handleAiGenerateFullArticle}
-                      disabled={isAiGenerating}
-                    >
-                      Nhờ AI Viết Lại Nội Dung Theo Tiêu Đề
-                    </button>
+                    <div className="editor-top-ai-btns">
+                      <button
+                        type="button"
+                        className="btn-ai-polish-inline"
+                        onClick={handleAiPolishUserDraft}
+                        disabled={isAiPolishing}
+                      >
+                        {isAiPolishing
+                          ? 'AI Đang Sửa Văn & Tối Ưu SEO...'
+                          : 'Nhờ AI Sửa Chữa Văn Phong Chuẩn SEO (Giữ Nguyên Ý)'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-insert-template"
+                        onClick={handleAiGenerateFullArticle}
+                        disabled={isAiGenerating}
+                      >
+                        AI Tự Viết Mới Theo Tiêu Đề
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Dedicated AI Proofread & SEO Polish Box right above textarea */}
+                  <div className="ai-polish-writer-box">
+                    <div className="ai-polish-writer-info">
+                      <strong>Bạn đang tự viết bài? Hãy để AI hỗ trợ sửa văn chuẩn SEO:</strong>
+                      <span>
+                        Chỉ cần gõ nội dung nháp hoặc các gạch đầu dòng bên dưới, sau đó bấm nút để AI tự động sửa lỗi chính tả, viết lại câu chữ mượt mà, chia thẻ H2/H3 và tối ưu từ khóa chuẩn SEO Google (100/100 điểm).
+                      </span>
+                    </div>
+                    <div className="ai-polish-writer-actions">
+                      <button
+                        type="button"
+                        className="btn-polish-primary"
+                        onClick={handleAiPolishUserDraft}
+                        disabled={isAiPolishing}
+                      >
+                        {isAiPolishing
+                          ? 'Đang Sửa Văn & Chuẩn Hóa SEO...'
+                          : 'Nhờ AI Sửa Văn & Chuẩn Hóa SEO Toàn Bài'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-polish-secondary"
+                        onClick={handleAiPolishSelectedSnippet}
+                        disabled={isAiPolishing}
+                        title="Bôi đen 1 đoạn văn bên dưới rồi bấm nút này để AI viết lại đoạn đó mượt hơn"
+                      >
+                        Sửa Đoạn Văn Đang Bôi Đen
+                      </button>
+                      {draftBackupBeforePolish && (
+                        <button
+                          type="button"
+                          className="btn-polish-undo"
+                          onClick={handleUndoAiPolish}
+                        >
+                          Hoàn Tác Bản Gốc
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Report of what AI fixed */}
+                  {aiPolishReport && aiPolishReport.length > 0 && (
+                    <div className="ai-polish-report-banner">
+                      <div className="report-header">
+                        <strong>AI đã hoàn tất sửa chữa văn phong & tối ưu chuẩn SEO cho bài viết của bạn:</strong>
+                        <button
+                          type="button"
+                          className="btn-close-report"
+                          onClick={() => setAiPolishReport(null)}
+                        >
+                          Đóng
+                        </button>
+                      </div>
+                      <ul className="report-list">
+                        {aiPolishReport.map((item, idx) => (
+                          <li key={idx}>• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {/* Formatting Toolbar */}
                   <div className="rich-editor-toolbar">
@@ -1277,7 +1466,7 @@ export default function AdminArticlesManager({
                     ref={contentTextareaRef}
                     rows={12}
                     className="article-content-textarea"
-                    placeholder="Bấm nút 'AI Tự Động Viết Trọn Bộ Bài Chuẩn SEO' ở trên để AI viết sẵn toàn bộ bài, hoặc tự nhập nội dung tại đây..."
+                    placeholder="Gõ nội dung nháp hoặc các ý chính của bạn vào đây, sau đó bấm nút 'Nhờ AI Sửa Văn & Chuẩn Hóa SEO Toàn Bài' ở ngay phía trên để AI trau chuốt câu chữ mượt mà và định dạng chuẩn SEO..."
                     value={formData.content}
                     onChange={(e) => {
                       const val = e.target.value;

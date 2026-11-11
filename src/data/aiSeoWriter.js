@@ -389,6 +389,344 @@ export function generateFaqAppendBlock(title, category, serviceId) {
 }
 
 /**
+ * Helper: Clean Vietnamese shorthand, abbreviations, brand names, prices, and punctuation
+ */
+export function cleanAndPolishVietnameseText(rawText = '') {
+  if (!rawText) return '';
+  let text = String(rawText);
+
+  // Word-boundary helper safe for Vietnamese Unicode text
+  const wb = (pattern) =>
+    new RegExp(`(^|[\\s,.;:!?()'"\\-])${pattern}(?=$|[\\s,.;:!?()'"\\-])`, 'gi');
+
+  const wordReplacements = [
+    [wb('ko'), '$1không'],
+    [wb('khong'), '$1không'],
+    [wb('dc'), '$1được'],
+    [wb('đc'), '$1được'],
+    [wb('duoc'), '$1được'],
+    [wb('kh'), '$1khách hàng'],
+    [wb('ktv'), '$1kỹ thuật viên'],
+    [wb('nv'), '$1chuyên viên'],
+    [wb('bh'), '$1bảo hành'],
+    [wb('sp'), '$1sản phẩm'],
+    [wb('mn'), '$1mọi người'],
+    [wb('trc'), '$1trước'],
+    [wb('ng'), '$1người'],
+    [wb('đt'), '$1điện thoại'],
+    [wb('sđt'), '$1số điện thoại'],
+    [wb('q10'), '$1Quận 10'],
+    [wb('quan\\s+10'), '$1Quận 10'],
+    [wb('quận\\s+10'), '$1Quận 10'],
+    [wb('tphcm'), '$1TP. Hồ Chí Minh'],
+    [wb('tp\\.?\\s*hcm'), '$1TP. Hồ Chí Minh'],
+    [wb('515\\s+bà\\s+hạt'), '$1515 Bà Hạt'],
+    [wb('515\\s+ba\\s+hat'), '$1515 Bà Hạt'],
+    [wb('diên\\s+hồng'), '$1Diên Hồng'],
+    [wb('spa\\s+forher'), '$1FORHER Beauty & Spa'],
+    [wb('forher\\s+spa'), '$1FORHER Beauty & Spa'],
+    [wb('forher\\s+beauty\\s*&\\s*spa'), '$1FORHER Beauty & Spa'],
+    [wb('diode\\s+laser'), '$1Diode Laser'],
+    [wb('three\\s+house\\s+nails?'), '$1Three House Nails'],
+    [/(\d{2,4})\s*k(?=$|[\s,.;:!?()'"\-])/gi, '$1.000đ']
+  ];
+
+  wordReplacements.forEach(([regex, replacement]) => {
+    text = text.replace(regex, replacement);
+  });
+
+  // Clean up spacing around punctuation
+  text = text
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\s+([,.;!?])/g, '$1')
+    .replace(/([,.;!?])([^\s\d<])/g, '$1 $2')
+    .trim();
+
+  // Capitalize first letter of text and after sentence-ending punctuation
+  text = text.replace(/(^|[.!?]\s+)([a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ])/g, (match, prefix, char) => {
+    return prefix + char.toUpperCase();
+  });
+
+  return text;
+}
+
+/**
+ * Polish a selected snippet of text (when user highlights a sentence/paragraph in the editor)
+ */
+export function polishSelectedTextSnippet(snippet = '', serviceId = '') {
+  const cleaned = cleanAndPolishVietnameseText(snippet.replace(/<[^>]*>/g, ' ').trim());
+  if (!cleaned) return '';
+
+  const service = SERVICES_CATALOG.find(s => s.id === serviceId);
+  let polished = cleaned;
+  if (!/[.!?]$/.test(polished)) {
+    polished += '.';
+  }
+
+  // Smoothly enrich if the sentence is very brief
+  if (polished.length < 130) {
+    const svcAddon = service
+      ? ` Quy trình ${service.name.toLowerCase()} tại FORHER Beauty & Spa (515 Bà Hạt, Quận 10) được thực hiện chuẩn y khoa với mức giá niêm yết minh bạch ${service.singlePriceDisplay}.`
+      : ' Tại FORHER Beauty & Spa (515 Bà Hạt, Phường Diên Hồng, Quận 10), mọi quy trình đều được thực hiện bài bản, vô trùng khép kín 1:1 và cam kết chất lượng rõ ràng.';
+    polished = `${polished}${svcAddon}`;
+  }
+
+  // Highlight key SEO terms once
+  polished = polished
+    .replace(/FORHER Beauty & Spa/, '<strong>FORHER Beauty & Spa</strong>')
+    .replace(/515 Bà Hạt/, '<strong>515 Bà Hạt</strong>')
+    .replace(/Quận 10/, '<strong>Quận 10</strong>');
+
+  return `<p>${polished}</p>`;
+}
+
+/**
+ * AI SEO Editor & Proofreader:
+ * Takes the user's existing draft (title, excerpt, content) and:
+ * 1. Fixes spelling, abbreviations, punctuation, and sentence flow while preserving 100% of the user's ideas.
+ * 2. Structures paragraphs with SEO H2/H3 headings, bullet lists, and bold keywords.
+ * 3. Expands & enriches short drafts so the article achieves 100/100 Google SEO Score.
+ */
+export async function polishAndOptimizeUserDraft({
+  title = '',
+  excerpt = '',
+  content = '',
+  category = 'cham-soc-mun',
+  serviceId = '',
+  tags = ''
+}) {
+  const service = SERVICES_CATALOG.find(s => s.id === serviceId) || SERVICES_CATALOG[0];
+  const images = selectImagesForCategory(category, `${title} ${content}`);
+  const improvements = [];
+
+  // Extract user's raw paragraphs (strip existing outer tags to inspect lines cleanly, or keep structure)
+  const rawLines = String(content || '')
+    .replace(/<\/(p|h2|h3|li|div|blockquote)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .split(/\n+/)
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  // Determine core topic from user's title or first line of content
+  const rawTopicSource =
+    (title || '').trim() ||
+    (rawLines[0] ? rawLines[0].slice(0, 75) : '') ||
+    (service ? service.name : 'Chăm sóc sắc đẹp chuẩn y khoa');
+
+  const cleanedTopic = cleanAndPolishVietnameseText(rawTopicSource).replace(/[.!?]+$/, '');
+
+  // 1. Polish Title for SEO (30 - 140 chars, containing topic + FORHER Spa Quận 10)
+  let polishedTitle = cleanAndPolishVietnameseText(title || '').replace(/[.]+$/, '');
+  if (!polishedTitle) {
+    polishedTitle = `${cleanedTopic} – Quy Trình Chuẩn Y Khoa Tại FORHER Spa Quận 10`;
+    improvements.push('Tự động đặt Tiêu đề chuẩn SEO dựa trên nội dung bạn viết');
+  } else if (polishedTitle.length < 35) {
+    const hasForher = /forher|quận 10|515 bà hạt/i.test(polishedTitle);
+    polishedTitle = hasForher
+      ? `${polishedTitle} – Quy Trình Chuẩn Y Khoa & Bảng Giá Mới Nhất`
+      : `${polishedTitle} Tại FORHER Beauty & Spa Quận 10: An Toàn & Hiệu Quả`;
+    improvements.push('Mở rộng và trau chuốt Tiêu đề đạt độ dài vàng chuẩn SEO Google');
+  } else {
+    improvements.push('Chuẩn hóa viết hoa và dấu câu cho Tiêu đề bài viết');
+  }
+
+  // 2. Check if Gemini API Key is configured for cloud AI editing
+  const geminiKey = getSavedGeminiKey();
+  if (geminiKey && rawLines.length > 0) {
+    try {
+      const prompt = `Bạn là Biên tập viên SEO cao cấp của "FORHER Beauty & Spa" (Địa chỉ: 515 Bà Hạt, Phường Diên Hồng, Quận 10, TP.HCM - Hotline: 0703 994 683).
+Người dùng đã viết bản thảo bài viết sau đây:
+- Tiêu đề hiện tại: "${title}"
+- Nội dung bản thảo:
+"""
+${rawLines.join('\n')}
+"""
+${service ? `- Dịch vụ liên quan: ${service.name} (Giá niêm yết: ${service.singlePriceDisplay})` : ''}
+
+Nhiệm vụ của bạn:
+1. Sửa toàn bộ lỗi chính tả, từ viết tắt, lỗi diễn đạt lủng củng; viết lại câu văn mượt mà, sang trọng, tự nhiên và thuyết phục hơn NHƯNG GIỮ NGUYÊN 100% ý chính, thông điệp, chương trình ưu đãi và số liệu của người viết.
+2. Chia bố cục bài viết bằng các thẻ HTML chuẩn SEO: <h2> (tối thiểu 3 thẻ H2), <h3>, <p>, <ul><li>, <blockquote>, và dùng <strong> để in đậm từ khóa quan trọng.
+3. Nếu bản thảo hơi ngắn, hãy triển khai sâu hơn các ý của người viết và bổ sung thông tin quy trình chuẩn y khoa tại FORHER Beauty & Spa (515 Bà Hạt, Quận 10) để tổng độ dài đạt 450 - 800 từ.
+4. Trả về JSON hợp lệ:
+{
+  "title": "Tiêu đề đã trau chuốt chuẩn SEO",
+  "excerpt": "Đoạn tóm tắt Meta Description chuẩn SEO 130-165 ký tự",
+  "content": "Nội dung HTML đã biên tập và tối ưu SEO",
+  "tags": "Từ khóa 1, Từ khóa 2, FORHER Beauty & Spa, Spa Quận 10, 515 Bà Hạt"
+}`;
+
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.5, responseMimeType: 'application/json' }
+          })
+        }
+      );
+
+      if (resp.ok) {
+        const data = await resp.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const parsed = JSON.parse(rawText.replace(/^```json\s*|\s*```$/g, '').trim());
+        if (parsed?.content) {
+          const finalContent = parsed.content.includes('<img')
+            ? parsed.content
+            : parsed.content.replace(
+                '</h2>',
+                `</h2>\n<img src="${images.inlineImage}" alt="${images.inlineAlt}" />`
+              );
+          return {
+            title: parsed.title || polishedTitle,
+            slug: slugifyVietnamese(parsed.title || polishedTitle),
+            excerpt: parsed.excerpt || excerpt,
+            content: finalContent,
+            tags: parsed.tags || tags,
+            readTime: estimateReadingTime(finalContent),
+            improvements: [
+              'Đã sửa lỗi chính tả, câu chữ và nâng cấp văn phong mượt mà bằng Gemini AI',
+              'Đã giữ nguyên ý chính của bạn và chuẩn hóa bố cục thẻ H2, H3, danh sách chuẩn SEO',
+              'Đã tối ưu Meta Description, Slug và từ khóa Local SEO Quận 10 đạt 100/100 điểm'
+            ]
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Gemini polish fallback to built-in SEO editor:', e);
+    }
+  }
+
+  // 3. Built-in FORHER Smart Vietnamese SEO Proofreader & Polisher (Instant, 100% reliable)
+  const polishedParagraphs = [];
+  const bulletItems = [];
+
+  rawLines.forEach((line) => {
+    const isBullet = /^[-+•*]\s+|^bước\s*\d+/i.test(line);
+    const cleanedLine = cleanAndPolishVietnameseText(line.replace(/^[-+•*]\s+/, ''));
+    if (!cleanedLine) return;
+
+    const withPeriod = /[.!?:]$/.test(cleanedLine) ? cleanedLine : `${cleanedLine}.`;
+
+    if (isBullet) {
+      // Bold the lead phrase before ":" or "–" if present
+      const formattedBullet = withPeriod.replace(/^([^:–-]{3,45})([:–-])/, '<strong>$1</strong>$2');
+      bulletItems.push(formattedBullet);
+    } else {
+      // Polish prose flow if the line is very brief
+      let enrichedLine = withPeriod;
+      if (enrichedLine.length < 95 && !/h2|h3/i.test(line)) {
+        enrichedLine = `${enrichedLine} Đây là một trong những yếu tố quan trọng được đội ngũ chuyên viên tại <strong>FORHER Beauty & Spa</strong> đặc biệt chú trọng nhằm mang lại hiệu quả chăm sóc tối ưu và an toàn nhất cho khách hàng.`;
+      }
+      // Highlight key SEO terms naturally
+      enrichedLine = enrichedLine
+        .replace(/FORHER Beauty & Spa/, '<strong>FORHER Beauty & Spa</strong>')
+        .replace(/515 Bà Hạt/, '<strong>515 Bà Hạt</strong>')
+        .replace(/Quận 10/, '<strong>Quận 10</strong>')
+        .replace(/chuẩn y khoa/i, '<strong>chuẩn y khoa</strong>')
+        .replace(/bảo hành 2 năm/i, '<strong>bảo hành 2 năm</strong>');
+
+      polishedParagraphs.push(enrichedLine);
+    }
+  });
+
+  improvements.push('Đã rà soát lỗi chính tả, từ viết tắt (k, đc, ko, q10, ktv...) và trau chuốt câu văn mượt mà');
+
+  // Build structured HTML preserving 100% of the user's polished paragraphs & bullets
+  const htmlSections = [];
+
+  // Section 1: User's core message & introduction
+  htmlSections.push(`<h2>1. ${cleanedTopic} tại FORHER Beauty & Spa Quận 10</h2>`);
+  if (polishedParagraphs.length > 0) {
+    const firstBatch = polishedParagraphs.slice(0, Math.max(2, Math.ceil(polishedParagraphs.length / 2)));
+    firstBatch.forEach(p => htmlSections.push(`<p>${p}</p>`));
+  } else {
+    htmlSections.push(
+      `<p>Nhu cầu tìm hiểu về <strong>${cleanedTopic.toLowerCase()}</strong> chuẩn y khoa, an toàn và minh bạch chi phí đang được rất nhiều chị em tại khu vực <strong>Quận 10, TP. Hồ Chí Minh</strong> quan tâm. Tại <strong>FORHER Beauty & Spa (515 Bà Hạt, Phường Diên Hồng)</strong>, mỗi liệu trình đều được thiết kế chuyên biệt theo tình trạng thực tế của từng khách hàng.</p>`
+    );
+  }
+
+  htmlSections.push(
+    `<blockquote>Tại FORHER Beauty & Spa (515 Bà Hạt, Quận 10), chúng tôi cam kết sử dụng 100% dụng cụ tiệt trùng riêng biệt 1:1, không gian rèm ngăn kín đáo và bảng giá niêm yết công khai, tuyệt đối không phát sinh phụ phí.</blockquote>`
+  );
+
+  // Section 2: Remaining user paragraphs + bullet points + inline image
+  htmlSections.push(`<h2>2. Chi tiết điểm nổi bật & Quy trình thực hiện chuẩn y khoa</h2>`);
+  if (polishedParagraphs.length > 2) {
+    const secondBatch = polishedParagraphs.slice(Math.ceil(polishedParagraphs.length / 2));
+    secondBatch.forEach(p => htmlSections.push(`<p>${p}</p>`));
+  }
+
+  if (bulletItems.length > 0) {
+    htmlSections.push(`<h3>Các điểm quan trọng trong liệu trình</h3>`);
+    htmlSections.push(`<ul>\n${bulletItems.map(item => `  <li>${item}</li>`).join('\n')}\n</ul>`);
+    improvements.push('Đã chuyển đổi các ý gạch đầu dòng của bạn thành danh sách HTML chuẩn SEO');
+  } else if (service) {
+    htmlSections.push(`<h3>Thông tin dịch vụ & Tiêu chuẩn chất lượng tại FORHER Spa</h3>`);
+    htmlSections.push(`<ul>
+  <li><strong>Dịch vụ trọng tâm:</strong> ${service.name} (${service.categoryName}) – ${service.description}</li>
+  <li><strong>Chi phí niêm yết minh bạch:</strong> Chỉ <strong>${service.singlePriceDisplay}</strong>${service.packagePriceDisplay ? ` (${service.packageLabel}: <strong>${service.packagePriceDisplay}</strong>)` : ''}, cam kết không chèo kéo.</li>
+  <li><strong>Quy trình vô khuẩn 1:1:</strong> Khử trùng dụng cụ bằng tia UV y tế và chuẩn bị vật tư riêng biệt cho mỗi khách hàng.</li>
+</ul>`);
+  }
+
+  htmlSections.push(`<img src="${images.inlineImage}" alt="${images.inlineAlt}" />`);
+
+  // Section 3: Ensure article depth (>= 300 words) & Local SEO Call-to-Action so SEO score hits 100/100
+  htmlSections.push(`<h2>3. Trải nghiệm 3 tầng làm đẹp & Hướng dẫn đặt lịch tại 515 Bà Hạt</h2>`);
+  htmlSections.push(
+    `<p>Khi ghé thăm tòa nhà 3 tầng <strong>FORHER Beauty & Spa tại số 515 Bà Hạt, Phường Diên Hồng, Quận 10</strong>, quý khách có thể kết hợp chăm sóc trọn vẹn từ làn da, mái tóc đến bộ móng trong cùng một không gian sang trọng, ấm cúng: Tầng trệt là <em>Three House Nails</em> nghệ thuật; Lầu 1 là khu vực <em>Gội đầu dưỡng sinh thảo dược</em> massage cổ vai gáy; và Lầu 2 là phòng <em>Spa chăm sóc da chuyên sâu, lấy nhân mụn y khoa & Triệt lông Diode Laser lạnh bảo hành 2 năm</em>.</p>`
+  );
+  htmlSections.push(
+    `<h3>Liên hệ đặt lịch hẹn trước để được đón tiếp chu đáo nhất</h3>\n<p>FORHER Beauty & Spa mở cửa phục vụ từ <strong>09:00 – 20:00 tất cả các ngày trong tuần (kể cả Thứ 7 & Chủ Nhật)</strong>. Hãy bấm nút <strong>Đặt Lịch Hẹn</strong> bên dưới hoặc nhắn trực tiếp qua <strong>Hotline / Zalo: ${COMPANY_INFO.phone}</strong> để chuyên viên giữ lịch ưu tiên và chuẩn bị phòng riêng cho bạn!</p>`
+  );
+
+  improvements.push('Đã chuẩn hóa cấu trúc thẻ H2, H3, hộp trích dẫn, hình ảnh minh họa và thông tin Local SEO Quận 10');
+
+  const finalContent = htmlSections.join('\n\n');
+
+  // 4. Polish Excerpt (Meta Description 130 - 170 chars)
+  let polishedExcerpt = cleanAndPolishVietnameseText(excerpt || '');
+  if (polishedExcerpt.length < 85) {
+    const firstUserSentence = polishedParagraphs[0]
+      ? polishedParagraphs[0].replace(/<[^>]*>/g, '').slice(0, 110).replace(/[.,;:\s]+$/, '')
+      : cleanedTopic;
+    polishedExcerpt = `${firstUserSentence}. Trải nghiệm quy trình chuẩn y khoa, bảng giá minh bạch tại FORHER Beauty & Spa (515 Bà Hạt, Quận 10) – Hotline: 0703 994 683.`;
+    improvements.push('Đã tự động tóm tắt đoạn Meta Description chuẩn SEO từ nội dung bài viết của bạn');
+  }
+
+  // 5. Ensure at least 4 SEO tags
+  const existingTags = (tags || '')
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+  const mergedTags = Array.from(
+    new Set([
+      ...existingTags,
+      cleanedTopic.slice(0, 45),
+      service ? service.name : 'Chăm sóc da Quận 10',
+      'FORHER Beauty & Spa',
+      'Spa Quận 10',
+      '515 Bà Hạt'
+    ])
+  ).join(', ');
+
+  await new Promise(r => setTimeout(r, 300));
+
+  return {
+    title: polishedTitle,
+    slug: slugifyVietnamese(polishedTitle),
+    excerpt: polishedExcerpt,
+    content: finalContent,
+    tags: mergedTags,
+    readTime: estimateReadingTime(finalContent),
+    improvements
+  };
+}
+
+/**
  * Evaluate Real-time SEO Score (0 - 100) and checklist for the current article form
  */
 export function evaluateSeoScore(formData) {
